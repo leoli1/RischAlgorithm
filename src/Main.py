@@ -52,7 +52,7 @@ def inputPolynomialFromExtendedField(var, pname):
         coeffs.append(inputPolynomial("x","a_{}".format(i)))
     coeffs.reverse()
     return Polynomial(coefficients=coeffs,field=FE.BASEFUNCTION_FIELD)
-def fieldExtensionInput():
+def fieldExtensionInput(fieldTower=None):
     f_e_type1 = getInput("Type of field extension (Transcendental: t, Algebraic: a):", ["t","a"])
     if f_e_type1=="a":
         raise NotImplementedError()
@@ -64,6 +64,22 @@ def fieldExtensionInput():
     u = inputRational("x",("p","q"))
     print("u(x)={}".format(u))
     return FE.FieldExtension(f_e_type,u)
+    
+def fieldTowerInput():
+    height = input("Number of field extensions? ")
+    FE.VARIABLES = [FE.BASE_VARIABLE]
+    for i in range(height):
+        FE.VARIABLES.append("T_{{{}}}".format(i+1))
+        
+    fieldTower = FE.FieldTower()
+    for i in range(height):
+        t = "C(x,"
+        for j in range(1,i+2):
+            t+= FE.VARIABLES[j]+","
+        t = t.strip(",") + ")"
+        print(t)
+        
+    return fieldTower
     
 def Main():
     FE.fieldExtension = fieldExtensionInput()
