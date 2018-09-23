@@ -4,7 +4,7 @@ Created on 22.09.2018
 @author: Leonard
 '''
 #from Polynomial import *
-from FieldExtension import *
+import FieldExtension as FE
 import Polynomial as Pol
 
 class RationalFunction(object):
@@ -13,7 +13,7 @@ class RationalFunction(object):
     '''
 
 
-    def __init__(self, numerator, denominator, field = BASE_FIELD):
+    def __init__(self, numerator, denominator, field = FE.BASE_FIELD):
         '''
         Constructor
         '''
@@ -21,14 +21,15 @@ class RationalFunction(object):
 
         self.numerator = numerator
         self.denominator = denominator
-        
-        self.removeCommonFactors()
+        if self.denominator!=1 and self.numerator!=1:
+            self.removeCommonFactors()
         
     def removeCommonFactors(self):
         '''
         cancels common factors, so that: numerator/denominator = p/q with gcd(p,q)=1
         '''
         gcd = Pol.PolyGCD(self.numerator, self.denominator)
+        #print(gcd)
         if not gcd.isConstant():
             self.numerator = Pol.PolyDiv(self.numerator, gcd)[0]
             self.denominator = Pol.PolyDiv(self.denominator,gcd)[0]
@@ -36,6 +37,12 @@ class RationalFunction(object):
     def isZero(self):
         return self.numerator.isZero()
     
+    def differentiate(self):
+        p = self.numerator
+        q = self.denominator
+        dp = p.differentiate()
+        dq = q.differentiate()
+        return RationalFunction(dp*q-p*dq,q*q,field=self.field) # (p/q)'=(p'q-pq')/(q^2)
     def Inverse(self):
         return RationalFunction(self.denominator,self.numerator,field=self.field)
     def __radd__(self, other):
@@ -43,7 +50,7 @@ class RationalFunction(object):
     def __add__(self, other): # a/b+c/d = (ad+cb)/(bd)
         if other==0:
             return self
-        if type(other) == Pol.Polynomial or _isPoly(other):
+        if type(other) == Pol.Polynomial:
             return self.__add__(RationalFunction(other,1,field=self.field))
         num = self.numerator*other.denominator+self.denominator*other.numerator
         den = self.denominator*other.denominator
@@ -51,7 +58,7 @@ class RationalFunction(object):
     def __mul__(self, other):
         if other == 1:
             return self
-        if type(other)==Pol.Polynomial or _isPoly(other):
+        if type(other)==Pol.Polynomial:
             return self.__mul__(RationalFunction(other,1,field=self.field))
         num = self.numerator * other.numerator
         denom = self.denominator*other.denominator
@@ -59,7 +66,7 @@ class RationalFunction(object):
     def __truediv__(self, other):
         if other==1:
             return self
-        if _isPoly(other):
+        if type(other) == Pol.Polynomial:#_isPoly(other):
             return self.__mul__(RationalFunction(1,other,field=self.field))
         return self.__mul__(other.Inverse())
     def __str__(self):
@@ -84,3 +91,6 @@ if __name__=='__main__':
     polD = Pol.Polynomial(coefficients=[1,1])
     ratB = RationalFunction(polC,polD)
     print(ratB)
+    
+    print("[{}]'={}".format(ratA,ratA.differentiate()))
+    polE = Pol.Polynomial(coefficients=[])

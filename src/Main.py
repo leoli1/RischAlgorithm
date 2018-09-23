@@ -3,9 +3,10 @@ Created on 22.09.2018
 
 @author: Leonard
 '''
-from FieldExtension import *
+import FieldExtension as FE
 from Polynomial import *
 from RationalFunction import RationalFunction
+from RischAlgorithm import *
 
 def getInput(msg, outputs):
     e = True
@@ -33,25 +34,55 @@ def inputPolynomial(var, pname):
             coeff = eval(coeff_raw)
         poly += Monomial(power,coeff)
     return poly
+
+def inputRational(var,pnames):
+    p = inputPolynomial("x", pnames[0])
+    q = inputPolynomial("x", pnames[1])
+    return RationalFunction(p,q)
+def inputPolynomialFromExtendedField(var, pname):
+    deg = input("deg({})=".format(pname))
+    poly_raw = ""
+    for i in range(deg,-1,-1):
+        poly_raw += "a_{{{}}}{}**{}+".format(i,var,i)
+    poly_raw = poly_raw.strip("+")
+    print(poly_raw)
+    print("a_i element C[x]") # C[x] instead of C(x) since you can multiply both p(T) and q(T) with a common multiple of the denominators in their coefficients
+    coeffs = []
+    for i in range(deg,-1,-1):
+        coeffs.append(inputPolynomial("x","a_{}".format(i)))
+    coeffs.reverse()
+    return Polynomial(coefficients=coeffs,field=FE.BASEFUNCTION_FIELD)
 def fieldExtensionInput():
     f_e_type1 = getInput("Type of field extension (Transcendental: t, Algebraic: a):", ["t","a"])
     if f_e_type1=="a":
         raise NotImplementedError()
     f_e_type2 = getInput("Type of transcendental extension (Exponential: e, Logarithmic: l):",["e","l"])
-    f_e_type = TRANS_LOG if f_e_type2=="l" else TRANS_EXP
-    bfunc = "exp" if f_e_type == TRANS_EXP else "log"
+    f_e_type = FE.TRANS_LOG if f_e_type2=="l" else FE.TRANS_EXP
+    bfunc = "exp" if f_e_type == FE.TRANS_EXP else "log"
     print("Field extension will be of the form: C(x,T), where T={}(u) with u element C(x)".format(bfunc))
     print("u(x)=p(x)/q(x)")
-    p = inputPolynomial("x", "p")
-    q = inputPolynomial("x", "q")
-    u = RationalFunction(p,q)
+    u = inputRational("x",("p","q"))
     print("u(x)={}".format(u))
-    return FieldExtension(f_e_type,u)
+    return FE.FieldExtension(f_e_type,u)
     
 def Main():
-    fieldExtension = fieldExtensionInput()
-    print(fieldExtension)
+    FE.fieldExtension = fieldExtensionInput()
+    print(FE.fieldExtension)
     while (True):
-        print("integrate f, f(T)=p(T)/q(T), p,q element C(x)[T]")
+        print("integrate f, f(T)=p(T)/q(T); p,q element C(x)[T]")
+        print("input p(T)")
+        p = inputPolynomialFromExtendedField("T", "p")
+        print("input q(T)")
+        q = inputPolynomialFromExtendedField("T", "q")
+        f = RationalFunction(p,q,field=FE.BASEFUNCTION_FIELD)
+        print(f)
+        print(f.differentiate())
+        output = Integrate(f)
+        if output!=None:
+            print("Integral({} dx) = {} + C".format(str(f),output))
+        else:
+            print("Integral({} dx) is not elementary".format(str(f)))
+        
+        
 if __name__ == '__main__':
     Main()

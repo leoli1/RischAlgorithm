@@ -17,6 +17,8 @@ BASE_VARIABLE = "x"
 EXTENSION_VARIABLE = "T"
 VARIABLES = [BASE_VARIABLE,EXTENSION_VARIABLE]
 
+fieldExtension = None
+
 class FieldExtension(object):
     '''
     classdocs
@@ -31,12 +33,15 @@ class FieldExtension(object):
         self.extensionType = extensionType
         if (extensionType==ALGEBRAIC):
             raise NotImplementedError("Algebraic field extensions are not implemented (yet).")
-        self.characteristicFuntion = characteristicFunction # = u
+        self.characteristicFunction = characteristicFunction # = u
         
     def __str__(self):
         var = "exp" if self.extensionType==TRANS_EXP else "log"
-        out = "C(x,T), T={}({})".format(var,str(self.characteristicFuntion))
+        out = "C(x,T), T={}({})".format(var,str(self.characteristicFunction))
         return out
         
-#class FieldTower(object):
-#    pass
+class FieldTower(object):
+    def __init__(self, fieldExtension):
+        self.fieldExtensions = [fieldExtension]
+    def addFieldExtension(self, fieldExtension):
+        pass

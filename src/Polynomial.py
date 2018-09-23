@@ -4,7 +4,7 @@ Created on 22.09.2018
 @author: Leonard
 '''
 from __future__ import division
-from FieldExtension import *
+import FieldExtension as FE
 import RationalFunction as Rat
 
 numbers = [int,float,complex]
@@ -15,7 +15,7 @@ class Polynomial(object):
     '''
 
 
-    def __init__(self, coefficients = None, field=BASE_FIELD):
+    def __init__(self, coefficients = None, field=FE.BASE_FIELD):
         '''
         field: the field(-extension) of its coefficients
         '''
@@ -27,6 +27,7 @@ class Polynomial(object):
         self._coefficients = coefficients
         
         self.degree = len(self._coefficients)-1
+        self.updateDegree()
 
     def setCoefficients(self, newCoeffs):
         self._coefficients = newCoeffs
@@ -59,7 +60,7 @@ class Polynomial(object):
         c = self.getCoefficient(power)
         if c==0:
             return True
-        elif self.field == BASE_FIELD:
+        elif self.field == FE.BASE_FIELD:
             return False 
         return c.isZero()
     def isZero(self):
@@ -70,6 +71,23 @@ class Polynomial(object):
     def isConstant(self):
         self.updateDegree()
         return self.degree==0
+    
+    def differentiate(self):
+        dPoly = Polynomial(field = self.field)
+        for i in range(self.degree,-1,-1):
+            p = self.getCoefficient(i)
+            if self.field == FE.BASE_FIELD:
+                if i>0:
+                    dPoly.setCoefficient(p*i, i-1)
+            elif FE.fieldExtension.extensionType==FE.TRANS_EXP: # (p*T^i)'=p'T^i+p*i*T'*T^(i-1) = p'T^i+i*p*u'*T^i since T'=u'T
+                dPoly += Monomial(i, p.differentiate(), field=FE.BASEFUNCTION_FIELD)
+                dPoly += i*Monomial(i,p*FE.fieldExtension.characteristicFunction.differentiate(),field=FE.BASEFUNCTION_FIELD)
+            elif FE.fieldExtension.extensionType==FE.TRANS_LOG:
+                dPoly += Monomial(i,p.differentiate(),field=FE.BASEFUNCTION_FIELD)
+                if i>0:
+                    dPoly += i*Monomial(i-1,p*Rat.RationalFunction(FE.fieldExtension.characteristicFunction.differentiate(),FE.fieldExtension.characteristicFunction))
+        return dPoly
+        
     def __radd__(self, other):
         return self.__add__(other)
     def __add__(self, other):
@@ -95,6 +113,8 @@ class Polynomial(object):
             return self
         if type(other) in numbers:
             return self.__mul__(Polynomial(coefficients=[other],field=self.field))
+        elif type(other) == Rat.RationalFunction:
+            return other.__mul__(self)
         if (self.field!=other.field):
             raise Exception("Polynomials have to have coefficients in the same field in order to multiply them")
         tDeg = self.degree + other.degree
@@ -118,7 +138,7 @@ class Polynomial(object):
         return Rat.RationalFunction(rem,other)+quot
     def __str__(self):
         out = ""
-        var = VARIABLES[self.field]
+        var = FE.VARIABLES[self.field]
         for i in range(self.degree,-1,-1):
             if self.coeffIsZero(i):
                 continue
@@ -143,15 +163,15 @@ def PolyDiv(polA, polB):
         return (monomial+quot,remainder)
     
 def PolyGCD(polA,polB):
-    (A,B) = (polA,polB) if polA.degree>polB.degree else (polB,polA)
+    (A,B) = (polA,polB) if polA.degree>=polB.degree else (polB,polA)
     (s,r) = PolyDiv(A,B) # A=s*B+r
     if r == 0 or r.isZero():
-        if B.isConstant():
+        if B.isConstant() and type(B.getCoefficient(0)) in numbers:
             return B*(1/B.getCoefficient(0)) # normalize
         return B
     return PolyGCD(B,r)
     
-def Monomial(degree, coeff, field = BASE_FIELD):
+def Monomial(degree, coeff, field = FE.BASE_FIELD):
     return Polynomial([0]*degree+[coeff], field=field)
 if __name__ == '__main__': #tests
     print("---------- General poly tests")
@@ -164,10 +184,14 @@ if __name__ == '__main__': #tests
     polD = polA*polB
     print("[{}] * [{}] = {}".format(polA,polB,polD))
     
-    polF_T = Polynomial(coefficients=[polA,polB],field=BASEFUNCTION_FIELD)
+    polF_T = Polynomial(coefficients=[polA,polB],field=FE.BASEFUNCTION_FIELD)
     print(polF_T)
     polG_T = polF_T*polF_T
     print("[{}] * [{}] = {}".format(polF_T,polF_T,polG_T))
+    
+    print("---------- Diff poly tests")
+    print("[{}]'={}".format(polA,polA.differentiate()))
+    
     print("---------- Poly div test:")
     polA = Polynomial(coefficients=[11,4,0,3])
     polB = Polynomial(coefficients=[2,-3,1])
@@ -181,6 +205,7 @@ if __name__ == '__main__': #tests
     
     (quot,rem) = PolyDiv(polG_T, polF_T)
     print("[{}] / [{}] = {} R {}".format(polG_T,polF_T,quot,rem))
+    
     print("---------- GCD Tests")
     polA = Polynomial(coefficients=[-4,0,1])#x^2-4
     polB = Polynomial(coefficients=[2,1])#x+2
