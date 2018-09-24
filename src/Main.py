@@ -51,7 +51,7 @@ def inputPolynomialFromExtendedField(var, pname):
     for i in range(deg,-1,-1):
         coeffs.append(inputPolynomial("x","a_{}".format(i)))
     coeffs.reverse()
-    return Polynomial(coefficients=coeffs,field=FE.BASEFUNCTION_FIELD)
+    return Polynomial(coefficients=coeffs,field=1)
 def fieldExtensionInput(fieldTower=None):
     f_e_type1 = getInput("Type of field extension (Transcendental: t, Algebraic: a):", ["t","a"])
     if f_e_type1=="a":
@@ -82,18 +82,20 @@ def fieldTowerInput():
     return fieldTower
     
 def Main():
-    FE.fieldExtension = fieldExtensionInput()
-    print(FE.fieldExtension)
+    fieldExtension = fieldExtensionInput()
+    FE.fieldTower = FE.FieldTower(fieldExtension=fieldExtension)
+    FE.updateVariables()
+    print(FE.fieldTower)
     while (True):
         print("integrate f, f(T)=p(T)/q(T); p,q element C(x)[T]")
         print("input p(T)")
         p = inputPolynomialFromExtendedField("T", "p")
         print("input q(T)")
         q = inputPolynomialFromExtendedField("T", "q")
-        f = RationalFunction(p,q,field=FE.BASEFUNCTION_FIELD)
+        f = RationalFunction(p,q,field=1)
         print(f)
-        print(f.differentiate())
-        output = Integrate(f)
+        #print(f.differentiate())
+        output = Integrate(f, FE.fieldTower)
         if output!=None:
             print("Integral({} dx) = {} + C".format(str(f),output))
         else:

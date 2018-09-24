@@ -43,6 +43,15 @@ class Polynomial(object):
         
     def getCoefficient(self, power):
         return 0 if power>self.degree else self._coefficients[power]
+    def getLeadingCoefficient(self):
+        return self.getCoefficient(self.degree)
+    def getFieldTower(self):
+        return FE.fieldTower.getStrippedTower(self.field)
+    def getFieldExtension(self):
+        if self.field==FE.BASE_FIELD:
+            return None
+        t = self.getFieldTower()
+        return t.getFieldExtension(t.towerHeight-1)
     
     def updateDegree(self):
         '''
@@ -72,20 +81,36 @@ class Polynomial(object):
         self.updateDegree()
         return self.degree==0
     
+    def isSquareFree(self): # polynomial p is square-free iff gcd(p,p')=1
+        gcd = PolyGCD(self,self.differentiate())
+        return gcd.isConstant()
+    
+    def evaluate(self, val):
+        if self.field!=FE.BASE_FIELD:
+            raise Exception()
+        sum = 0
+        for i in range(self.degree+1):
+            sum += self.getCoefficient(i)*(val**i)
+        return sum
+    
     def differentiate(self):
         dPoly = Polynomial(field = self.field)
         for i in range(self.degree,-1,-1):
             p = self.getCoefficient(i)
+            fieldExtension = self.getFieldExtension()
+            if p==0:
+                continue
             if self.field == FE.BASE_FIELD:
                 if i>0:
                     dPoly.setCoefficient(p*i, i-1)
-            elif FE.fieldExtension.extensionType==FE.TRANS_EXP: # (p*T^i)'=p'T^i+p*i*T'*T^(i-1) = p'T^i+i*p*u'*T^i since T'=u'T
-                dPoly += Monomial(i, p.differentiate(), field=FE.BASEFUNCTION_FIELD)
-                dPoly += i*Monomial(i,p*FE.fieldExtension.characteristicFunction.differentiate(),field=FE.BASEFUNCTION_FIELD)
-            elif FE.fieldExtension.extensionType==FE.TRANS_LOG:
-                dPoly += Monomial(i,p.differentiate(),field=FE.BASEFUNCTION_FIELD)
+            elif fieldExtension.extensionType==FE.TRANS_EXP: # (p*T^i)'=p'T^i+p*i*T'*T^(i-1) = p'T^i+i*p*u'*T^i since T'=u'T
+                dPoly += Monomial(i, p.differentiate(), field=self.field)
+                dPoly += i*Monomial(i,p*fieldExtension.characteristicFunction.differentiate(),field=self.field)
+            elif fieldExtension.extensionType==FE.TRANS_LOG:
+                dPoly += Monomial(i,p.differentiate(),field=self.field)
                 if i>0:
-                    dPoly += i*Monomial(i-1,p*Rat.RationalFunction(FE.fieldExtension.characteristicFunction.differentiate(),FE.fieldExtension.characteristicFunction))
+                    log_diff_u = Rat.RationalFunction(fieldExtension.characteristicFunction.differentiate(),fieldExtension.characteristicFunction,field=self.field-1)
+                    dPoly += i*Monomial(i-1,p*log_diff_u, field=self.field)
         return dPoly
         
     def __radd__(self, other):
@@ -131,6 +156,8 @@ class Polynomial(object):
         return tPoly
     
     def __truediv__(self, other):
+        if type(other) in numbers:
+            return self.__mul__(1/other)
         (quot,rem)= PolyDiv(self, other)
         if rem==0:
             return quot
@@ -147,6 +174,7 @@ class Polynomial(object):
         if len(out)==0:
             return "0"
         return out.strip("+")
+    
 def PolyDiv(polA, polB):
     if (polA.field!=polB.field):
         raise Exception("Polynomials have to have coefficients in the same field in order to apply PolyDiv")
@@ -174,6 +202,10 @@ def PolyGCD(polA,polB):
 def Monomial(degree, coeff, field = FE.BASE_FIELD):
     return Polynomial([0]*degree+[coeff], field=field)
 if __name__ == '__main__': #tests
+    fieldExtension1 = FE.FieldExtension(FE.TRANS_EXP,Polynomial([0,1])) # field extension with e^x=exp(x)
+    fieldExtension2 = FE.FieldExtension(FE.TRANS_LOG,Polynomial([Polynomial([0,1])], field=1)) # field extension with log(x)
+    FE.fieldTower = FE.FieldTower(fieldExtensions=[fieldExtension1,fieldExtension2])
+    FE.updateVariables()
     print("---------- General poly tests")
     polA = Polynomial(coefficients=[1,0,2,4])
     print(polA)
@@ -184,13 +216,19 @@ if __name__ == '__main__': #tests
     polD = polA*polB
     print("[{}] * [{}] = {}".format(polA,polB,polD))
     
-    polF_T = Polynomial(coefficients=[polA,polB],field=FE.BASEFUNCTION_FIELD)
+    polF_T = Polynomial(coefficients=[polA,polB],field=1) # polB*(T_1)**1+polA = polB*(e**x)+polA
     print(polF_T)
     polG_T = polF_T*polF_T
     print("[{}] * [{}] = {}".format(polF_T,polF_T,polG_T))
     
+    polH = Polynomial(coefficients=[0,Polynomial([1])], field=1)
+    polG = Polynomial(coefficients=[polH,polH],field=2)
+    print(polH)
+    print(polG)
+    
     print("---------- Diff poly tests")
     print("[{}]'={}".format(polA,polA.differentiate()))
+    print("[{}]'={}".format(polG,polG.differentiate()))
     
     print("---------- Poly div test:")
     polA = Polynomial(coefficients=[11,4,0,3])

@@ -11,14 +11,23 @@ TRANS_EXP = 1
 ALGEBRAIC = 2
 
 BASE_FIELD = 0 # C
-BASEFUNCTION_FIELD = 1 # field of rational functions in x: C(x)
-EXTENDED_FIELD = 2 # extended field: C(x,T)
+##BASEFUNCTION_FIELD = 1 # field of rational functions in x: C(x)
+#EXTENDED_FIELD = 2 # extended field: C(x,T)
 BASE_VARIABLE = "x"
 EXTENSION_VARIABLE = "T"
-VARIABLES = [BASE_VARIABLE,EXTENSION_VARIABLE]
+VARIABLES = [BASE_VARIABLE]#,EXTENSION_VARIABLE]
 
-fieldExtension = None
+#fieldExtension = None
 
+fieldTower = None
+
+def updateVariables():
+    if fieldTower==None:
+        return
+    if fieldTower.towerHeight>=len(VARIABLES):
+        for i in range(len(VARIABLES),fieldTower.towerHeight+1):
+            VARIABLES.append("T_{{{}}}".format(i))
+            
 class FieldExtension(object):
     '''
     classdocs
@@ -49,7 +58,8 @@ class FieldTower(object):
             self.fieldExtensions = [fieldExtension]
         else:
             self.fieldExtensions = []
-        
+            
+        updateVariables()
     
     @property
     def towerHeight(self):
@@ -57,21 +67,26 @@ class FieldTower(object):
     
     def getFieldExtension(self, index):
         return self.fieldExtensions[index]
-    def getStrippedExtensions(self, index):
+    def getLastExtension(self):
+        if self.towerHeight==0:
+            return None
+        return self.getFieldExtension(self.towerHeight-1)
+    def getStrippedTower(self, index):
         return FieldTower(fieldExtensions=self.fieldExtensions[0:index])
     
     def addFieldExtension(self, fieldExtension):
         self.fieldExtensions.append(fieldExtension)
+        updateVariables()
         
     def __str__(self):
         out = "C("
         for i in range(self.towerHeight+1):
             out += VARIABLES[i]
         out = out.strip(",")
-        out += ") where"
+        out += ") where "
         for i in range(self.towerHeight):
             ext = self.getFieldExtension(i)
             var = "exp" if ext.extensionType==TRANS_EXP else "log"
-            out += "{} = {}({}); ".format(VARIABLES[i+1],var,str(ext.characteristicFuntion))
-        out = out.strip(";")
+            out += "{} = {}({}); ".format(VARIABLES[i+1],var,str(ext.characteristicFunction))
+        out = out.strip("; ")
         return out

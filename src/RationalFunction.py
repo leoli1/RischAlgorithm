@@ -21,7 +21,7 @@ class RationalFunction(object):
 
         self.numerator = numerator
         self.denominator = denominator
-        if self.denominator!=1 and self.numerator!=1:
+        if self.denominator!=1 and self.numerator!=1 and self.numerator!=0:
             self.removeCommonFactors()
         
     def removeCommonFactors(self):
@@ -43,14 +43,23 @@ class RationalFunction(object):
         dp = p.differentiate()
         dq = q.differentiate()
         return RationalFunction(dp*q-p*dq,q*q,field=self.field) # (p/q)'=(p'q-pq')/(q^2)
-    def Inverse(self):
+    def PartialFraction(self):
+        if self.denominator.isSquareFree():
+            if self.denominator.degree>2:
+                raise NotImplementedError()
+            else:
+                raise NotImplementedError()
+              #  c = 
+        else:
+            raise NotImplementedError()
+    def Inverse(self):# f->1/f
         return RationalFunction(self.denominator,self.numerator,field=self.field)
     def __radd__(self, other):
         return self.__add__(other)
     def __add__(self, other): # a/b+c/d = (ad+cb)/(bd)
         if other==0:
             return self
-        if type(other) == Pol.Polynomial:
+        if type(other) == Pol.Polynomial or _isPoly(other):
             return self.__add__(RationalFunction(other,1,field=self.field))
         num = self.numerator*other.denominator+self.denominator*other.numerator
         den = self.denominator*other.denominator
@@ -58,7 +67,7 @@ class RationalFunction(object):
     def __mul__(self, other):
         if other == 1:
             return self
-        if type(other)==Pol.Polynomial:
+        if type(other)==Pol.Polynomial or _isPoly(other):
             return self.__mul__(RationalFunction(other,1,field=self.field))
         num = self.numerator * other.numerator
         denom = self.denominator*other.denominator
@@ -66,11 +75,13 @@ class RationalFunction(object):
     def __truediv__(self, other):
         if other==1:
             return self
-        if type(other) == Pol.Polynomial:#_isPoly(other):
+        if type(other) == Pol.Polynomial or _isPoly(other):#_isPoly(other):
             return self.__mul__(RationalFunction(1,other,field=self.field))
         return self.__mul__(other.Inverse())
     def __str__(self):
         out = "["+str(self.numerator)+"]"
+        if self.numerator==0:
+            return out
         d = str(self.denominator)
         if d=="(1)":
             return out
