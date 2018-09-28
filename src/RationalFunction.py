@@ -43,7 +43,11 @@ class RationalFunction(object):
         dp = p.differentiate()
         dq = q.differentiate()
         return RationalFunction(dp*q-p*dq,q*q,field=self.field) # (p/q)'=(p'q-pq')/(q^2)
-    def PartialFraction(self):
+    
+    def PartialFraction(self, denomFactorization):
+        
+        raise NotImplementedError
+    """def PartialFraction(self):
         if self.denominator.isSquareFree():
             if self.denominator.degree>2:
                 raise NotImplementedError()
@@ -51,7 +55,8 @@ class RationalFunction(object):
                 raise NotImplementedError()
               #  c = 
         else:
-            raise NotImplementedError()
+            raise NotImplementedError()"""
+    
     def Inverse(self):# f->1/f
         return RationalFunction(self.denominator,self.numerator,field=self.field)
     def __radd__(self, other):

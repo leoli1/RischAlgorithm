@@ -84,6 +84,13 @@ class Polynomial(object):
     def isSquareFree(self): # polynomial p is square-free iff gcd(p,p')=1
         gcd = PolyGCD(self,self.differentiate())
         return gcd.isConstant()
+    def factorSquareFree(self):
+        """
+        factors self = f = a_1*(a_2^2)*(a_3^3)...
+        where the a_i are square-free and gcd(a_i,a_j)=1 for i!=j
+        returns [(a_1,1),(a_2,2), ...]
+        """
+        raise NotImplementedError()
     
     def evaluate(self, val):
         if self.field!=FE.BASE_FIELD:
@@ -112,7 +119,17 @@ class Polynomial(object):
                     log_diff_u = Rat.RationalFunction(fieldExtension.characteristicFunction.differentiate(),fieldExtension.characteristicFunction,field=self.field-1)
                     dPoly += i*Monomial(i-1,p*log_diff_u, field=self.field)
         return dPoly
-        
+    def differentiateWRTtoPolyVar(self):
+        """
+        differentiates function with respect to the field extension variable of the polynomial:
+        p = 2*T**2+T+1
+        -> differentiateWRTtoPolyVar(p) = (d/dT)p = 4T+1
+        """
+        dPoly = Polynomial(field=self.field)
+        for i in range(self.degree,0,-1):
+            p = self.getCoefficient(i)
+            dPoly.setCoefficient(p*i, i-1)
+        return dPoly
     def __radd__(self, other):
         return self.__add__(other)
     def __add__(self, other):
