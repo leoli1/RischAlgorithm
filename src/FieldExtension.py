@@ -15,41 +15,45 @@ BASE_FIELD = 0 # C
 #EXTENDED_FIELD = 2 # extended field: C(x,T)
 BASE_VARIABLE = "x"
 EXTENSION_VARIABLE = "T"
-VARIABLES = [BASE_VARIABLE]#,EXTENSION_VARIABLE]
+#VARIABLES = [BASE_VARIABLE]#,EXTENSION_VARIABLE]
 
 #fieldExtension = None
 
 fieldTower = None
 
-def updateVariables():
+"""def updateVariables():
     if fieldTower==None:
         return
     if fieldTower.towerHeight>=len(VARIABLES):
         for i in range(len(VARIABLES),fieldTower.towerHeight+1):
             VARIABLES.append("T_{{{}}}".format(i))
-            
+            """
 class FieldExtension(object):
     '''
     classdocs
     '''
 
-    def __init__(self, extensionType, characteristicFunction):
-        '''
+    def __init__(self, extensionType, characteristicFunction, variable):
+        """
         logarithmic extension: f' = u'/u where u=characteristicFuntion
         exponential extension f'=u'f where u=characteristicFuntion
         u is in the field extension, that is one level lower
-        '''
+        variable : name of the extensionVariable, usually T (for Theta which is often used in literature)
+        """
         self.extensionType = extensionType
         if (extensionType==ALGEBRAIC):
             raise NotImplementedError("Algebraic field extensions are not implemented (yet).")
         self.characteristicFunction = characteristicFunction # = u
+        self.variable = variable
         
     def __str__(self):
         var = "exp" if self.extensionType==TRANS_EXP else "log"
         #out = "C(x,T), T={}({})".format(var,str(self.characteristicFunction)) 
-        out = "K(T), T={}({})".format(var,str(self.characteristicFunction)) 
+        out = "K({}), {}={}({})".format(self.variable,self.variable,var,str(self.characteristicFunction)) 
         return out
-        
+    def strFunc(self):
+        var = "exp" if self.extensionType==TRANS_EXP else "log"
+        return "{}({})".format(var,str(self.characteristicFunction))
 class FieldTower(object):
     def __init__(self, fieldExtension=None,fieldExtensions=None):
         if fieldExtensions!=None:
@@ -59,7 +63,7 @@ class FieldTower(object):
         else:
             self.fieldExtensions = []
             
-        updateVariables()
+        #updateVariables()
     
     @property
     def towerHeight(self):
@@ -76,17 +80,17 @@ class FieldTower(object):
     
     def addFieldExtension(self, fieldExtension):
         self.fieldExtensions.append(fieldExtension)
-        updateVariables()
+        #updateVariables()
         
     def __str__(self):
-        out = "C("
-        for i in range(self.towerHeight+1):
-            out += VARIABLES[i]
+        out = "C(x,"
+        for i in range(self.towerHeight):
+            out += self.getFieldExtension(i).variable+","
         out = out.strip(",")
         out += ") where "
         for i in range(self.towerHeight):
             ext = self.getFieldExtension(i)
             var = "exp" if ext.extensionType==TRANS_EXP else "log"
-            out += "{} = {}({}); ".format(VARIABLES[i+1],var,str(ext.characteristicFunction))
+            out += "{} = {}({}); ".format(self.getFieldExtension(i).variable,var,str(ext.characteristicFunction))
         out = out.strip("; ")
         return out

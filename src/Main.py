@@ -63,9 +63,9 @@ def fieldExtensionInput(fieldTower=None):
     print("u(x)=p(x)/q(x)")
     u = inputRational("x",("p","q"))
     print("u(x)={}".format(u))
-    return FE.FieldExtension(f_e_type,u)
+    return FE.FieldExtension(f_e_type,u,"T_{{0}}")
     
-def fieldTowerInput():
+"""def fieldTowerInput():
     height = input("Number of field extensions? ")
     FE.VARIABLES = [FE.BASE_VARIABLE]
     for i in range(height):
@@ -79,12 +79,12 @@ def fieldTowerInput():
         t = t.strip(",") + ")"
         print(t)
         
-    return fieldTower
+    return fieldTower"""
     
 def Main():
     fieldExtension = fieldExtensionInput()
     FE.fieldTower = FE.FieldTower(fieldExtension=fieldExtension)
-    FE.updateVariables()
+   # FE.updateVariables()
     print(FE.fieldTower)
     while (True):
         print("integrate f, f(T)=p(T)/q(T); p,q element C(x)[T]")

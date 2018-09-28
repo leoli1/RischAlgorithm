@@ -3,9 +3,11 @@ Created on 22.09.2018
 
 @author: Leonard
 '''
+from __future__ import division
 #from Polynomial import *
 import FieldExtension as FE
 import Polynomial as Pol
+from Utils import isNumber
 
 class RationalFunction(object):
     '''
@@ -21,6 +23,15 @@ class RationalFunction(object):
 
         self.numerator = numerator
         self.denominator = denominator
+        if not isNumber(numerator) and not isNumber(denominator):
+            if self.numerator.field!=self.denominator.field:
+                raise Exception()
+        if not isNumber(numerator):
+            if self.numerator.field!=self.field:
+                raise Exception()
+        if not isNumber(denominator):
+            if self.denominator.field!=self.field:
+                raise Exception()
         if self.denominator!=1 and self.numerator!=1 and self.numerator!=0:
             self.removeCommonFactors()
         
@@ -30,7 +41,7 @@ class RationalFunction(object):
         '''
         gcd = Pol.PolyGCD(self.numerator, self.denominator)
         #print(gcd)
-        if not gcd.isConstant():
+        if not gcd==1:
             self.numerator = Pol.PolyDiv(self.numerator, gcd)[0]
             self.denominator = Pol.PolyDiv(self.denominator,gcd)[0]
             #print(PolyDiv(self.denominator,gcd)[0])
@@ -59,6 +70,12 @@ class RationalFunction(object):
     
     def Inverse(self):# f->1/f
         return RationalFunction(self.denominator,self.numerator,field=self.field)
+    
+    def MakeDenominatorMonic(self):
+        lcoeff = self.denominator.getLeadingCoefficient()
+        lcoeff_poly = Pol.Polynomial(coefficients=[lcoeff],field=self.field)
+        self.numerator = self.numerator/lcoeff_poly
+        self.denominator = self.denominator/lcoeff_poly
     def __radd__(self, other):
         return self.__add__(other)
     def __add__(self, other): # a/b+c/d = (ad+cb)/(bd)
@@ -91,6 +108,10 @@ class RationalFunction(object):
         if d=="(1)":
             return out
         return out+"/["+d+"]"
+    def printFull(self):
+        numStr = str(self.numerator) if isNumber(self.numerator) else self.numerator.printFull()
+        denomStr = str(self.denominator) if isNumber(self.denominator) else self.denominator.printFull()
+        return "[{}]/[{}]".format(numStr,denomStr)
 
 def _isPoly(x):
     try:
@@ -107,6 +128,15 @@ if __name__=='__main__':
     polD = Pol.Polynomial(coefficients=[1,1])
     ratB = RationalFunction(polC,polD)
     print(ratB)
+    fieldExtension1 = FE.FieldExtension(FE.TRANS_EXP,Pol.Polynomial([0,1]),"T_{{1}}") # field extension with e^x=exp(x)
+    FE.fieldTower = FE.FieldTower(fieldExtensions=[fieldExtension1])
+    
+    polE = Pol.Polynomial(coefficients=[polA,polC],field=1)
+    polF = Pol.Polynomial(coefficients=[polB,polD],field=1)
+    ratC = RationalFunction(polE,polF,field=1)
+    print(ratC)
+    ratC.MakeDenominatorMonic()
+    print(ratC)
     
     print("[{}]'={}".format(ratA,ratA.differentiate()))
     polE = Pol.Polynomial(coefficients=[])
