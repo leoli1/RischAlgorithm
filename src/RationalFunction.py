@@ -33,7 +33,8 @@ class RationalFunction(object):
             if self.denominator.field!=self.field:
                 raise Exception()
         if self.denominator!=1 and self.numerator!=1 and self.numerator!=0:
-            self.removeCommonFactors()
+            if isNumber(self.numerator) or not self.numerator.isZero():
+                self.removeCommonFactors()
         
     def removeCommonFactors(self):
         '''
@@ -76,6 +77,11 @@ class RationalFunction(object):
         lcoeff_poly = Pol.Polynomial(coefficients=[lcoeff],field=self.field)
         self.numerator = self.numerator/lcoeff_poly
         self.denominator = self.denominator/lcoeff_poly
+    def isConstant(self):
+        if isNumber(self.numerator):
+            return isNumber(self.denominator) or self.denominator.isConstant()
+        if self.numerator.isConstant():
+            return isNumber(self.denominator) or self.denominator.isConstant()
     def __radd__(self, other):
         return self.__add__(other)
     def __add__(self, other): # a/b+c/d = (ad+cb)/(bd)
@@ -86,11 +92,16 @@ class RationalFunction(object):
         num = self.numerator*other.denominator+self.denominator*other.numerator
         den = self.denominator*other.denominator
         return RationalFunction(num,den,field=self.field)
+    def __rmul__(self, other):
+        return self.__mul__(other)
     def __mul__(self, other):
         if other == 1:
             return self
         if type(other)==Pol.Polynomial or _isPoly(other):
             return self.__mul__(RationalFunction(other,1,field=self.field))
+        if isNumber(other):
+            num = self.numerator*other
+            return RationalFunction(num,self.denominator, field=self.field)
         num = self.numerator * other.numerator
         denom = self.denominator*other.denominator
         return RationalFunction(num,denom,field=self.field)
@@ -101,10 +112,21 @@ class RationalFunction(object):
             return self.__mul__(RationalFunction(1,other,field=self.field))
         return self.__mul__(other.Inverse())
     def __str__(self):
-        out = "["+str(self.numerator)+"]"
+        if self.numerator!=1 and not self.numerator.isConstant():
+            out = "["+str(self.numerator)+"]"
+        else:
+            out = str(self.numerator.getLeadingCoefficient())
+        if self.numerator==0:
+            return "0"
+        d = str(self.denominator)
+        if d=="(1)" or self.denominator==1:
+            return out
+        return out+"/["+d+"]"
+    def strCustomVar(self, variable):
+        out = "["+str(self.numerator.strCustomVar(variable))+"]"
         if self.numerator==0:
             return out
-        d = str(self.denominator)
+        d = str(self.denominator.strCustomVar(variable))
         if d=="(1)":
             return out
         return out+"/["+d+"]"

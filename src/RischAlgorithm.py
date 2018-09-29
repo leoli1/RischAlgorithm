@@ -7,7 +7,9 @@ from __future__ import division
 import Polynomial as Pol
 import RationalFunction as Rat
 import FieldExtension as FE
-import LogFunction as LF
+#import LogFunction as LF
+import Integral as Int
+import RootSum as RS
 from math import sqrt as msqrt
 
 def Integrate(func, fieldTower):
@@ -32,9 +34,18 @@ def IntegrateRationalFunction(func): # field=0, func element C(x)
         raise NotImplementedError()
     if func.denominator.isSquareFree():
         #partial fraction
-        if func.denominator.degree>2: raise NotImplementedError()
-        if func.denominator.degree==1:
-            return LF.LogFunction(func.denominator)*(func.numerator/func.denominator.getLeadingCoefficient())
+        if func.denominator.degree>2:
+            
+            poly = func.denominator
+            coeff_rat = func.numerator/func.denominator.differentiate()
+            coeff_str = coeff_rat.strCustomVar("y")
+            rootSum = RS.RootSum(poly,"{}{}".format(coeff_str, logExpression("x-y")),exprVar="y")
+            return Int.Integral(str(rootSum))
+        elif func.denominator.degree==1:
+            arg = func.denominator
+            coeff = func.numerator/func.denominator.getLeadingCoefficient()
+            return Int.Integral("{}*{}".format(str(coeff), logExpression(arg)))
+            #return LF.LogFunction(func.denominator)*(func.numerator/func.denominator.getLeadingCoefficient())
         elif func.denominator.degree==2:
             f = func.numerator
             g = func.denominator
@@ -50,7 +61,11 @@ def IntegrateRationalFunction(func): # field=0, func element C(x)
             B = f.evaluate(zero1)/g.differentiate().evaluate(zero1)
             denomA = Pol.Polynomial([-zero0,1])
             denomB = Pol.Polynomial([-zero1,1])
-            return (LF.LogFunction(denomA)*A)+(LF.LogFunction(denomB)*B)
+            one = Pol.Polynomial([1])
+            a = Rat.RationalFunction(one,denomA)
+            b = Rat.RationalFunction(one,denomB)
+            return IntegrateRationalFunction(a*A)+IntegrateRationalFunction(b*B)
+            #return (LF.LogFunction(denomA)*A)+(LF.LogFunction(denomB)*B)
     else:
         raise NotImplementedError
 def IntegratePolynomialPartLogExt(func, fieldTower):
@@ -71,9 +86,20 @@ def sqrt(x):
         return complex(0,1)*(msqrt(-x))
     return msqrt(x)
 
+def logExpression(arg):
+    return "log({})".format(str(arg))
 if __name__ == '__main__':
+    from Parse import parseField0PolyFromStr
     polA = Pol.Polynomial([1])
     polB = Pol.Polynomial([2,-3,1])
+    polC = Pol.Polynomial([-1,2])
+    print(Integrate(Rat.RationalFunction(polA,polC), FE.FieldTower()))
     ratA = Rat.RationalFunction(polA,polB)
     print(ratA)
     print(Integrate(ratA, FE.FieldTower()))
+    print("----")
+    polD = parseField0PolyFromStr("3*x**2+x+1")
+    polE = parseField0PolyFromStr("x**4+x**2+1")
+    ratB = Rat.RationalFunction(polD,polE)
+    print(ratB)
+    print(Integrate(ratB,FE.FieldTower()))

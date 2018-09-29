@@ -8,6 +8,8 @@ from Polynomial import *
 from RationalFunction import RationalFunction
 from RischAlgorithm import *
 
+from Parse import parseField0PolyFromStr
+
 def getInput(msg, outputs):
     e = True
     o=""
@@ -18,22 +20,7 @@ def getInput(msg, outputs):
     return o
 def inputPolynomial(var, pname):
     poly_raw = raw_input("{}({})=".format(pname,var)) # polynomial = sum of the monomials separated by '+'
-    monomials = poly_raw.split("+")
-    poly = Polynomial()
-    for mon in monomials:
-        l = mon.split("**")
-        i = complex(0,1)
-        power = 0
-        if (len(l)>1):
-            power = eval(l[1])
-        elif l[0].endswith(var):
-            power = 1
-        coeff_raw = l[0].strip(var).strip("*")
-        coeff = 1
-        if len(coeff_raw)!=0:
-            coeff = eval(coeff_raw)
-        poly += Monomial(power,coeff)
-    return poly
+    return parseField0PolyFromStr(poly_raw,var=var)
 
 def inputRational(var,pnames):
     p = inputPolynomial("x", pnames[0])
