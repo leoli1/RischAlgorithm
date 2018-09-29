@@ -7,7 +7,8 @@ from __future__ import division
 import FieldExtension as FE
 import RationalFunction as Rat
 
-from Utils import isNumber
+from Utils import isNumber,numberIsZero
+
 
 class Polynomial(object):
     '''
@@ -43,10 +44,13 @@ class Polynomial(object):
         
     def getCoefficient(self, power):
         return 0 if power>self.degree else self._coefficients[power]
+    
     def getLeadingCoefficient(self):
         return self.getCoefficient(self.degree)
+    
     def getFieldTower(self):
         return FE.fieldTower.getStrippedTower(self.field)
+    
     def getFieldExtension(self):
         if self.field==FE.BASE_FIELD:
             return None
@@ -67,19 +71,25 @@ class Polynomial(object):
         
     def coeffIsZero(self, power):
         c = self.getCoefficient(power)
+        if isNumber(c):
+            if numberIsZero(c):
+                return True
+            else:
+                return False
         if c==0:
             return True
-        elif self.field == FE.BASE_FIELD:
-            return False 
         return c.isZero()
+    
     def isZero(self):
         for i in range(self.degree+1):
             if not self.coeffIsZero(i):
                 return False
         return True
+    
     def deg0(self):
         self.updateDegree()
         return self.degree==0
+    
     def isConstant(self):
         if self.deg0():
             if self.field==0:
@@ -88,10 +98,17 @@ class Polynomial(object):
                 return self.getCoefficient(0).isConstant()
         else:
             return False
+    def getConstant(self):
+        if not self.isConstant():
+            return None
+        if self.field == 0:
+            return self.getCoefficient(0)
+        return self.getCoefficient(0).getConstant()
         
     def isSquareFree(self): # polynomial p is square-free iff gcd(p,p')=1
         gcd = PolyGCD(self,self.differentiateWRTtoPolyVar())#PolyGCD(self,self.differentiate())
         return gcd==1
+    
     def factorSquareFree(self):
         """
         factors self = f = a_1*(a_2^2)*(a_3^3)...
@@ -101,10 +118,16 @@ class Polynomial(object):
         #raise NotImplementedError()
         if self.isSquareFree():
             return [(self,1)]
-        c = PolyGCD(self, self.differentiateWRTtoPolyVar()) # = a_2*(a_3)^2*(a_4)^3...
+        d = self.differentiateWRTtoPolyVar()
+        c = PolyGCD(self, d) # = a_2*(a_3)^2*(a_4)^3...
         w = self/c # = a_1*a_2*a_3...
         y = PolyGCD(c, w) # = a_2*a_3...
         a1 = w/y
+        if isNumber(a1):
+            assert a1==1
+        else:
+            if a1.getConstant()==1:
+                a1 = 1
         rest = c.factorSquareFree()
         an = [(a1,1)]+rest
         for i in range(1,len(an)):
@@ -119,8 +142,10 @@ class Polynomial(object):
         for i in range(self.degree+1):
             sum += self.getCoefficient(i)*(val**i)
         return sum
+    
     def getVariable(self):
         return "x" if self.field==FE.BASE_FIELD else self.getFieldExtension().variable
+    
     def differentiate(self):
         dPoly = Polynomial(field = self.field)
         for i in range(self.degree,-1,-1):
@@ -140,6 +165,7 @@ class Polynomial(object):
                     log_diff_u = Rat.RationalFunction(fieldExtension.characteristicFunction.differentiate(),fieldExtension.characteristicFunction,field=self.field-1)
                     dPoly += i*Monomial(i-1,p*log_diff_u, field=self.field)
         return dPoly
+    
     def differentiateWRTtoPolyVar(self):
         """
         differentiates function with respect to the field extension variable of the polynomial:
@@ -151,11 +177,29 @@ class Polynomial(object):
             p = self.getCoefficient(i)
             dPoly.setCoefficient(p*i, i-1)
         return dPoly
+    
+    def asRational(self):
+        return Rat.RationalFunction(self,1,field=self.field)
+    
+    def makeMonic(self):
+        x = self.getLeadingCoefficient()
+        o = self/Polynomial([x],field=self.field)
+        return o
+    
+    def isMonic(self):
+        lcoeff = self.getLeadingCoefficient()
+        if isNumber(lcoeff):
+            return lcoeff==1
+        return lcoeff.isConstant() and lcoeff.getConstant()==1
+    
     def __radd__(self, other):
         return self.__add__(other)
+    
     def __add__(self, other):
         if other ==0:
             return self
+        if isNumber(other):
+            return self.__add__(Polynomial([other],field=self.field))
         if type(other)==Rat.RationalFunction:
             return other.__add__(self)
         if (self.field!=other.field):
@@ -167,10 +211,13 @@ class Polynomial(object):
             b = other.getCoefficient(i)
             tPoly.setCoefficient(a+b, i)
         return tPoly
+    
     def __sub__(self, other):
         return self.__add__(other*(-1))
+    
     def __rmul__(self, other):
         return self.__mul__(other)
+    
     def __mul__(self, other):
         if other == 1:
             return self
@@ -191,7 +238,17 @@ class Polynomial(object):
                 b = other.getCoefficient(i-j)
                 newCoeff += a*b
             tPoly.setCoefficient(newCoeff, i)
+            
         return tPoly
+    def __pow__(self, other):
+        if not isNumber(other) or int(other)!=other or other<0:
+            raise Exception("power has to be an integer >= 0")
+        if other==0:
+            return 1
+        return (self**(other-1))*self
+    
+    def __rtruediv__(self, other):
+        return other.__truediv__(self)
     
     def __truediv__(self, other):
         if isNumber(other):
@@ -200,9 +257,14 @@ class Polynomial(object):
         if rem==0:
             return quot
         
-        return Rat.RationalFunction(rem,other)+quot
+        return Rat.RationalFunction(self,other,field=self.field)#Rat.RationalFunction(rem,other, field=self.field)+quot
+    
     def __str__(self):
         return self.strCustomVar(self.getVariable())
+    
+    def __repr__(self):
+        return self.__str__()
+
     def strCustomVar(self, variable):
         out = ""#FE.VARIABLES[self.field]
         for i in range(self.degree,-1,-1):
@@ -228,6 +290,7 @@ class Polynomial(object):
         if len(out)==0:
             return "0"
         return out.strip("+")
+    
     def printFull(self):
         """
         writes out field extension variables
@@ -250,17 +313,27 @@ class Polynomial(object):
             return "0"
         return out.strip("+")
     
+def polyEqual(A,B):
+    a = A
+    if isNumber(A) and isNumber(B):
+        return A==B
+    return (A+(-1)*B).isZero()
 def PolyDiv(polA, polB):
     if (polA.field!=polB.field):
         raise Exception("Polynomials have to have coefficients in the same field in order to apply PolyDiv")
     if polA.deg0() and polB.deg0():
-        return (Polynomial([polA.getCoefficient(0)/polB.getCoefficient(0)],field=polA.field), 0)
+        if polA.field==0:
+            return (Polynomial([polA.getCoefficient(0)/polB.getCoefficient(0)],field=polA.field), 0)
+        else:
+            return (Polynomial([polA.getCoefficient(0)/polB.getCoefficient(0)],field=polA.field),0)#Rat.RationalFunction(polA.getCoefficient(0),polB.getCoefficient(0),polA.field-1)],field=polA.field), 0)
     if (polA.degree<polB.degree):
         return (0,polA)
     power = polA.degree-polB.degree
     coeff = polA.getCoefficient(polA.degree)/polB.getCoefficient(polB.degree)
     monomial = Monomial(power,coeff,field=polB.field)
-    newA = polA-(monomial*polB)
+    newA = polA-(monomial*polB) # 
+    if newA.degree==polA.degree: # calculation errors
+        newA.setCoefficient(0,newA.degree)
     if newA.isZero():
         return (monomial,0)
     else:
@@ -268,50 +341,71 @@ def PolyDiv(polA, polB):
         return (monomial+quot,remainder)
     
 def PolyGCD(polA,polB):
+    if polB==1:
+        return polA
+    if polA==1:
+        return polB
     (A,B) = (polA,polB) if polA.degree>=polB.degree else (polB,polA)
     if B.isZero():
         return A
     (s,r) = PolyDiv(A,B) # A=s*B+r
-    if r == 0 or r.isZero():
+    if (isNumber(r) and numberIsZero(r)) or (not isNumber(r) and r.isZero()):
         if B.deg0():# and type(B.getCoefficient(0)) in numbers:
             return 1#B*(1/B.getCoefficient(0)) # normalize
-        return B
+        return B.makeMonic()
+    #print(str(B),str(r))
     gcd = PolyGCD(B,r)
     if gcd!=1:
-        lcoeff = gcd.getLeadingCoefficient()
-        if isNumber(lcoeff):
-            return gcd*Polynomial([1/gcd.getLeadingCoefficient()],field=gcd.field)
-        else:
-            return gcd*Polynomial([gcd.getLeadingCoefficient().Inverse()],field=gcd.field)
+        if not gcd.isMonic():
+            return gcd.makeMonic()
+        return gcd
     else:
         return 1
     
-def extendedEuclid(p,q):
+def __extendedEuclid(p,q):
     """
-    xp+yq=1
+    finds x,y with
+    xp+yq=gcd(p,q)
     """
-    if (PolyGCD(p,q))!=1:
-        raise Exception()
-    (P,Q) = (p,q) if p.degree>=q.degree else (q,p)
+    (P,Q) = (p,q)# if p.degree>=q.degree else (q,p)
     (s,r) = PolyDiv(P,Q)
-    if r.deg0():
+    rm = 0 if r==0 else r.makeMonic()
+    if polyEqual(PolyGCD(p,q),rm):
+   # if r.deg0():
         if r.field==FE.BASE_FIELD:
-            r_inv_poly = Polynomial([1/r.getCoefficient(0)])
+            r_inv_poly = Polynomial([1/r.getLeadingCoefficient()])
             return (r_inv_poly,r_inv_poly*(-1)*s)
         else:
-            r_inv_poly = Polynomial([r.getCoefficient(0).Inverse()],field=r.field)#Rat.RationalFunction(1,r,field=r.field)
+            r_inv_poly = Polynomial([r.getLeadingCoefficient().Inverse()],field=r.field)#Rat.RationalFunction(1,r,field=r.field)
             return (r_inv_poly,r_inv_poly*(-1)*s)
     (x,y) = extendedEuclid(Q, r)
     return (y,x+(-1)*s*y)
     
+def extendedEuclid(p,q):
+    (P,Q,a) = (p,q,0) if p.degree>=q.degree else (q,p,1)
+    if Q.deg0():
+        return (1,((-1)*P+1)/Q)
+    (x,y) = __extendedEuclid(P, Q)
+    return (x,y) if a==0 else (y,x)
+
 def extendedEuclidGenF(p,q,f):
     """
+    finds x,y with
     xp+yq=f
+    gcd(p,q)|f
     """
-    if PolyGCD(p, q)!=1:
-        raise Exception()
+    gcd = PolyGCD(p,q)
+    if gcd!=1 and PolyDiv(f,gcd)[1]!=0:
+        raise Exception("gcd(p,q) doesn't divide f")
     (s,t) = extendedEuclid(p, q)
-    
+    if f.deg0():
+        return (s*f,t*f)
+    sig1 = s*(f/gcd)
+    tau1 = t*(f/gcd)
+    (a,r) = PolyDiv(sig1, q/gcd)
+    sig = r
+    tau = tau1+a*(p/gcd)
+    return (sig,tau)
 def PartialFraction(f,p,q):
     """
     f/(pq)=x/p+y/q
@@ -321,6 +415,42 @@ def PartialFraction(f,p,q):
         raise Exception()
     if PolyGCD(p,q)!=1:
         raise Exception()
+    (sig,tau) = extendedEuclidGenF(p, q, f)
+    return (tau,sig)
+
+
+def PartialFractionWithPowerFactorization(numerator,factorization):
+    if len(factorization)==1:
+        return PartialFractionPower(numerator, factorization[0][0], factorization[0][1])
+    
+    otherFactors = 1
+    for i in range(1,len(factorization)):
+        otherFactors *= factorization[i][0]**factorization[i][1]
+        
+    if factorization[0][0]!=1:
+        (r1,r2) = PartialFraction(numerator, factorization[0][0], otherFactors)
+        pfrac = PartialFractionPower(r1, factorization[0][0], factorization[0][1])
+        return pfrac + PartialFractionWithPowerFactorization(r2, factorization[1:len(factorization)])
+    else:
+        return PartialFractionWithPowerFactorization(numerator, factorization[1:len(factorization)])
+    
+    
+    
+def PartialFractionPower(p,q,n):
+    """
+    deg(p)<deg(q)
+    returns [(r1,q,1),(r2,q,2),(r3,q,3),...] with
+    p/(q^n) = r1/q+r2/q^2+...+rn/q^n
+    deg(ri)<deg(q)
+    """
+    if p==0:
+        return []
+    if n==1:
+        if p.degree>=q.degree:
+            raise Exception("deg(p) should be < deg(q)")
+        return [(p,q,1)]
+    (L,J) = PolyDiv(p,q)
+    return PartialFractionPower(L, q, n-1)+[(J,q,n)]
     
 def Monomial(degree, coeff, field = FE.BASE_FIELD):
     return Polynomial([0]*degree+[coeff], field=field)
@@ -335,6 +465,16 @@ def printFactorization(fact):
             out += "*"
     return out.strip("*")
             
+def printPartialFraction(pfrac):
+    out = ""
+    for frac in pfrac:
+        if (isNumber(frac[0]) and numberIsZero(frac[0])) or frac[0].isZero():
+            continue
+        power = ""
+        if frac[2]>1:
+            power = "**{}".format(frac[2])
+        out += "[{}]/[{}]{}+".format(frac[0],frac[1],power)
+    return out.strip("+")
 
 if __name__ == '__main__': #tests
     from Parse import parseField0PolyFromStr,parseField0RatFromStr
@@ -342,7 +482,7 @@ if __name__ == '__main__': #tests
     fieldExtension2 = FE.FieldExtension(FE.TRANS_LOG,Polynomial([Polynomial([0,1])], field=1),"T_{{2}}") # field extension with log(x)
     FE.fieldTower = FE.FieldTower(fieldExtensions=[fieldExtension1,fieldExtension2])
     #FE.updateVariables()
-    print("---------- General poly tests")
+    print("---------- General poly tests") #################################################################################
     polA = Polynomial(coefficients=[1,0,2,4])
     print(polA)
     polB = Polynomial(coefficients=[0,1,2])
@@ -363,11 +503,16 @@ if __name__ == '__main__': #tests
     print(polG)
     print(polG.printFull())
     
-    print("---------- Diff poly tests")
+    ratA = parseField0RatFromStr("1/x")
+    ratB = parseField0RatFromStr("x**2/x+1")
+    polA = Polynomial(coefficients=[ratA,ratB],field=1)
+    print(polA.makeMonic()) # 
+    
+    print("---------- Diff poly tests") #################################################################################
     print("[{}]'={}".format(polA,polA.differentiate()))
     print("[{}]'={}".format(polG,polG.differentiate()))
     
-    print("---------- Poly div test:")
+    print("---------- Poly div test:") #################################################################################
     polA = Polynomial(coefficients=[11,4,0,3])
     polB = Polynomial(coefficients=[2,-3,1])
     (quot,rem) = PolyDiv(polA, polB)
@@ -378,14 +523,18 @@ if __name__ == '__main__': #tests
     (quot,rem) = PolyDiv(polA, polB)
     print("[{}] / [{}] = {} R {}".format(polA,polB,quot,rem)) # (12x^3-11x^2+9x+18)/(4x+3)
     
-    polA = parseField0PolyFromStr("x**2+")
+    #polA = parseField0PolyFromStr("x**2+")
     
     (quot,rem) = PolyDiv(polG_T, polF_T)
     print("[{}] / [{}] = {} R {}".format(polG_T,polF_T,quot,rem))
     
-    print("---------- GCD Tests")
+    print("---------- GCD Tests") #################################################################################
     polA = Polynomial(coefficients=[-4,0,1])#x^2-4
     polB = Polynomial(coefficients=[2,1])#x+2
+    print("gcd({},{})={}".format(polA,polB,PolyGCD(polA, polB)))
+    
+    polA = Polynomial(coefficients=[-1,0,1])#x^2-1
+    polB = Polynomial(coefficients=[1,2,1])#1+2x+x^2
     print("gcd({},{})={}".format(polA,polB,PolyGCD(polA, polB)))
     
     polA = Polynomial(coefficients=[1,0,1])
@@ -396,13 +545,41 @@ if __name__ == '__main__': #tests
     polB = Polynomial(coefficients=[1,1,1,1,1,1])#1+x+x^2+x^3+x^4+x^5
     print("gcd({},{})={}".format(polA,polB,PolyGCD(polA, polB)))
     
-    print("---------- ExtendedEuclid Test")
+    ratA = parseField0RatFromStr("1/1")
+    ratB = parseField0RatFromStr("(-1)*x**2/1")
+    polA = Polynomial([ratB,0,ratA],field=1) # = -x^2+T^2=(T-x)(T+x)
+    ratC = parseField0RatFromStr("x**2+1/x")
+    polB = Polynomial([ratA,ratC,ratA],field=1)# = T^2+(x^2+1)/x*T+1=(T+x)(T+1/x)
+    print("gcd({},{})={}".format(str(polA),str(polB),str(PolyGCD(polA, polB))))
+    
+    (x,y) = extendedEuclid(polA,polB)
+    print("extended euclid: {}, {}, {}".format(x,y,PolyGCD(polA, polB)))
+    f = PolyGCD(polA, polB)*Polynomial([Polynomial([1,1]),1,1],field=1) #*(1+x+T+T^2)
+    (x,y) = extendedEuclidGenF(polA, polB, f)
+    print("extended euclid gen f: {}, {}, {}".format(x,y,f))
+    print("{} is squarefree: {}, should be true".format(polA,polA.isSquareFree()))
+    polC = Polynomial([Polynomial([0,1]).asRational(),ratA],field=1)
+    polD = polC*polA
+    print("{} is squarefree: {}, should be false".format(polD,polD.isSquareFree()))
+    polDd = polD.differentiateWRTtoPolyVar()
+    (s,r) = PolyDiv(polD,polDd)
+    #print(r)
+    #(s,r) = PolyDiv(polDd,r)
+    #print(r)
+    print("{}={}".format(polD,printFactorization(polD.factorSquareFree())))
+    print("[{}]/[{}]={}".format(polD,polC,polD/polC))
+    
+    print("---------- ExtendedEuclid Test") #################################################################################
     polA = parseField0PolyFromStr("x**3+x**2+(-1)*x+2")
     polB = parseField0PolyFromStr("x**2+1")
     (x,y) = extendedEuclid(polA,polB)
+    print(polA,polB,PolyGCD(polA,polB))
     print(str(x),str(y))
-    
-    print("---------- Factor square free test")
+    f = parseField0PolyFromStr("x**2+(-1)")
+    (x,y) = extendedEuclidGenF(polA, polB, f)
+    print(x,y)
+    #polA = parseField0PolyFromStr("", var)
+    print("---------- Factor square free test") #################################################################################
     polA = parseField0PolyFromStr("x**3+4*x**2+5*x+2")
     fact = polA.factorSquareFree()
     print("{} = {}".format(str(polA),printFactorization(fact)))
@@ -417,5 +594,42 @@ if __name__ == '__main__': #tests
     polA = Polynomial([ratA*(-1),ratB,ratC,ratD],field=1)
     print(polA)
     fact = polA.factorSquareFree()
+    
+    assert polA.isSquareFree()==False
     print("{} = {}".format(str(polA),printFactorization(fact)))
+    
+    polA = parseField0PolyFromStr("x**4+3*x**3+3*x**2+x")
+    print("{} = {}".format(str(polA),printFactorization(polA.factorSquareFree())))
+    
+    
+    print("---------- partial fraction test") #################################################################################
+    
+    polA = parseField0PolyFromStr("x**5+x**2+1")
+    polB = parseField0PolyFromStr("x**2+1")
+    pfrac = PartialFractionPower(polA, polB, 4)
+    print("[{}]/[{}]^{} = {}".format(polA,polB,4,printPartialFraction(pfrac)))
+    
+    polA = parseField0PolyFromStr("x**2+1")
+    polB = parseField0PolyFromStr("x**4+3*x**3+3*x**2+x")
+    factorization = polB.factorSquareFree()
+    pfrac = PartialFractionWithPowerFactorization(polA, factorization)
+    print("[{}]/[{}] = {}".format(polA,polB,printPartialFraction(pfrac)))
+    # a = parseField0PolyFromStr("x")
+    # b = parseField0PolyFromStr("x**3+3*x**2+3*x+1")
+    # c = parseField0PolyFromStr("x**2+1")
+    # (x,y) = extendedEuclidGenF(a, b, c)
+    # print(x,y)  
+    
+    one = parseField0RatFromStr("1/1")
+    x = parseField0RatFromStr("x/1")
+    polA = Polynomial([(-1)*x,one],field=1) # T-x
+    polB = Polynomial([x,one],field=1) # T+x
+    
+    num = Polynomial([one,one],field=1)#1+T
+    denom = polA*(polB**2)
+    
+    factorization = denom.factorSquareFree()
+    print("{} = {}".format(denom,printFactorization(factorization)))
+    pfrac = PartialFractionWithPowerFactorization(num, factorization)
+    print("[{}]/[{}] = {}".format(num,denom,printPartialFraction(pfrac)))
         

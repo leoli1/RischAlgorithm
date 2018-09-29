@@ -8,6 +8,7 @@ from __future__ import division
 import FieldExtension as FE
 import Polynomial as Pol
 from Utils import isNumber
+from test.test_binop import isnum
 
 class RationalFunction(object):
     '''
@@ -33,9 +34,36 @@ class RationalFunction(object):
             if self.denominator.field!=self.field:
                 raise Exception()
         if self.denominator!=1 and self.numerator!=1 and self.numerator!=0:
-            if isNumber(self.numerator) or not self.numerator.isZero():
+            if (isNumber(self.numerator) or not self.numerator.isZero()) and not ( isNumber(self.numerator) or isNumber(self.denominator)):
                 self.removeCommonFactors()
         
+        
+        
+        # TODO: clean up if's
+        if (isNumber(numerator) or numerator.isConstant()) and (isNumber(denominator) or denominator.isConstant()):
+            if isNumber(numerator) and isNumber(denominator):
+                self.numerator = numerator/denominator
+                print(self.numerator)
+                self.denominator = 1
+            elif isNumber(numerator) and denominator.isConstant():
+                #print(str(numerator),str(denominator),"a")
+                self.numerator = Pol.Polynomial([numerator/denominator.getConstant()],field=field)#(denominator/numerator).asRational().Inverse().numerator()
+                self.denominator = 1
+            elif isNumber(denominator) and numerator.isConstant():
+                self.numerator = Pol.Polynomial([numerator.getConstant()/denominator],field=field)
+                self.denominator = 1
+            elif numerator.isConstant() and denominator.isConstant():
+                self.numerator = Pol.Polynomial([numerator.getConstant()/denominator.getConstant()],field=field)
+                self.denominator = 1
+            
+        if isNumber(self.denominator):
+            self.numerator = self.numerator/self.denominator
+            self.denominator = 1
+        elif self.denominator.isConstant():
+            self.numerator = self.numerator/self.denominator.getConstant()
+            self.denominator = 1
+            
+        self.MakeDenominatorMonic()
     def removeCommonFactors(self):
         '''
         cancels common factors, so that: numerator/denominator = p/q with gcd(p,q)=1
@@ -52,38 +80,58 @@ class RationalFunction(object):
     def differentiate(self):
         p = self.numerator
         q = self.denominator
-        dp = p.differentiate()
-        dq = q.differentiate()
+        if isNumber(p):
+            dp = 0
+        else:
+            dp = p.differentiate()
+        if isNumber(q):
+            dq = 0
+        else:
+            dq = q.differentiate()
         return RationalFunction(dp*q-p*dq,q*q,field=self.field) # (p/q)'=(p'q-pq')/(q^2)
     
     def PartialFraction(self, denomFactorization):
         
-        raise NotImplementedError
-    """def PartialFraction(self):
-        if self.denominator.isSquareFree():
-            if self.denominator.degree>2:
-                raise NotImplementedError()
-            else:
-                raise NotImplementedError()
-              #  c = 
-        else:
-            raise NotImplementedError()"""
+        self.MakeDenominatorMonic()
+        return Pol.PartialFractionWithPowerFactorization(self.numerator, denomFactorization)
     
     def Inverse(self):# f->1/f
         return RationalFunction(self.denominator,self.numerator,field=self.field)
     
     def MakeDenominatorMonic(self):
+        if isNumber(self.denominator):
+            return
         lcoeff = self.denominator.getLeadingCoefficient()
         lcoeff_poly = Pol.Polynomial(coefficients=[lcoeff],field=self.field)
-        self.numerator = self.numerator/lcoeff_poly
+        if isNumber(self.numerator):
+            self.numerator = Pol.Polynomial([self.numerator],field=self.field)/lcoeff_poly
+        else:
+            self.numerator = self.numerator/lcoeff_poly
         self.denominator = self.denominator/lcoeff_poly
+        
     def isConstant(self):
         if isNumber(self.numerator):
             return isNumber(self.denominator) or self.denominator.isConstant()
         if self.numerator.isConstant():
             return isNumber(self.denominator) or self.denominator.isConstant()
+        
+    def getConstant(self):
+        if not self.isConstant():
+            return None
+        if isNumber(self.numerator):
+            if isNumber(self.denominator):
+                return self.numerator/self.denominator
+            else:
+                return self.numerator/self.denominator.getConstant()
+        else:
+            if isNumber(self.denominator):
+                return self.numerator.getConstant()/self.denominator
+            else:
+                return self.numerator.getConstant()/self.denominator.getConstant()
+            
     def __radd__(self, other):
         return self.__add__(other)
+    
     def __add__(self, other): # a/b+c/d = (ad+cb)/(bd)
         if other==0:
             return self
@@ -92,8 +140,10 @@ class RationalFunction(object):
         num = self.numerator*other.denominator+self.denominator*other.numerator
         den = self.denominator*other.denominator
         return RationalFunction(num,den,field=self.field)
+    
     def __rmul__(self, other):
         return self.__mul__(other)
+    
     def __mul__(self, other):
         if other == 1:
             return self
@@ -105,12 +155,14 @@ class RationalFunction(object):
         num = self.numerator * other.numerator
         denom = self.denominator*other.denominator
         return RationalFunction(num,denom,field=self.field)
+    
     def __truediv__(self, other):
         if other==1:
             return self
         if type(other) == Pol.Polynomial or _isPoly(other):#_isPoly(other):
             return self.__mul__(RationalFunction(1,other,field=self.field))
         return self.__mul__(other.Inverse())
+    
     def __str__(self):
         if self.numerator!=1 and not self.numerator.isConstant():
             out = "["+str(self.numerator)+"]"
@@ -122,6 +174,10 @@ class RationalFunction(object):
         if d=="(1)" or self.denominator==1:
             return out
         return out+"/["+d+"]"
+    
+    def __repr__(self):
+        return self.__str__()
+    
     def strCustomVar(self, variable):
         out = "["+str(self.numerator.strCustomVar(variable))+"]"
         if self.numerator==0:
@@ -130,6 +186,7 @@ class RationalFunction(object):
         if d=="(1)":
             return out
         return out+"/["+d+"]"
+    
     def printFull(self):
         numStr = str(self.numerator) if isNumber(self.numerator) else self.numerator.printFull()
         denomStr = str(self.denominator) if isNumber(self.denominator) else self.denominator.printFull()
@@ -141,6 +198,8 @@ def _isPoly(x):
         return True
     except:
         return False
+    
+    
 if __name__=='__main__':
     polA = Pol.Polynomial(coefficients=[1,2,1])
     polB = Pol.Polynomial(coefficients=[2,1])
@@ -162,3 +221,8 @@ if __name__=='__main__':
     
     print("[{}]'={}".format(ratA,ratA.differentiate()))
     polE = Pol.Polynomial(coefficients=[])
+    
+    polA = Pol.Polynomial([4])
+    polB = Pol.Polynomial([3])
+    ratA = RationalFunction(polA,polB)
+    print(ratA)

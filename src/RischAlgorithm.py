@@ -11,6 +11,10 @@ import FieldExtension as FE
 import Integral as Int
 import RootSum as RS
 from math import sqrt as msqrt
+from Utils import isNumber
+from RationalFunction import _isPoly
+
+logExtensionsInIntegral = []
 
 def Integrate(func, fieldTower):
     (quot, rem) = Pol.PolyDiv(func.numerator, func.denominator)
@@ -29,23 +33,35 @@ def Integrate(func, fieldTower):
     if out1==None or out2==None: return None
     return out1+out2
 
+def IntegratePolynomialPart(poly):
+    if poly.field!=0:
+        raise Exception()
+    intPoly = Pol.Polynomial()
+    for i in range(poly.degree+1):
+        coeff = poly.getCoefficient(i)/(i+1)
+        intPoly.setCoefficient(coeff, i+1)
+    return Int.Integral(str(intPoly))
+
 def IntegrateRationalFunction(func): # field=0, func element C(x)
+    if _isPoly(func):
+        return IntegratePolynomialPart(func)
     if func.numerator.degree>=func.denominator.degree:
-        raise NotImplementedError()
+        (poly,rat) = Pol.PolyDiv(func.numerator,func.denominator)
+        return IntegratePolynomialPart(poly)+IntegrateRationalFunction(rat/func.denominator)
     if func.denominator.isSquareFree():
         #partial fraction
         if func.denominator.degree>2:
-            
             poly = func.denominator
             coeff_rat = func.numerator/func.denominator.differentiate()
             coeff_str = coeff_rat.strCustomVar("y")
+            #logExtensions = []
+            #for i in range(func.denominator.degree):
             rootSum = RS.RootSum(poly,"{}{}".format(coeff_str, logExpression("x-y")),exprVar="y")
             return Int.Integral(str(rootSum))
         elif func.denominator.degree==1:
             arg = func.denominator
             coeff = func.numerator/func.denominator.getLeadingCoefficient()
             return Int.Integral("{}*{}".format(str(coeff), logExpression(arg)))
-            #return LF.LogFunction(func.denominator)*(func.numerator/func.denominator.getLeadingCoefficient())
         elif func.denominator.degree==2:
             f = func.numerator
             g = func.denominator
@@ -65,9 +81,33 @@ def IntegrateRationalFunction(func): # field=0, func element C(x)
             a = Rat.RationalFunction(one,denomA)
             b = Rat.RationalFunction(one,denomB)
             return IntegrateRationalFunction(a*A)+IntegrateRationalFunction(b*B)
-            #return (LF.LogFunction(denomA)*A)+(LF.LogFunction(denomB)*B)
     else:
-        raise NotImplementedError
+        return HermiteReduction(func)#raise NotImplementedError
+    
+def HermiteReduction(rational):
+    sqrFreeFactorization = rational.denominator.factorSquareFree()
+    partialFractions = rational.PartialFraction(sqrFreeFactorization)
+    integral = Int.Integral("")
+    for frac in partialFractions:
+        j = frac[2]
+        q_i = frac[1]
+        r_ij = frac[0]
+        if j>1:
+            (s,t) = Pol.extendedEuclidGenF(q_i, q_i.differentiate(), r_ij) # s*q_i+t*q_i'=r_ij
+            tPrime = 0 if isNumber(t) else t.differentiate()
+            p1 = Int.Integral(str((-1)*t/(j-1)/(q_i**(j-1))))
+            #print(t,q_i)
+            num = s+tPrime/(j-1)
+            if not num.isZero():
+                r = num/(q_i**(j-1))
+                p2 = IntegrateRationalFunction(r)
+                integral += p1+p2
+            else:
+                integral+= p1
+        else:
+            integral += IntegrateRationalFunction(r_ij/q_i)
+    return integral
+    
 def IntegratePolynomialPartLogExt(func, fieldTower):
     raise NotImplementedError
 def IntegrateRationalPartLogExt(func, fieldTower):
@@ -103,3 +143,9 @@ if __name__ == '__main__':
     ratB = Rat.RationalFunction(polD,polE)
     print(ratB)
     print(Integrate(ratB,FE.FieldTower()))
+    print("----")
+    polA = parseField0PolyFromStr("2*x**4+x**2+x+(-1)")
+    polB = parseField0PolyFromStr("(-1)+x")*(parseField0PolyFromStr("x+1")**3)#*parseField0PolyFromStr("x**2+x-1")**3
+    ratA = Rat.RationalFunction(polA,polB)
+    print(ratA)
+    print(Integrate(ratA, FE.FieldTower()))
