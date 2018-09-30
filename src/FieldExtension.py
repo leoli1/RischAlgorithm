@@ -9,6 +9,7 @@ Created on 22.09.2018
 TRANS_LOG = 0
 TRANS_EXP = 1
 ALGEBRAIC = 2
+TRANSCENDENTAL_SYMBOL = 3
 
 BASE_FIELD = 0 # C
 ##BASEFUNCTION_FIELD = 1 # field of rational functions in x: C(x)
@@ -20,6 +21,7 @@ EXTENSION_VARIABLE = "T"
 #fieldExtension = None
 
 fieldTower = None
+
 
 """def updateVariables():
     if fieldTower==None:
@@ -46,16 +48,28 @@ class FieldExtension(object):
         self.characteristicFunction = characteristicFunction # = u
         self.variable = variable
         
+    def getFVar(self):
+        return "exp" if self.extensionType==TRANS_EXP else ("log" if self.extensionType==TRANS_LOG else "")
     def __str__(self):
-        var = "exp" if self.extensionType==TRANS_EXP else "log"
+        var = self.getFVar()
         #out = "C(x,T), T={}({})".format(var,str(self.characteristicFunction)) 
         out = "K({}), {}={}({})".format(self.variable,self.variable,var,str(self.characteristicFunction)) 
         return out
     def strFunc(self):
         var = "exp" if self.extensionType==TRANS_EXP else "log"
-        return "{}({})".format(var,str(self.characteristicFunction))
+        return "{}({})".format(var,self.characteristicFunction.printFull())
+        #return "{}({})".format(var,str(self.characteristicFunction))
+    
 class FieldTower(object):
+    """
+    TODO
+    """
     def __init__(self, fieldExtension=None,fieldExtensions=None):
+        """
+        FieldTower() = C(x)
+        FieldTower(fieldExtension) = C(x,fieldExtension.variable)
+        etc...
+        """
         if fieldExtensions!=None:
             self.fieldExtensions = fieldExtensions
         elif fieldExtension!=None:
@@ -81,16 +95,45 @@ class FieldTower(object):
     def addFieldExtension(self, fieldExtension):
         self.fieldExtensions.append(fieldExtension)
         #updateVariables()
-        
+    def copy(self):
+        return self.getStrippedTower(self.towerHeight)
+    def isExtendedTowerOf(self, other):
+        if other.towerHeight>=self.towerHeight:
+            return False
+        for i in range(other.towerHeight):
+            if self.getFieldExtension(i) != other.getFieldExtension(i):
+                return False
+        return True
+    def __eq__(self, other):
+        if type(other)!=FieldTower:
+            return False
+        if self.towerHeight != other.towerHeight:
+            return False
+        for i in range(self.towerHeight):
+            if self.getFieldExtension(i)!=other.getFieldExtension(i):
+                return False
+            
+        return True
+    def __ne__(self, other):
+        return not (self==other)
     def __str__(self):
         out = "C(x,"
         for i in range(self.towerHeight):
             out += self.getFieldExtension(i).variable+","
         out = out.strip(",")
-        out += ") where "
+        out += ")"
+        if self.towerHeight==0:
+            return out
+        out += " where "
         for i in range(self.towerHeight):
             ext = self.getFieldExtension(i)
-            var = "exp" if ext.extensionType==TRANS_EXP else "log"
-            out += "{} = {}({}); ".format(self.getFieldExtension(i).variable,var,str(ext.characteristicFunction))
+            var = ext.getFVar()
+            if i==0:
+                out += "{} = {}({}); ".format(ext.variable,var,str(ext.characteristicFunction))
+            else:
+                out += "{} = {}({}) = {}({}); ".format(ext.variable,var,str(ext.characteristicFunction),var,ext.characteristicFunction.printFull())
         out = out.strip("; ")
         return out
+    def __repr__(self):
+        return str(self)
+    
