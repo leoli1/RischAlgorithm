@@ -300,7 +300,11 @@ class Polynomial(object):
         if type(other) == Rat.RationalFunction:
             return other.__mul__(self)
         if (self.fieldTower!=other.fieldTower):
-            raise Exception("Polynomials have to have coefficients in the same field in order to multiply them")
+            if self.fieldTower.isExtendedTowerOf(other.fieldTower):
+                return self.__mul__(Polynomial([other],fieldTower=self.getFieldTower()))
+            else:
+                return other.__mul__(self)
+            #raise Exception("Polynomials have to have coefficients in the same field in order to multiply them")
         
         tDeg = self.degree+other.degree
         tPoly = Polynomial(fieldTower=self.getFieldTower())
@@ -322,7 +326,7 @@ class Polynomial(object):
         if rem==0:
             return quot
         
-        return Rat.RationalFunction(self,other,field=self.field,fieldTower=self.getFieldTower())#Rat.RationalFunction(rem,other, field=self.field)+quot
+        return Rat.RationalFunction(self,other,fieldTower=self.getFieldTower())#Rat.RationalFunction(rem,other, field=self.field)+quot
         
     def __pow__(self, other):
         if not isNumber(other) or int(other)!=other or other<0:
@@ -352,9 +356,11 @@ class Polynomial(object):
                     coeff = str(coeff_v)
                 elif not isNumber(coeff_v) and coeff_v.isConstant() and coeff_v.getConstant()>0:
                     if coeff_v.getConstant()!=1 or i==0:
-                        coeff = str(coeff_v)
+                        coeff = str(coeff_v.getConstant())
+                elif isNumber(coeff_v):
+                    coeff = "({})".format(str(coeff_v))
                 else:
-                    coeff = "({})".format(str(self.getCoefficient(i)))
+                    coeff = "({})".format(str(coeff_v))
                 
             var = ""
             if i>1:
@@ -383,9 +389,11 @@ class Polynomial(object):
                     coeff = str(coeff_v)
                 elif not isNumber(coeff_v) and coeff_v.isConstant() and coeff_v.getConstant()>0:
                     if coeff_v.getConstant()!=1 or i==0:
-                        coeff = str(coeff_v)
+                        coeff = str(coeff_v.getConstant())
+                elif isNumber(coeff_v):
+                    coeff = "({})".format(str(coeff_v))
                 else:
-                    coeff = "({})".format(self.getCoefficient(i).printFull())
+                    coeff = "({})".format(coeff_v.printFull())
 
             power = ""
             if i>1:
@@ -792,6 +800,8 @@ def polyEqual(A,B):
         return A==B
     return (A+(-1)*B).isZero()
 def PolyDiv(polA, polB):
+    if polB==1:
+        return (polA,0)
     if (polA.fieldTower!=polB.fieldTower):
         raise Exception("Polynomials have to have coefficients in the same field in order to apply PolyDiv")
     if polA.deg0() and polB.deg0():

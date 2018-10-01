@@ -15,4 +15,6 @@ class RootSum(object):
     def __str__(self):
         
         return "RootSum(w | {}=0, {})".format(self.poly.strCustomVar("w"),self.expr.replace(self.exprVar,"w"))
-        
+    def printFull(self):
+        #TODO
+        return str(self)

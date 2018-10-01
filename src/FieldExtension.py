@@ -91,6 +91,8 @@ class FieldTower(object):
         return self.getFieldExtension(self.towerHeight-1)
     def getStrippedTower(self, index):
         return FieldTower(fieldExtensions=self.fieldExtensions[0:index])
+    def prevTower(self):
+        return self.getStrippedTower(self.towerHeight-1)
     
     def addFieldExtension(self, fieldExtension):
         self.fieldExtensions.append(fieldExtension)

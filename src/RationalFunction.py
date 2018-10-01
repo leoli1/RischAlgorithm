@@ -46,6 +46,10 @@ class RationalFunction(object):
             self.numerator = self.numerator/self.denominator.getConstant()
             self.denominator = 1
             
+        if isNumber(self.denominator):
+            self.denominator = Pol.Polynomial([self.denominator],fieldTower=self.getFieldTower())
+        if isNumber(self.numerator):
+            self.numerator = Pol.Polynomial([self.numerator],fieldTower=self.getFieldTower())
         self.makeDenominatorMonic()
         
     # ========================================== Field Tower/Extension =========================================
@@ -194,11 +198,29 @@ class RationalFunction(object):
         return out+"/["+d+"]"
     
     def printFull(self):
-        numStr = str(self.numerator) if isNumber(self.numerator) else self.numerator.printFull()
-        denomStr = str(self.denominator) if isNumber(self.denominator) else self.denominator.printFull()
+        out = ""
+        if not isNumber(self.numerator) and not self.numerator.isConstant() and self.denominator!=1:
+            out = "["+self.numerator.printFull()+"]"
+        elif isNumber(self.numerator):
+            out = str(self.numerator)
+        elif self.denominator==1:
+            out = self.numerator.printFull()
+        else:# => self.numerator.isConstant() = True
+            out = self.numerator.printFull()#str(self.numerator.getLeadingCoefficient())
+        if self.numerator==0:
+            return "0"
+        d = self.denominator.printFull()
         if self.denominator==1:
-            return "[{}]".format(numStr)
-        return "[{}]/[{}]".format(numStr,denomStr)
+            return out
+        if len(d)==1:
+            return out + "/"+d
+        return out+"/["+d+"]"
+    
+        #numStr = str(self.numerator) if isNumber(self.numerator) else self.numerator.printFull()
+        #denomStr = str(self.denominator) if isNumber(self.denominator) else self.denominator.printFull()
+        #if self.denominator==1:
+        #    return "[{}]".format(numStr)
+        #return "[{}]/[{}]".format(numStr,denomStr)
 
 
 '''class RationalFunction(object):
