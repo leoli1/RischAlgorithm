@@ -13,6 +13,8 @@ from math import sqrt as msqrt
 from Utils import isNumber,isPoly
 
 from Matrix import Resultant
+from cgi import log
+from sympy.integrals.integrals import integrate
 
 
 logExtensionsInIntegral = []
@@ -218,9 +220,10 @@ def IntegratePolynomialPartLogExtCheckIntegralConditions(integral,fieldTower):
     if len(logs)>1:
         raise Int.IntegralNotElementaryException()
     if len(logs)!=0:
-        if logs[1].argFunction == fieldTower.getLastExtension().characteristicFunction:
+        if logs[1].argFunction != fieldTower.getLastExtension().characteristicFunction:
             print(logs[1].argFunction, fieldTower.getLastExtension().characteristicFunction)
             raise Int.IntegralNotElementaryException
+        
 def IntegrateRationalPartLogExt(func, fieldTower): # Hermite Recuction
     if func.numerator==0 or func.numerator.isZero():
         return Int.Integral()
@@ -235,7 +238,7 @@ def IntegrateRationalPartLogExt(func, fieldTower): # Hermite Recuction
         if j>1: 
             (s,t) = Pol.extendedEuclidGenF(q_i, q_i.differentiate(), r_ij)
             tPrime = 0 if isNumber(t) else t.differentiate()
-            p1 = Int.Integral(str((-1)*t/(j-1)/(q_i**(j-1))))
+            p1 = Int.Integral(poly_rationals=[(-1)*t/(j-1)/(q_i**(j-1))])
             num = s+tPrime/(j-1)
             if not num.isZero():
                 r = num/(q_i**(j-1))
@@ -370,6 +373,8 @@ if __name__ == '__main__':
     
     fieldExtension2 = FE.FieldExtension(FE.TRANS_LOG,Pol.Polynomial([0,1],fieldTower=FE.FieldTower(fieldExtension1)),"T_2") # field extension with log(log(x))
     FE.fieldTower = FE.FieldTower(fieldExtensions=[fieldExtension1,fieldExtension2])
+    
+    
     numerator = Pol.Polynomial([1],fieldTower=FE.fieldTower)
     polX = Pol.Polynomial([parseField0PolyFromStr("x")],fieldTower=FE.fieldTower.getStrippedTower(1))
     denom = Pol.Polynomial([0,polX*Pol.Polynomial([0,1],fieldTower=FE.fieldTower.getStrippedTower(1))],fieldTower=FE.fieldTower)
@@ -378,13 +383,33 @@ if __name__ == '__main__':
     
     
     pol = Pol.Polynomial([0,1],fieldTower=FE.fieldTower) # log(log(x)
-   # print(pol.printFull())
+    # print(pol.printFull())
     print(integratetest("Integral not elementary", printIntegral(pol, FE.fieldTower)))
-  #  print(Integrate(pol, FE.fieldTower))
+    #  print(Integrate(pol, FE.fieldTower))
     ratX = Rat.RationalFunction(1,Pol.Polynomial([0,1]))
     pol = Pol.Polynomial([0,ratX],fieldTower=FE.fieldTower) # (1/x) log(log(x))
-    print(pol)
-    print(Integrate(pol,FE.fieldTower))
+    print(integratetest("log(x)*log(log(x))+(-1)*log(x)",printIntegral(pol, FE.fieldTower)))
+    
+    X = Pol.Polynomial([0,1],fieldTower=FE.FieldTower())
+    X2 = X*X
+    log = Pol.Polynomial([0,1],fieldTower=FE.fieldTower.getStrippedTower(1))
+    log2 = log*log
+    log3 = log2*log
+    loglogCoeff = 2*X2*log3+X2*log2+(-1)
+    num = Pol.Polynomial([log2,loglogCoeff],fieldTower=FE.fieldTower)
+    denom = Pol.Polynomial([0,X*log2],fieldTower=FE.fieldTower)
+    rat = Rat.RationalFunction(num,denom,fieldTower=FE.fieldTower)
+    print(integratetest("Integral is not elementary", printIntegral(rat, FE.fieldTower)))
+    
+    loglogCoeff = 2*X2*log3+X2*log2+(-1)
+    num = Pol.Polynomial([log,loglogCoeff],fieldTower=FE.fieldTower) # (2x^2*log(x)^3+x^2*log(x)^2-1) *log(log(x)) + log(x)
+    denom = Pol.Polynomial([0,X*log2],fieldTower=FE.fieldTower) # x*log(x)^2*log(log(x))
+    rat = Rat.RationalFunction(num,denom,fieldTower=FE.fieldTower) 
+    #print(rat)
+    print(integratetest("(x**2)log(x)+[(-1.0)log(x)+1.0]/[log(x)]+log(log(log(x)))",printIntegral(rat,FE.fieldTower)))
+    # print(printIntegral(rat,FE.fieldTower))
+    
+    
     
     fieldExtension1 = FE.FieldExtension(FE.TRANS_LOG,Pol.Polynomial([0,0,1]),"T") # field extension with log(x^2)
     FE.fieldTower = FE.FieldTower(fieldExtensions=[fieldExtension1])

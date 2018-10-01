@@ -166,7 +166,14 @@ class RationalFunction(object):
             return self.__mul__(other.asRational())
         num = self.numerator*other.numerator
         den = self.denominator*other.denominator
-        return RationalFunction(num,den,fieldTower=self.getFieldTower())    
+        return RationalFunction(num,den,fieldTower=self.getFieldTower())
+    
+    def __eq__(self, other):
+        if other==None:
+            return False
+        return (self+(-1)*other).isZero()
+    def __ne__(self, other):
+        return not self.__eq__(other)
     # ========================================== String output =========================================
     def __str__(self):
         out = ""

@@ -22,14 +22,14 @@ EXTENSION_VARIABLE = "T"
 
 fieldTower = None
 
+def hasFieldExtension(type,u,tower):
+    for i in range(tower.towerHeight):
+        ext = tower.getFieldExtension(i)
+        if type==ext.extensionType and u==ext.characteristicFunction:
+            return tower.getStrippedTower(i+1)
+    return None
 
-"""def updateVariables():
-    if fieldTower==None:
-        return
-    if fieldTower.towerHeight>=len(VARIABLES):
-        for i in range(len(VARIABLES),fieldTower.towerHeight+1):
-            VARIABLES.append("T_{{{}}}".format(i))
-            """
+
 class FieldExtension(object):
     '''
     classdocs

@@ -4,6 +4,8 @@ Created on 28.09.2018
 @author: Leonard
 '''
 from Utils import isNumber,objEqualsNumber
+import FieldExtension as FE
+import Polynomial as Pol
 
 class Integral(object):
 
@@ -32,8 +34,16 @@ class Integral(object):
         func = 0
         for p in self.poly_rational_partExpressions:
             func += p
-        if self.logExpressions!=[]:
-            raise NotImplementedError()
+        #if self.logExpressions!=[]:
+        #    raise NotImplementedError()
+        for log in self.logExpressions:
+            tower = FE.hasFieldExtension(FE.TRANS_LOG, log.argFunction, FE.fieldTower)
+            if tower==None:
+                raise NotImplementedError("")
+            else:
+                logExpr = Pol.Polynomial([0,log.factor], tower)
+                func += logExpr
+        
         if self.rootSums!=[]:
             raise NotImplementedError()
         

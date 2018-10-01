@@ -17,7 +17,7 @@ def isPoly(x):
     try:
         x.degree
         return True
-    except:
+    except AttributeError:
         return False
     
 def objEqualsNumber(obj, num):

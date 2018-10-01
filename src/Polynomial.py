@@ -270,11 +270,11 @@ class Polynomial(object):
             return tPoly
             #raise Exception(str(other))
         if (self.fieldTower!=other.fieldTower):
-            #if self.field<other.field:
-            #    return other+self.increaseField(other.field)
-            #else:
-            #    return self+other.increaseField(self.field)
-            raise Exception("Polynomials have to have coefficients in the same field in order to add them")
+            if self.fieldTower.isExtendedTowerOf(other.fieldTower):
+                return self.__add__(Polynomial([other],fieldTower=self.getFieldTower()))
+            else:
+                return other.__add__(self)
+            #raise Exception("Polynomials have to have coefficients in the same field in order to multiply them")
         
         tDeg = max(self.degree,other.degree)
         tPoly = Polynomial(fieldTower=self.fieldTower)
@@ -335,6 +335,13 @@ class Polynomial(object):
             return 1
         return (self**(other-1))*self
     
+    def __eq__(self, other):
+        if other==None:
+            return False
+        return polyEqual(self, other)
+    def __ne__(self, other):
+        return not self.__eq__(other)
+    
     # ========================================== String output =========================================
     def getVariable(self):
         return "x" if self.getFieldTower().towerHeight==0 else self.getFieldExtension().variable
@@ -360,7 +367,11 @@ class Polynomial(object):
                 elif isNumber(coeff_v):
                     coeff = "({})".format(str(coeff_v))
                 else:
-                    coeff = "({})".format(str(coeff_v))
+                    c = str(coeff_v)
+                    if coeff_v.isConstant() and c.startswith("(") and c.endswith(")"):
+                        coeff = "{}".format(c)
+                    else:
+                        coeff = "({})".format(c)
                 
             var = ""
             if i>1:
@@ -393,7 +404,11 @@ class Polynomial(object):
                 elif isNumber(coeff_v):
                     coeff = "({})".format(str(coeff_v))
                 else:
-                    coeff = "({})".format(coeff_v.printFull())
+                    c = coeff_v.printFull()
+                    if coeff_v.isConstant() and c.startswith("(") and c.endswith(")"):
+                        coeff = "{}".format(c)
+                    else:
+                        coeff = "({})".format(c)
 
             power = ""
             if i>1:
