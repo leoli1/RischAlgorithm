@@ -92,23 +92,6 @@ class LogFunction(object):
         '''
         self.argFunction = argFunction
         self.factor = factor
-    #    self.summand = 0
-    #def differentiate(self):
-    #    return self.argFunction.differentiate()/self.argFunction
-    #def __radd__(self, other):
-    #    return self.__add__(other)
-    #def __add__(self,other):
-    #    if other==0:
-    #        return self
-    #    self.summand += other
-    #    return self
-    #def __rmul__(self, other):
-    #    return self.__mul(other)
-    #def __mul__(self, other):
-    #    if other==1:
-    #        return self
-    #    self.factor *= other
-    #    return self
     def __str__(self):
         factor = ""
         if objEqualsNumber(self.factor, 0):
