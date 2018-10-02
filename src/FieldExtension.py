@@ -32,7 +32,7 @@ def hasFieldExtension(type,u,tower):
 
 class FieldExtension(object):
     '''
-    stores the data of a differential field extension
+    classdocs
     '''
 
     def __init__(self, extensionType, characteristicFunction, variable):
@@ -52,6 +52,7 @@ class FieldExtension(object):
         return "exp" if self.extensionType==TRANS_EXP else ("log" if self.extensionType==TRANS_LOG else "")
     def __str__(self):
         var = self.getFVar()
+        #out = "C(x,T), T={}({})".format(var,str(self.characteristicFunction)) 
         out = "K({}), {}={}({})".format(self.variable,self.variable,var,str(self.characteristicFunction)) 
         return out
     def strFunc(self):
@@ -61,7 +62,7 @@ class FieldExtension(object):
     
 class FieldTower(object):
     """
-    Tower of field extensions
+    TODO
     """
     def __init__(self, fieldExtension=None,fieldExtensions=None):
         """
@@ -88,7 +89,6 @@ class FieldTower(object):
         if self.towerHeight==0:
             return None
         return self.getFieldExtension(self.towerHeight-1)
-    
     def getStrippedTower(self, index):
         return FieldTower(fieldExtensions=self.fieldExtensions[0:index])
     def prevTower(self):
@@ -96,21 +96,16 @@ class FieldTower(object):
     
     def addFieldExtension(self, fieldExtension):
         self.fieldExtensions.append(fieldExtension)
-
+        #updateVariables()
     def copy(self):
         return self.getStrippedTower(self.towerHeight)
-    
     def isExtendedTowerOf(self, other):
-        """
-        tests if other.fieldExtensions is a subset of self.fieldExtensions
-        """
         if other.towerHeight>=self.towerHeight:
             return False
         for i in range(other.towerHeight):
             if self.getFieldExtension(i) != other.getFieldExtension(i):
                 return False
         return True
-    
     def __eq__(self, other):
         if type(other)!=FieldTower:
             return False
