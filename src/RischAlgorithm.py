@@ -13,8 +13,6 @@ from math import sqrt as msqrt
 from Utils import isNumber,isPoly
 
 from Matrix import Resultant
-from cgi import log
-from sympy.integrals.integrals import integrate
 
 
 logExtensionsInIntegral = []
