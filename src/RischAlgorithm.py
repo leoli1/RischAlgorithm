@@ -200,7 +200,7 @@ def IntegratePolynomialPartLogExt(poly, fieldTower):
     if b1==0:
         q_0 = P0.asFunction()
     else:
-        q_0 = P0+Int.Integral(logs=[Int.LogFunction(u,(-1)*b1)]).asFunction()
+        q_0 = (P0+Int.Integral(logs=[Int.LogFunction(u,(-1)*b1)])).asFunction()
     q[0] = q_0
     
     integralPoly = Pol.Polynomial(fieldTower=fieldTower)

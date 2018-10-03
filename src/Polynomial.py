@@ -972,7 +972,12 @@ def PolyDiv(polA, polB):
     if isNumber(polB) or isNumber(polA):
         raise Exception()
     if polA.fieldTower!=polB.fieldTower:
-        raise Exception()
+        if polA.fieldTower.isExtendedTowerOf(polB.fieldTower):
+            return PolyDiv(polA,Polynomial([polB],fieldTower=polA.fieldTower))
+        elif polB.fieldTower.isExtendedTowerOf(polA.fieldTower):
+            return PolyDiv(Polynomial([polA],fieldTower=polB.fieldTower), polB)
+        else:
+            raise Exception()
     '''if polB==1:
         return (polA,0)
     if (polA.fieldTower!=polB.fieldTower):

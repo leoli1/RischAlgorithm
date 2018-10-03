@@ -45,7 +45,7 @@ def parseExpressionFromStr(expr_str,fieldTower):
         var = variable[0]
         tower = variable[1]
         poly = Pol.Polynomial([0,1],fieldTower=tower)
-        exec var + "=poly"
+        exec (var + "=poly")
     x = Pol.Polynomial([0,1])
     i = complex(0,1)
     try:

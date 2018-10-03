@@ -11,17 +11,27 @@ from RischAlgorithm import *
 
 from Parse import parseField0PolyFromStr,parseExpressionFromStr
 
+PYTHON3 = False
+
+import sys
+if sys.version_info[0]>=3:
+    PYTHON3 = True
+    
+if PYTHON3:
+    raw_input = input
+
 def getInput(msg, outputs):
     e = True
     o=""
     while e:
         o = raw_input(msg).lower()
+            
         if o in outputs:
             e = False
     return o
     
 def fieldTowerInput():
-    height = input("Number of field extensions? ")
+    height = int(input("Number of field extensions? "))
         
     fieldTower = FE.FieldTower()
     for i in range(height):
@@ -37,7 +47,9 @@ def fieldTowerInput():
         f_e_type = FE.TRANS_LOG if f_e_type2=="l" else FE.TRANS_EXP
         bfunc = "exp" if f_e_type == FE.TRANS_EXP else "log"
         print("Field extension: {}(u)".format(bfunc))
-        argFunc_str = raw_input("u = ")
+        argFunc_str = None
+        while argFunc_str==None:
+            argFunc_str = raw_input("u = ")
         argFunc = parseExpressionFromStr(argFunc_str, fieldTower)
         fe = FE.FieldExtension(f_e_type,argFunc,"T_{}".format(i+1))
         fieldTower.addFieldExtension(fe)
