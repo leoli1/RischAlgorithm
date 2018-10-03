@@ -22,12 +22,25 @@ class Integral(object):
                 newPRs.append(pr)
         self.poly_rational_partExpressions = newPRs
         
-    def getLogExpressionsInFieldTower(self, fieldTower):
+    def getNewLogExpressionsInFieldTower(self, fieldTower,fullTower):
         logs = []
         for log in self.logExpressions:
-            if log.argFunction.getFieldTower()==fieldTower:
+            #if log.argFunction.getFieldTower()==fieldTower: # log must not be in fieldTower, e.g. log(x+1) is not el C(x,log(x)), but log(x^2) is el C(x,log(x)), since log(x^2)=2*log(x)
+            if log.argFunction == fullTower.getLastExtension().characteristicFunction:
                 logs.append(log)
-                
+            else:
+                if fieldTower.towerHeight>1:
+                    raise NotImplementedError()
+                elif fieldTower.towerHeight==0:
+                    logs.append(log)
+                else:
+                    #if not (fieldTower.getLastExtension().characteristicFunction/log.argFunction).isConstant():
+                    #    logs.append(log)
+                    (q,r) = Pol.PolyDiv(log.argFunction, fieldTower.getLastExtension().characteristicFunction)
+                    if r==0 or r.isZero():
+                        pass
+                    else:
+                        logs.append(log)
         return logs
     
     def asFunction(self):
@@ -76,39 +89,16 @@ class Integral(object):
         return out.strip("+")
     
 
-class IntegralNotElementaryException(Exception):
+class IntegralNotElementaryError(Exception):
     pass
 
 
 class LogFunction(object):
-    '''
-    classdocs
-    '''
-
 
     def __init__(self, argFunction, factor):
-        '''
-        Constructor
-        '''
+
         self.argFunction = argFunction
         self.factor = factor
-    #    self.summand = 0
-    #def differentiate(self):
-    #    return self.argFunction.differentiate()/self.argFunction
-    #def __radd__(self, other):
-    #    return self.__add__(other)
-    #def __add__(self,other):
-    #    if other==0:
-    #        return self
-    #    self.summand += other
-    #    return self
-    #def __rmul__(self, other):
-    #    return self.__mul(other)
-    #def __mul__(self, other):
-    #    if other==1:
-    #        return self
-    #    self.factor *= other
-    #    return self
     def __str__(self):
         factor = ""
         if objEqualsNumber(self.factor, 0):
@@ -147,4 +137,3 @@ class LogFunction(object):
         else:
             factor = "[{}]".format(self.factor.printFull())
         return "{}log({})".format(factor,self.argFunction.printFull())
-        #return "[{}]+[{}]*log({})".format(self.summand, self.factor, self.argFunction)
