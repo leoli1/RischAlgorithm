@@ -3,13 +3,13 @@ Created on 28.09.2018
 
 @author: Leonard
 '''
-from Utils import isNumber
+from __future__ import division
+from Utils import isNumber, argmax
 
 class QuadMatrix(object):
     """
     Matrix class
     """
-
 
     def __init__(self, size, data=None):
         self.size = size
@@ -18,7 +18,7 @@ class QuadMatrix(object):
         else:
             self.__data = data
         
-    def subMatrix(self, i, j):
+    def getSubMatrix(self, i, j):
         M = QuadMatrix(self.size-1)
         for n in range(self.size-1):
             for m in range(self.size-1):
@@ -31,6 +31,8 @@ class QuadMatrix(object):
                 
                 M.setElement(n,m,self.getElement(a,b))
         return M
+    #def setSubMatrix(self, i,j, matrix):
+        
     
     def determinant(self):
         return self.determinantLaplace()
@@ -41,21 +43,91 @@ class QuadMatrix(object):
             return self.getElement(0,0)
         s = 0
         for j in range(self.size):
-            s += (-1)**j*self.getElement(0, j)*self.subMatrix(0,j).determinantLaplace()
+            s += (-1)**j*self.getElement(0, j)*self.getSubMatrix(0,j).determinantLaplace()
             
         return s
     
+    def getTriangularMatrix(self,vec):
+        """
+        converts matrix A=
+        ( a11 a12 ... a1n )
+        ( a21 a22 ... a2n )
+              .
+              .
+              .
+        ( an1 an2 ... ann )
+        into a triangular matrix:
+        ( b11 b12 ... b1n )
+        ( 0   b22 ... b2n )
+        ( 0   0 b33...b3n )
+              .
+              .
+              .
+        ( 0   0 ... 0 bnn )
+        
+        can be used for solving linear system of equations
+        """
+        if self.size==1:
+            return (self, vec)
+        M = self.copy()
+        subM = self.getSubMatrix(0, 0)
+        i_max  = argmax(list(map(abs,[self.getElement(i, 0) for i in range(self.size)])))
+        if self.getElement(i, 0)==0:
+            (subTri, vecn) = subM.getTriangularMatrix(vec[1:self.size])
+            vec = [vec[0]]+vecn
+        else:
+            M.swapRows(0,i_max)
+            t = vec[i_max]
+            vec[i_max] = vec[0]
+            vec[0] = t
+            subM = M.getSubMatrix(0, 0)
+            mainRow = M.getRow(0)[1:self.size]
+            lcoeff = M.getElement(0, 0)
+            for i in range(1,self.size):
+                f = -M.getElement(i, 0)/lcoeff
+                s = _mulObjectToListElements(f, mainRow)
+                newRow = _addListToList(subM.getRow(i-1), s)
+                subM.setRow(i-1,newRow)
+                vec[i] += vec[0]*f
+            (subTri, vecn) = subM.getTriangularMatrix(vec[1:self.size])
+            vec = [vec[0]]+vecn
+            
+        for i in range(self.size-1):
+            for j in range(self.size-1):
+                M.setElement(i+1, j+1, subTri.getElement(i,j))
+            M.setElement(i+1,0,0)
+        return (M, vec)                
+        
     def getColumn(self, j):
         col = []
         for i in range(self.size):
             col.append(self.getElement(i, j))
         return col
+    def setColumn(self, j, col):
+        if len(col)!=self.size:
+            raise TypeError("input column has to have the same length as the matrix size.")
+        for i in range(self.size):
+            self.setElement(i, j, col[i])
+            
     def getRow(self,i):
         row = []
         for j in range(self.size):
             row.append(self.getElement(i, j)) 
         return row
-    
+    def setRow(self, i, row):
+        if len(row)!=self.size:
+            raise TypeError("input row has to have the same length as the matrix size.")
+        for j in range(self.size):
+            self.setElement(i, j, row[j])
+    def swapRows(self, a,b):
+        tr = self.getRow(a)
+        self.setRow(a, self.getRow(b))
+        self.setRow(b, tr)
+        
+    def copy(self):
+        data = [[x for x in self.__data[i]] for i in range(self.size)]
+        return QuadMatrix(self.size,data=data)
+        
     def getElement(self, i,j): # i=row, j = column
         return self.__data[i][j]
     def setElement(self, i,j,value):
@@ -69,6 +141,8 @@ class QuadMatrix(object):
             r = r.strip(",")+"]"
             out += r+"\n"
         return out.strip("\n")
+    def __repr__(self):
+        return self.__str__()
 
 class SylvesterMatrix(QuadMatrix):
     def __init__(self, coeffsA,coeffsB):
@@ -77,8 +151,8 @@ class SylvesterMatrix(QuadMatrix):
         super(SylvesterMatrix,self).__init__(self.degA+self.degB)
         self.coeffsA = coeffsA
         self.coeffsB = coeffsB
-        cA = reverseList(coeffsA)
-        cB = reverseList(coeffsB)
+        cA = _reverseList(coeffsA)
+        cB = _reverseList(coeffsB)
         for j in range(self.degA+1):
             for i in range(self.degB):
                 self.setElement(i, i+j, cA[j])
@@ -122,19 +196,68 @@ def Resultant(coeffsA,coeffsB):
         raise Exception()
     return SylvesterMatrix(coeffsA,coeffsB).determinant()
             
-        
-def reverseList(a):
+def solveLinearSystem(coeffs, vec):
+    (tri, vec) = coeffs.getTriangularMatrix(vec)
+    n = coeffs.size
+    xs = []
+    if tri.getElement(n-1,n-1)==0 and vec[n-1]!=0:
+        return None # last row : 0 0 0 ... 0 | x, x!=0 => no solution
+    unique = True
+    for i in range(n):
+        if tri.getElement(n-1-1,n-1-i):
+            xs.append(1)
+            unique = False
+            continue
+        s = 0
+        for j in range(i):
+            s += xs[j]*tri.getElement(n-1-i,n-1-j)
+        d = (vec[n-1-i]+(-s))
+        xs.append(d/tri.getElement(n-1-i,n-1-i))
+    return (_reverseList(xs), unique)
+    
+    
+def _addListToList(l1, l2):
+    """
+    l1 = [a1,a2,...,an]
+    l1 = [b1,b2,...,bn]
+    returns [a1+b1,a2+b2,...,an+b2]
+    """
+    if len(l1)!=len(l2):
+        raise Exception()
+    nl = []
+    for i in range(len(l1)):
+        nl.append(l1[i]+l2[i])
+    return nl
+def _mulObjectToListElements(el, l):
+    """
+    l = [a1,a2,...,an]
+    returns [a1*el,a2*el,...,an*el]
+    """
+    nl = []
+    for e in l:
+        nl.append(e*el)
+    return nl
+
+def _reverseList(a):
     b = []
     for i in range(len(a)-1,-1,-1):
         b.append(a[i])
     return b
+
+def matrixtest(expected, got):
+    print("matrixtest: should be {}, got {}".got(expected,got))
 if __name__ == '__main__':
-    M = QuadMatrix(4)
+    from Number import Rational
+    """"M = QuadMatrix(4)
     M.setElement(2,3,42)
     M.setElement(3,1,-1)
     M.setElement(3,3,2)
+    M.setRow(0, [1,2,3,4])
+    M.setColumn(1, [101,102,1000,-1])
+    M.swapRows(1,2)
     print(M)
-    print(M.subMatrix(2, 3))
+    print(M.copy())
+    print(M.getSubMatrix(2, 3))
     print("-----")
     A = QuadMatrix(2,data=[[3,2],[43,101]])
     print(A.getElement(1,0))
@@ -144,4 +267,15 @@ if __name__ == '__main__':
     print(B.determinant())
     C = SylvesterMatrix([-2,-1,1,3,3],[5,1,-3,1])
     print(C)
-    print(Resultant([-2,-1,1,3,3],[5,1,-3,1]))
+    print(Resultant([-2,-1,1,3,3],[5,1,-3,1]))"""
+    
+    M = QuadMatrix(3,data=[[2,1,-1],[-3,-1,2],[-2,1,2]])
+    #print(M.getTriangularMatrix([8,-11,-3]))
+    print(solveLinearSystem(M, [8,-11,-3]))
+    
+    M = QuadMatrix(2,data=[[Rational(1,1),Rational(1,2)],[Rational(1,2),Rational(1,3)]])
+    print(solveLinearSystem(M, [Rational(1,1),Rational(5,7)]))
+    #print(M.getTriangularMatrix([Rational(1,1),Rational(5,7)]))
+    
+    M = QuadMatrix(2,data=[[1,1],[2,2]])
+    print(solveLinearSystem(M, [1,2]))

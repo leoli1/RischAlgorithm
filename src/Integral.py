@@ -18,7 +18,7 @@ class Integral(object):
         
         newPRs = []
         for pr in self.poly_rational_partExpressions:
-            if not pr.isZero():
+            if not pr==0 and not pr.isZero():
                 newPRs.append(pr)
         self.poly_rational_partExpressions = newPRs
         
@@ -42,7 +42,11 @@ class Integral(object):
                     else:
                         logs.append(log)
         return logs
-    
+    def combine_rationals(self):
+        s = 0
+        for r in self.poly_rational_partExpressions:
+            s += r
+        self.poly_rational_partExpressions = [s]
     def asFunction(self):
         func = 0
         for p in self.poly_rational_partExpressions:
@@ -81,7 +85,10 @@ class Integral(object):
     def printFull(self): # replaces fieldextension variables with their functions, i.e. T = log(x)
         out = ""
         for a in self.poly_rational_partExpressions:
-            out += a.printFull()+"+"
+            if isNumber(a):
+                out += str(a) + "+"
+            else:
+                out += a.printFull()+"+"
         for a in self.logExpressions:
             out += a.printFull()+"+"
         for a in self.rootSums:
@@ -130,7 +137,7 @@ class LogFunction(object):
         elif self.factor.isConstant():
             c = self.factor.getConstant()
             if not objEqualsNumber(c, 1):
-                if c>=0:
+                if type(c)==complex or c>=0:
                     factor = str(self.factor.getConstant())+"*"
                 else:
                     factor = "({})".format(c)
