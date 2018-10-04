@@ -73,7 +73,7 @@ class RationalFunction(object):
                 return self.numerator.getConstant()/self.denominator.getConstant()
             
     def isZero(self):
-        return objEqualsNumber(self.getConstant(),0)
+        return objEqualsNumber(self.getConstant(),Number.Rational(0,1))
 
     # ========================================== Field Tower/Extension =========================================
     def getFieldTower(self):
@@ -159,10 +159,13 @@ class RationalFunction(object):
         self.denominator = self.denominator/lcoeff_poly
         
     def PartialFraction(self, denomFactorization):
-        
-        #self.makeDenominatorMonic()
         return Pol.PartialFractionWithPowerFactorization(self.numerator, denomFactorization)
     
+    def replaceNumbersWithRationals(self):
+        if not isNumber(self.numerator):
+            self.numerator.replaceNumbersWithRationals()
+        if not isNumber(self.denominator):
+            self.denominator.replaceNumbersWithRationals()
     def __radd__(self, other):
         return self.__add__(other)
     def __add__(self, other):

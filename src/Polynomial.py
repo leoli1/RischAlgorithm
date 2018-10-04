@@ -10,8 +10,13 @@ import RationalFunction as Rat
 from Utils import *
 from FieldExtension import fieldTower
 from Parse import parseExpressionFromStr
+import Number
 
-
+if "derivativecalled" not in dir() and "squarefreecalled" not in dir() and "gcdcalls" not in dir():
+    derivativecalled = {}
+    squarefreecalled = {}
+    gcdcalled = {}
+    
 class Polynomial(object):
     
     def __init__(self, coefficients=None, fieldTower=None):
@@ -37,6 +42,7 @@ class Polynomial(object):
         
         self.updateCoefficients()
         self.updateCoefficientsFields()
+        self.derivativecalled = 0
         
     # ========================================== Coefficients stuff =========================================
     def setCoefficient(self, coeff, power): # coefficient of T^power
@@ -164,6 +170,14 @@ class Polynomial(object):
     def deg0(self):
         return self.degree==0
     
+    def replaceNumbersWithRationals(self):
+        if self.fieldTower.towerHeight==0:
+            for i in range(len(self._coefficients)):
+                self._coefficients[i] = Number.Rational.fromFloat(self._coefficients[i])
+        else:
+            for c in self._coefficients:
+                c.replaceNumbersWithRationals()
+    
     # ========================================== Mixed stuff =========================================
     @property
     def degree(self):
@@ -264,6 +278,7 @@ class Polynomial(object):
     
     # ========================================== Differentiate stuff =========================================
     def differentiate(self):
+        
         fieldTower = self.getFieldTower()
         dPoly = Polynomial(fieldTower=fieldTower)
         fieldExtension = self.getFieldExtension()

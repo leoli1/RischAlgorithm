@@ -29,6 +29,7 @@ class Integral(object):
             if log.argFunction == fullTower.getLastExtension().characteristicFunction:
                 logs.append(log)
             else:
+                print("Result may be wrong")
                 if fieldTower.towerHeight>1:
                     raise NotImplementedError()
                 elif fieldTower.towerHeight==0:
@@ -46,7 +47,8 @@ class Integral(object):
         s = 0
         for r in self.poly_rational_partExpressions:
             s += r
-        self.poly_rational_partExpressions = [s]
+        if s!=0:
+            self.poly_rational_partExpressions = [s]
     def asFunction(self):
         func = 0
         for p in self.poly_rational_partExpressions:
@@ -81,6 +83,8 @@ class Integral(object):
         for a in self.rootSums:
             out += str(a)+"+"
         return out.strip("+")
+    def __repr__(self):
+        return self.__str__()
     
     def printFull(self): # replaces fieldextension variables with their functions, i.e. T = log(x)
         out = ""
