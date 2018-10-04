@@ -35,8 +35,9 @@ class Rational(object):
             
     def removeCommonFactors(self):
         gcd = NumberGCD(abs(self._p),abs(self._q))
-        self._p /= gcd
-        self._q /= gcd
+        if gcd!=1:
+            self._p /= gcd
+            self._q /= gcd
         
     def __radd__(self, other):
         return self.__add__(other)
@@ -85,14 +86,17 @@ class Rational(object):
         return not self.__eq__(other)
     def __float__(self):
         return self._p/self._q
+    def __int__(self):
+        return self._p//self._q
     def __abs__(self):
         return Rational(abs(self._p),self._q)
     def __repr__(self):
         return str(self)
     def __str__(self):
+        pstr = "({})".format(str(self._p)) if self._p<0 else str(self._p)
         if self._q==1:
-            return str(self._p)
-        return str(self._p)+"/"+str(self._q)
+            return pstr
+        return pstr+"/"+str(self._q)
     
 def NumberGCD(a,b):
     (A,B) = (a,b) if a>=b else (b,a)

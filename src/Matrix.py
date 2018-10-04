@@ -158,7 +158,7 @@ class SylvesterMatrix(QuadMatrix):
                 self.setElement(i, i+j, cA[j])
         for j in range(self.degB+1):
             for i in range(self.degA):
-                self.setElement(i+self.degA-1,j+i,cB[j])
+                self.setElement(i+self.degB,j+i,cB[j])
         
         
 def Resultant(coeffsA,coeffsB):
@@ -264,10 +264,10 @@ if __name__ == '__main__':
     print(A)
     print(A.determinant())
     B = QuadMatrix(3,data=[[-2,2,-3],[-1,1,3],[2,0,1]])
-    print(B.determinant())
+    print(B.determinant())"""
     C = SylvesterMatrix([-2,-1,1,3,3],[5,1,-3,1])
     print(C)
-    print(Resultant([-2,-1,1,3,3],[5,1,-3,1]))"""
+    print(Resultant([-2,-1,1,3,3],[5,1,-3,1]))
     
     M = QuadMatrix(3,data=[[2,1,-1],[-3,-1,2],[-2,1,2]])
     #print(M.getTriangularMatrix([8,-11,-3]))

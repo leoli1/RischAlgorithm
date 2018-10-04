@@ -184,6 +184,13 @@ class Polynomial(object):
         self.updateCoefficients()
         return len(self.getCoefficients())-1#-1 if self.isZero() else len(self.getCoefficients())-1
     
+    @property
+    def lowestDegree(self):
+        for i in range(self.degree):
+            if not self.coeffIsZero(i):
+                return i
+        return 0
+    
     def asRational(self):
         return Rat.RationalFunction(self,1)
     

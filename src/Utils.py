@@ -13,7 +13,7 @@ def isNumber(x):
     return type(x) in numbers
 
 def isInt(x):
-    return (type(x)==int or type(x)==float) and (int(x)==x)
+    return (type(x)==int or type(x)==float or type(x)==Number.Rational) and (int(x)==x)
 
 def numberIsZero(x):
     return abs(x)<eps

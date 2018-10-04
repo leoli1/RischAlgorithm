@@ -41,8 +41,8 @@ def fieldTowerInput():
             raise NotImplementedError()
         
         f_e_type2 = getInput("Type of transcendental extension (Exponential: e, Logarithmic: l):",["e","l"])
-        if f_e_type2=="e":
-            raise NotImplementedError()
+        #if f_e_type2=="e":
+        #    raise NotImplementedError()
         
         f_e_type = FE.TRANS_LOG if f_e_type2=="l" else FE.TRANS_EXP
         bfunc = "exp" if f_e_type == FE.TRANS_EXP else "log"

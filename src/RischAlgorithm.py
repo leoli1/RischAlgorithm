@@ -369,12 +369,90 @@ def IntegrateRationalPartLogExt(func, fieldTower): # Hermite Reduction
     #raise NotImplementedError
 def IntegratePolynomialPartExpExt(func, fieldTower):
     if func == 0 or func.isZero():
-        return Int.Integral("")
-    raise NotImplementedError
+        return Int.Integral()
+    raise NotImplementedError()
 def IntegrateRationalPartExpExt(func, fieldTower):
-    if func.numerator ==0:
-        return 0
-    raise NotImplementedError
+    if func.numerator==0 or func.numerator.isZero():
+        return Int.Integral()
+    func = func.makeDenominatorMonic()
+    if func.denominator.lowestDegree!=0:
+        raise NotImplementedError()
+    
+    sqrFreeFactorization = func.denominator.factorSquareFree()
+    partialFractions = func.PartialFraction(sqrFreeFactorization)
+    integral = Int.Integral()
+    integratedPart = 0
+    toIntegratePart = 0 # squarefree part
+
+    for frac in partialFractions:
+        j = frac[2]
+        q_i = frac[1]
+        r_ij = frac[0]
+        integrand = r_ij/(q_i**j)
+        while j>1:
+            (s,t) = Pol.extendedEuclidGenF(q_i, q_i.differentiate(), r_ij)
+            #p1 = Int.Integral(poly_rationals=[(-1)*t/(j-1)/(q_i**(j-1))])
+            integratedPart += (-1)*t*(1/(j-1))/(q_i**(j-1))
+            tPrime = 0 if isNumber(t) else t.differentiate()
+            num = s+tPrime*(1/(j-1))
+            integrand = num/(q_i**(j-1))
+            r_ij = num
+            j -= 1
+        toIntegratePart += integrand
+    
+    integral += Int.Integral(poly_rationals=[integratedPart])
+    if toIntegratePart==0:
+        return integral
+    
+    r = toIntegratePart.reduceToLowestPossibleFieldTower()
+    if r.fieldTower!=toIntegratePart.fieldTower:
+        integral += Integrate(r)
+    else:   
+        a = toIntegratePart.numerator
+        b = toIntegratePart.denominator
+        bp = b.differentiate()
+        
+        zExtension = FE.FieldExtension(FE.TRANSCENDENTAL_SYMBOL,1,"z")
+        newFieldTower = fieldTower.getStrippedTower(fieldTower.towerHeight)
+        newFieldTower.addFieldExtension(zExtension)
+        
+        coeffsA = []
+        Adeg = max(a.degree,bp.degree)   
+        for i in range(Adeg+1):
+            polZ = Pol.Polynomial([a.getCoefficient(i),bp.getCoefficient(i)*(-1)],fieldTower=newFieldTower)
+            coeffsA.append(polZ)
+            
+        b_coeffs = b.getCoefficients()
+        coeffsB = []
+        for bc in b_coeffs:
+            coeffsB.append(Pol.Polynomial([bc],fieldTower=newFieldTower))
+        res = Resultant(coeffsA, coeffsB) # res_T (a-z*b',b)
+        if res!=0:
+            primitivePart = res.makeMonic()
+            constantRoots = primitivePart.hasOnlyConstantCoefficients()
+        if res==0 or res.isZero():
+            constantRoots = True # TODO
+            primitivePart = 0
+                
+        #print("Only constant coefficients in primitive part {}: {}".format(primitivePart,constantRoots))
+        
+        if not constantRoots:
+            raise Int.IntegralNotElementaryError("Integral is not elementary")
+        
+        roots = primitivePart.getRoots()
+        vfunc = []
+        for c in roots:
+            vfunc.append(Pol.PolyGCD(a+bp*(-c), b))
+        intPart = Int.Integral()
+        for (c,v) in zip(roots,vfunc):
+            logExpr = Int.LogFunction(v,c)
+            intPart += Int.Integral(logs=[logExpr])
+            polyPart = (-c)*v.degree*fieldTower.getLastExtension().characteristicFunction
+            intPart += Int.Integral(poly_rationals=[polyPart])
+        integral += intPart
+    
+    return integral
+    raise NotImplementedError()
 
 def sqrt(x):
     if x<0:
