@@ -3,12 +3,15 @@ Created on 28.09.2018
 
 @author: Leonard
 '''
-numbers = [int,float,complex]
+import Number
+
+numbers = [int,float,complex,Number.Rational]
 
 eps = 10**(-5) # 
 
 def isNumber(x):
     return type(x) in numbers
+
 def isInt(x):
     return (type(x)==int or type(x)==float) and (int(x)==x)
 
@@ -25,6 +28,8 @@ def isPoly(x):
     except AttributeError:
         return False
     
+def sign(x):
+    return 0 if x==0 else x/abs(x)
 def objEqualsNumber(obj, num):
     if obj==None:
         return False
@@ -36,4 +41,4 @@ def objEqualsNumber(obj, num):
         if y==None:
             return False
         x = y
-    return numberIsZero(x-num)
+    return numberIsZero(x+(-num))

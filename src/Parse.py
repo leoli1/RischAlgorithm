@@ -52,6 +52,8 @@ def parseExpressionFromStr(expr_str,fieldTower):
         expr = eval(expr_str)
         if isNumber(expr) or expr.fieldTower.towerHeight<fieldTower.towerHeight:
             expr = Pol.Polynomial([expr],fieldTower=fieldTower)
+            
+        expr.replaceNumbersWithRationals()
         return expr
     except SyntaxError as a:
         print(a)

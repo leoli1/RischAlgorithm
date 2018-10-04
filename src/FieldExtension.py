@@ -54,6 +54,8 @@ class FieldExtension(object):
         var = self.getFVar()
         out = "K({}), {}={}({})".format(self.variable,self.variable,var,str(self.characteristicFunction)) 
         return out
+    def __repr__(self):
+        return self.__str__()
     def strFunc(self):
         var = "exp" if self.extensionType==TRANS_EXP else "log"
         return "{}({})".format(var,self.characteristicFunction.printFull())

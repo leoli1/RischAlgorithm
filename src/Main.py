@@ -63,6 +63,8 @@ def Main():
         print("Use field-extension Variables, instead of functions, e.g. f=x*{} instead of f=x*{}".format(FE.fieldTower.getFieldExtension(0).variable, FE.fieldTower.getFieldExtension(0).strFunc()))
     while (True):
         f_str = raw_input("integrate f = ")
+        if f_str.lower()=="quit":
+            sys.exit()
         f = parseExpressionFromStr(f_str, FE.fieldTower)
         print("Integral({}) = {}".format(f.printFull(),printIntegral(f, FE.fieldTower)))
 

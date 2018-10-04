@@ -10,15 +10,14 @@ import FieldExtension as FE
 import Integral as Int
 import RootSum as RS
 from math import sqrt as msqrt
-from Utils import isNumber,isPoly
+from Utils import *
 
 from Matrix import Resultant
 
 
 logExtensionsInIntegral = []
 
-def Integrate(func, fieldTower):
-    #print(func)
+def Integrate(func):#, fieldTower):
     if isPoly(func):
         quot = func
         rat = 0
@@ -26,7 +25,7 @@ def Integrate(func, fieldTower):
         (quot, rem) = Pol.PolyDiv(func.numerator, func.denominator)
         rat = Rat.RationalFunction(rem,func.denominator)
     
-    #print(quot, rem,rat)
+    fieldTower = func.fieldTower
     lastExtension = fieldTower.getLastExtension()
     try:
         if lastExtension == None:
@@ -60,7 +59,7 @@ def IntegratePolynomialPart(poly):
         raise Exception()
     intPoly = Pol.Polynomial()
     for i in range(poly.degree+1):
-        coeff = poly.getCoefficient(i)/(i+1)
+        coeff = poly.getCoefficient(i)*(1/(i+1))
         intPoly.setCoefficient(coeff, i+1)
     return Int.Integral(poly_rationals=[intPoly])
     #return Int.Integral(str(intPoly))
@@ -154,7 +153,7 @@ def IntegratePolynomialPartLogExt(poly, fieldTower):
     if poly == 0 or poly.isZero():
         return Int.Integral()
     if poly.deg0():
-        return Integrate(poly.getCoefficient(0), fieldTower.prevTower())
+        return Integrate(poly.getCoefficient(0))#, fieldTower.prevTower())
     p = []
     for c in poly.getCoefficients():
         p.append(c)
@@ -180,7 +179,7 @@ def IntegratePolynomialPartLogExt(poly, fieldTower):
         int_reduced = integrand.reduceToLowestPossibleFieldTower()
         if int_reduced!=None:
             integrand = int_reduced
-        P_i = Integrate(integrand,integrand.getFieldTower())
+        P_i = Integrate(integrand)
         IntegratePolynomialPartLogExtCheckIntegralConditions(P_i, fieldTower)
         prev = fieldTower.prevTower()
         logs = P_i.getNewLogExpressionsInFieldTower(prev,fieldTower)
@@ -191,7 +190,7 @@ def IntegratePolynomialPartLogExt(poly, fieldTower):
         q[i+1] = d[i+1]+b[i+1]
     
     integrand = p[0]+(-1)*d[1]*log_diff_u
-    P0 = Integrate(integrand,integrand.getFieldTower())
+    P0 = Integrate(integrand)
     if P0==None:
         raise Int.IntegralNotElementaryError()
     b1 = 0
@@ -219,7 +218,15 @@ def IntegratePolynomialPartLogExtCheckIntegralConditions(integral,fieldTower):
         raise Int.IntegralNotElementaryError()
     logs = integral.getNewLogExpressionsInFieldTower(fieldTower.prevTower(),fieldTower)
     if len(logs)>1: # at most one log extension of C(x,T_1,...,T_(N-1))
-        raise Int.IntegralNotElementaryError()
+        if len(logs)==2:
+            x = logs[0].factor.getConstant()
+            y = logs[1].factor.getConstant()
+            if abs(x)==abs(y):
+                a = logs[0].argFunction if sign(x)==1 else logs[0].argFunction.Inverse()
+                b = logs[1].argFunction if sign(y)==1 else logs[1].argFunction.Inverse()
+                logs = [Int.LogFunction(a*b,abs(x))]
+        else:
+            raise Int.IntegralNotElementaryError()
     if len(logs)!=0: # if a log extension appears, it must be T_N
         if logs[0].argFunction != fieldTower.getLastExtension().characteristicFunction:
             raise Int.IntegralNotElementaryError()
@@ -256,7 +263,7 @@ def IntegrateRationalPartLogExt(func, fieldTower): # Hermite Reduction
     
     r = toIntegratePart.reduceToLowestPossibleFieldTower()
     if r.fieldTower!=toIntegratePart.fieldTower:
-        integral += Integrate(r,r.fieldTower)
+        integral += Integrate(r)
     else:   
         a = toIntegratePart.numerator
         b = toIntegratePart.denominator
@@ -377,8 +384,8 @@ def sqrt(x):
 def logExpression(arg):
     return "log({})".format(str(arg))
 
-def printIntegral(func,fieldTower):
-    integral = Integrate(func, fieldTower)
+def printIntegral(func,fieldTower=None):
+    integral = Integrate(func)#, fieldTower)
     if integral!=None:
         integral.combine_rationals()
     return "Integral is not elementary" if integral==None else integral.printFull()+"  + C"
@@ -392,22 +399,22 @@ if __name__ == '__main__':
     polA = Pol.Polynomial([1])
     polB = Pol.Polynomial([2,-3,1])
     polC = Pol.Polynomial([-1,2])
-    print(integratetest("0.5*log(x+(-0.5))",Integrate(Rat.RationalFunction(polA,polC),FE.FieldTower()))) #Integral of 1/(2x-1)
+    print(integratetest("0.5*log(x+(-0.5))",Integrate(Rat.RationalFunction(polA,polC))))#,FE.FieldTower()))) #Integral of 1/(2x-1)
 
     ratA = Rat.RationalFunction(polA,polB) # 1/(x^2-3x+2)
-    print(integratetest("log(x+(-2.0))+(-1.0)log(x+(-1.0))",Integrate(ratA, FE.FieldTower())))
+    print(integratetest("log(x+(-2.0))+(-1.0)log(x+(-1.0))",Integrate(ratA)))
     print("----")
     polD = parseField0PolyFromStr("3*x**2+x+1")
     polE = parseField0PolyFromStr("x**4+x**2+1")
     ratB = Rat.RationalFunction(polD,polE)
 
-    print(integratetest("RootSum(w | w**4+w**2+1.0=0, ([0.75w**2+0.25w+0.25]/[w**3+0.5w])log(x-w))",Integrate(ratB,FE.FieldTower())))#print(Integrate(ratB,FE.FieldTower()))
+    print(integratetest("RootSum(w | w**4+w**2+1.0=0, ([0.75w**2+0.25w+0.25]/[w**3+0.5w])log(x-w))",Integrate(ratB)))#print(Integrate(ratB,FE.FieldTower()))
     print("----")
     polA = parseField0PolyFromStr("2*x**4+x**2+x+(-1)")
     polB = parseField0PolyFromStr("(-1)+x")*(parseField0PolyFromStr("x+1")**3)#*parseField0PolyFromStr("x**2+x-1")**3
     ratA = Rat.RationalFunction(polA,polB)
 
-    print(integratetest("2.0x+[4.25x]/[x+1.0]+[(-0.25)x]/[x**2+2.0x+1.0]+[(-0.25)x]/[x+1.0]+0.375*log(x+(-1.0))+(-4.375)log(x+1.0)",printIntegral(ratA, FE.FieldTower())))
+    print(integratetest("2.0x+[4.25x]/[x+1.0]+[(-0.25)x]/[x**2+2.0x+1.0]+[(-0.25)x]/[x+1.0]+0.375*log(x+(-1.0))+(-4.375)log(x+1.0)",printIntegral(ratA)))
     print("----")
     fieldExtension1 = FE.FieldExtension(FE.TRANS_LOG,Pol.Polynomial([0,1]),"T_1") # field extension with log(x)
     FE.fieldTower = FE.FieldTower(fieldExtensions=[fieldExtension1])
