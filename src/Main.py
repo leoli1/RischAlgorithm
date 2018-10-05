@@ -41,14 +41,12 @@ def fieldTowerInput():
             raise NotImplementedError()
         
         f_e_type2 = getInput("Type of transcendental extension (Exponential: e, Logarithmic: l):",["e","l"])
-        #if f_e_type2=="e":
-        #    raise NotImplementedError()
         
         f_e_type = FE.TRANS_LOG if f_e_type2=="l" else FE.TRANS_EXP
         bfunc = "exp" if f_e_type == FE.TRANS_EXP else "log"
         print("Field extension: {}(u)".format(bfunc))
-        argFunc_str = None
-        while argFunc_str==None:
+        argFunc_str = ""
+        while argFunc_str=="":
             argFunc_str = raw_input("u = ")
         argFunc = parseExpressionFromStr(argFunc_str, fieldTower)
         fe = FE.FieldExtension(f_e_type,argFunc,"T_{}".format(i+1))

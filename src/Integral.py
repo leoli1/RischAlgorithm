@@ -99,7 +99,11 @@ class Integral(object):
             out += a.printFull()+"+"
         return out.strip("+")
     
-
+class NonElementaryIntegral(Integral):
+    def __str__(self):
+        return "Integral({})".format(super(NonElementaryIntegral,self).__str__())
+    def __repr__(self):
+        return self.__str__()
 class IntegralNotElementaryError(Exception):
     pass
 
