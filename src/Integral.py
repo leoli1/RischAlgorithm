@@ -47,8 +47,11 @@ class Integral(object):
         s = 0
         for r in self.poly_rational_partExpressions:
             s += r
-        if s!=0:
-            self.poly_rational_partExpressions = [s]
+        if len(self.poly_rational_partExpressions)!=0:
+            if s==0:
+                self.poly_rational_partExpressions = []
+            else:
+                self.poly_rational_partExpressions = [s]
     def asFunction(self):
         func = 0
         for p in self.poly_rational_partExpressions:

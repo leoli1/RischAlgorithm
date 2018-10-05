@@ -13,6 +13,7 @@ from math import sqrt as msqrt
 from Utils import *
 
 from Matrix import Resultant
+from Number import sqrt
 
 
 logExtensionsInIntegral = []
@@ -104,6 +105,9 @@ def IntegrateRationalFunction(func): # field=0, func element C(x)
                 raise Exception("denom was tested square free, but discriminant is 0")
             zero0 = -p/2+disc
             zero1 = -p/2-disc
+            [zero0,zero1] = func.denominator.getRoots()
+            if zero0==zero1:
+                raise Exception("denom was tested square free, but has double zero")
             A = f.evaluate(zero0)/g.differentiate().evaluate(zero0)
             B = f.evaluate(zero1)/g.differentiate().evaluate(zero1)
             denomA = Pol.Polynomial([-zero0,1])
@@ -380,16 +384,17 @@ def IntegrateRationalPartExpExt(func, fieldTower):
             coeffsB.append(Pol.Polynomial([bc],fieldTower=newFieldTower))
         res = Resultant(coeffsA, coeffsB) # res_T (a-z*b',b)
         if res!=0:
-            primitivePart = res.makeMonic()
+            primitivePart = res.makeMonic().reduceToLowestPossibleFieldTower()
             constantRoots = primitivePart.hasOnlyConstantCoefficients()
         if res==0 or res.isZero():
-            constantRoots = True # TODO
+            constantRoots = False # TODO
             primitivePart = 0
                 
         #print("Only constant coefficients in primitive part {}: {}".format(primitivePart,constantRoots))
         
         if not constantRoots:
             raise Int.IntegralNotElementaryError("Integral is not elementary")
+        
         
         roots = primitivePart.getRoots()
         vfunc = []
@@ -406,10 +411,10 @@ def IntegrateRationalPartExpExt(func, fieldTower):
     return integral
     raise NotImplementedError()
 
-def sqrt(x):
+"""def sqrt(x):
     if x<0:
         return complex(0,1)*(msqrt(-x))
-    return msqrt(x)
+    return msqrt(x)"""
 
 def logExpression(arg):
     return "log({})".format(str(arg))

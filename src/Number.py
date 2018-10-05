@@ -6,11 +6,117 @@ Created on 03.10.2018
 from __future__ import division
 import Utils
 
+class AlgebraicNumber(object):
+    def __init__(self, poly):
+        self.poly = poly
+        if not Utils.isPoly(self.poly):
+            raise TypeError("poly argument is no Polynomial")
+        if self.poly.fieldTower.towerHeight==0:
+            raise TypeError("poly field tower must be C(x)")
+        
 
-class Rational(object):
+class SqrRootPolynomial(object):
+    """
+    Represents a number/expression a+b*sqrt(q) el Q[sqrt(q)] with q el Q
+    """
+    
+    def __init__(self, radicand,a=0,b=0):
+        self.radicand = radicand
+        if not type(radicand) is Rational:
+            self.radicand = Rational.fromFloat(radicand)
+        self.a = ZERO if a==0 else a
+        self.b = ZERO if b==0 else b # coefficient of sqrt(radicand)
+        
+    def __radd__(self, other):
+        return self.__add__(other)
+    def __add__(self, other):
+        if other==0:
+            return self
+        if type(other)==Rational:
+            return SqrRootPolynomial(self.radicand, a=self.a+other, b=self.b)
+        if not type(other) is SqrRootPolynomial:
+            return self.__add__(Rational.fromFloat(other))
+        if self.radicand!=other.radicand:
+            raise ValueError()
+        return SqrRootPolynomial(self.radicand,a=self.a+other.a,b=self.b+other.b)
+    def __sub__(self, other):
+        return self.__add__(-other)
+    def __rmul__(self, other):
+        return self.__mul__(other)
+    def __mul__(self, other): # (a+bX)(p+qX) = (ap+bqX**2)+(bp+qa)X
+        if other==1:
+            return self
+        if type(other)==Rational:
+            return SqrRootPolynomial(self.radicand, a=self.a*other, b=self.b*other)
+        if not type(other) is SqrRootPolynomial:
+            return self.__mul__(Rational.fromFloat(other))
+        if self.radicand!=other.radicand:
+            raise ValueError()
+        return SqrRootPolynomial(self.radicand,a=self.a*other.a+self.b*other.b*self.radicand,b=self.b*other.a+self.a*other.b)
+    def __rtruediv__(self, other):#other/self
+        return self.Inverse().__mul__(other)
+    def __truediv__(self, other): # self/other = (a+bX)/(p+qX) = [(a+bX)(p-qX)]/[(p+qX)(p-qX)] = (a+bX)(p-qX)/(p^2-q^2X^2)
+        if other==1:
+            return self
+        if type(other)==Rational:
+            return SqrRootPolynomial(self.radicand, a=self.a/other, b=self.b/other)
+        if self.radicand!=other.radicand:
+            raise ValueError()
+        return self*other.Inverse()
+    def __pow__(self, other):
+        if not Utils.isInt(other):
+            return TypeError()
+        if other==0:
+            return Rational(1,1)
+        if other>0:
+            return self*(self**(other-1))
+        else:
+            return 1/self * (self**(other+1))
+    
+    def Inverse(self):
+        return self.conjugate()*(self.a**2-self.b**2*self.radicand**2).Inverse()
+    def __neg__(self):
+        return SqrRootPolynomial(self.radicand,a=-self.a,b=-self.b)
+    def conjugate(self):
+        return SqrRootPolynomial(self.radicand,a=self.a,b=-self.b)
+    
+    def __eq__(self, other):
+        if other==None:
+            return False
+        if type(other)==Rational:
+            return self.__eq__(SqrRootPolynomial(self.radicand,a=other))
+        elif type(other)!=SqrRootPolynomial:
+            return self.__eq__(Rational.fromFloat(other))
+        return self.a==other.a and self.b==other.b
+    def __ne__(self, other):
+        return not self.__eq__(other)
+    def __str__(self):
+        rstr = str(self.radicand)
+        if self.radicand._q==1:
+            rstr = rstr.replace("(", "").replace(")","")
+        if self.b==0:
+            bStr = ""
+        elif self.b==1:
+            bStr= "sqrt({})".format(rstr)
+        else:
+            #if self.b._q==1:
+            bStr= "{}sqrt({})".format(str(self.b),rstr)
+            #else: 
+            #    bStr= "({})sqrt({})".format(str(self.b),rstr)
+        if self.a==0:
+           return bStr
+        else:
+            if bStr=="":
+                return str(self.a)
+            else:
+                return str(self.a)+"+"+bStr
+    def __repr__(self):
+        return self.__str__()
+class Rational(AlgebraicNumber):
     """
     Represents a rational Number p/q el Q
     """
+    
     def __init__(self, p,q):
         self._p = p
         self._q = q
@@ -26,6 +132,8 @@ class Rational(object):
         
     @staticmethod
     def fromFloat(f):
+        if type(f) is Rational:
+            return f
         n = 0
         p = f
         while not Utils.isInt(p):
@@ -47,13 +155,15 @@ class Rational(object):
         if type(other)==int or type(other)==float:
             return self.__add__(Rational.fromFloat(other))
         if type(other)!=Rational:
-            return other.__mul__(self)
+            return other.__add__(self)
         return Rational(self._p*other._q+self._q*other._p,self._q*other._q)
     def __rsub__(self, other):
         print("asdf")
     def __sub__(self, other):
-        if type(other)!=Rational:
-            return other.__add__(self)
+        if type(other)==int or type(other)==float:
+            return self.__add__(Rational.fromFloat(-other))
+        #if type(other)!=Rational:
+        #    return other.__add__(self)
         return self.__add__(-other)
     def __rmul__(self, other):
         return self.__mul__(other)
@@ -68,12 +178,22 @@ class Rational(object):
     def __truediv__(self, other):
         if type(other)==int or type(other)==float:
             return self.__truediv__(Rational.fromFloat(other))
-        if type(other)!=Rational:
-            return other.__mul__(self)
+        if type(other) is SqrRootPolynomial:
+            return other * self.Inverse()
         return Rational(self._p*other._q,self._q*other._p)
     def __neg__(self):
-        return Rational(-self._p,self._q)
-    
+        return Rational(-self._p,self._q) 
+    def Inverse(self):
+        return Rational(self._q,self._p)
+    def __pow__(self, other):
+        if not Utils.isInt(other):
+            return TypeError()
+        if other==0:
+            return Rational(1,1)
+        if other>0:
+            return self*(self**(other-1))
+        else:
+            return 1/self * (self**(other+1))
     def __lt__(self, other):
         return float(self) < float(other)
     def __gt__(self,other):
@@ -81,7 +201,11 @@ class Rational(object):
     def __eq__(self, other):
         if other==None:
             return False
-        return Utils.numberIsZero(self+(-other))
+        if type(other) is SqrRootPolynomial:
+            return SqrRootPolynomial.__eq__(self)
+        if type(other)!=Rational:
+            return self.__eq__(Rational.fromFloat(other))
+        return self._p==other._p and self._q==other._q
     def __ne__(self, other):
         return not self.__eq__(other)
     def __float__(self):
@@ -108,6 +232,31 @@ def NumberGCD(a,b):
     else:
         return NumberGCD(B,r)
     
+ONE = Rational(1,1)
+ZERO = Rational(0,1)
+
+def sqrt(x):
+    if type(x)!=Rational:
+        return sqrt(Rational.fromFloat(x))
+    if x._p<0:
+        ai = False
+    else:
+        a = x._p**0.5
+        ai = a.is_integer()
+    b = x._q**0.5
+    bi = b.is_integer()
+    if ai and bi:
+        return Rational(a,b)
+    if ai and not bi: # sqrt(x)=a/sqrt(x._q)
+       f = Rational(a,1)
+       r = Rational(1,x._q) 
+    elif not ai and bi:
+        f = Rational(1,b)
+        r = Rational(x._p,1)
+    else:
+        f = ONE
+        r = x
+    return SqrRootPolynomial(r,0,f)
 
 if __name__=='__main__':
     a = Rational(12,8)
@@ -115,4 +264,6 @@ if __name__=='__main__':
     print("{}+{}={}".format(a,b,a+b))
     c = Rational.fromFloat(1.25)
     print(c)
-    
+    print(sqrt(4))
+    print(5+2*sqrt(5))
+    print(sqrt(4/5))

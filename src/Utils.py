@@ -5,7 +5,7 @@ Created on 28.09.2018
 '''
 import Number
 
-numbers = [int,float,complex,Number.Rational]
+numbers = [int,float,complex,Number.Rational,Number.SqrRootPolynomial]
 
 eps = 10**(-5) # 
 
@@ -16,6 +16,10 @@ def isInt(x):
     return (type(x)==int or type(x)==float or type(x)==Number.Rational) and (int(x)==x)
 
 def numberIsZero(x):
+    if type(x)==Number.SqrRootPolynomial:
+        return x==0
+    elif type(x)==Number.Rational:
+        return x==0
     return abs(x)<eps
 
 def argmax(l):

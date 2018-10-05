@@ -221,7 +221,14 @@ class Polynomial(object):
         if self.degree==1:
             return [-coeffs[0]/coeffs[1]]
         elif self.degree==2:
-            raise NotImplementedError()
+            a = coeffs[2]
+            p = coeffs[1]/a
+            q = coeffs[0]/a
+            disc = Number.sqrt((p/2)**2-q)
+            zero0 = -p/2+disc
+            zero1 = -p/2-disc
+            return [zero0,zero1]
+            
     # ========================================== Field Tower/Extension =========================================
             
     def getFieldTower(self):
@@ -451,13 +458,13 @@ class Polynomial(object):
             coeff = ""
             coeff_v = self.getCoefficient(i)
             if coeff_v != 1 or i==0:
-                if isNumber(coeff_v) and coeff_v>0:
+                if isNumber(coeff_v):# and coeff_v>0:
                     coeff = str(coeff_v)
-                elif not isNumber(coeff_v) and coeff_v.isConstant() and coeff_v.getConstant()>0:
+                elif not isNumber(coeff_v) and coeff_v.isConstant():# and coeff_v.getConstant()>0:
                     if coeff_v.getConstant()!=1 or i==0:
                         coeff = str(coeff_v.getConstant())
-                elif isNumber(coeff_v):
-                    coeff = "({})".format(str(coeff_v))
+                #elif isNumber(coeff_v):
+                #    coeff = "({})".format(str(coeff_v))
                 else:
                     c = str(coeff_v)
                     if coeff_v.isConstant() and c.startswith("(") and c.endswith(")"):
@@ -488,13 +495,13 @@ class Polynomial(object):
             coeff = ""
             coeff_v = self.getCoefficient(i)
             if coeff_v != 1 or i==0:
-                if isNumber(coeff_v) and (type(coeff_v)!=complex and coeff_v>0):
+                if isNumber(coeff_v):# and (type(coeff_v)!=complex and coeff_v>0):
                     coeff = str(coeff_v)
-                elif not isNumber(coeff_v) and coeff_v.isConstant() and (type(coeff_v)!=complex and coeff_v.getConstant()>0):
+                elif not isNumber(coeff_v) and coeff_v.isConstant():# and (type(coeff_v)!=complex and coeff_v.getConstant()>0):
                     if coeff_v.getConstant()!=1 or i==0:
                         coeff = str(coeff_v.getConstant())
-                elif isNumber(coeff_v):
-                    coeff = "({})".format(str(coeff_v))
+               # elif isNumber(coeff_v):
+                #    coeff = "({})".format(str(coeff_v))
                 else:
                     c = coeff_v.printFull()
                     if coeff_v.isConstant() and c.startswith("(") and c.endswith(")"):
