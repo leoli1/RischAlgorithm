@@ -43,6 +43,11 @@ class Integral(object):
                     else:
                         logs.append(log)
         return logs
+    
+    def simplify(self):
+        self.combine_rationals()
+        self.combine_logs()
+        
     def combine_rationals(self):
         s = 0
         for r in self.poly_rational_partExpressions:
@@ -52,6 +57,21 @@ class Integral(object):
                 self.poly_rational_partExpressions = []
             else:
                 self.poly_rational_partExpressions = [s]
+                
+    def combine_logs(self):
+        newLogs = []
+        for l in self.logExpressions:
+            log = next((x for x in newLogs if x.argFunction==l.argFunction),None)
+            if log==None:
+                newLogs.append(l)
+            else:
+                log.factor += l.factor
+        finalLogs = []
+        for l in newLogs:
+            if l.factor!=0:
+                finalLogs.append(l)
+        self.logExpressions = finalLogs
+        
     def asFunction(self):
         func = 0
         for p in self.poly_rational_partExpressions:

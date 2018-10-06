@@ -14,6 +14,7 @@ from Utils import *
 
 from Matrix import Resultant
 from Number import sqrt
+import RischEquation
 
 
 logExtensionsInIntegral = []
@@ -62,7 +63,9 @@ def IntegratePolynomialPart(poly):
     intPoly = Pol.Polynomial()
     for i in range(poly.degree+1):
         coeff = poly.getCoefficient(i)*(1/(i+1))
-        intPoly.setCoefficient(coeff, i+1)
+        intPoly.setCoefficient(coeff, i+1,callUpdates=False)
+        
+    intPoly.updateCoefficientsAll()
     return Int.Integral(poly_rationals=[intPoly])
     #return Int.Integral(str(intPoly))
 
@@ -81,7 +84,63 @@ def IntegrateRationalFunction(func): # field=0, func element C(x)
         else:
             return IntegratePolynomialPart(poly)+IntegrateRationalFunction(rem/func.denominator)
     if func.denominator.isSquareFree():
-        if func.denominator.degree>2:
+        a = func.numerator
+        b = func.denominator
+        bp = b.differentiate()
+        
+        zExtension = FE.FieldExtension(FE.TRANSCENDENTAL_SYMBOL,1,"z")
+        newFieldTower = FE.FieldTower(zExtension)
+        
+        coeffsA = []
+        Adeg = max(a.degree,bp.degree)   
+        for i in range(Adeg+1):
+            polZ = Pol.Polynomial([a.getCoefficient(i),bp.getCoefficient(i)*(-1)],fieldTower=newFieldTower)
+            coeffsA.append(polZ)
+            
+        b_coeffs = b.getCoefficients()
+        coeffsB = []
+        for bc in b_coeffs:
+            coeffsB.append(Pol.Polynomial([bc],fieldTower=newFieldTower))
+        res = Resultant(coeffsA, coeffsB) # res_T (a-z*b',b)
+        if res!=0:
+            primitivePart = res.makeMonic()
+        if res==0 or res.isZero():
+            primitivePart = 0
+                
+        sqrfreeFact = primitivePart.factorSquareFree()
+        integral = Int.Integral()
+        zExtension = FE.FieldExtension(FE.TRANSCENDENTAL_SYMBOL,1,"z")
+        newFieldTower = FE.FieldTower(zExtension)
+        
+        # gcd_x(a-z*b',b)
+        """coeffsA = []
+        Adeg = max(a.degree,bp.degree)   
+        for i in range(Adeg+1):
+            polZ = Pol.Polynomial([a.getCoefficient(i),bp.getCoefficient(i)*(-1)],fieldTower=newFieldTower)
+            coeffsA.append(polZ)
+            
+        b_coeffs = b.getCoefficients()
+        coeffsB = []
+        for bc in b_coeffs:
+            coeffsB.append(Pol.Polynomial([bc],fieldTower=newFieldTower))
+        v = Pol._PolyGCD(coeffsA, coeffsB)"""
+        
+        for fac in sqrfreeFact:
+            if fac[0]==1:
+                continue
+            d = fac[0].degree
+            if d<=2:
+                roots = fac[0].getRoots()
+                for c in roots:
+                    v = Pol.PolyGCD(a+(-c)*bp, b)
+                    log = Int.LogFunction(v,c)
+                    integral += Int.Integral(logs=[log])
+            else:
+                raise NotImplementedError()
+        return integral
+                
+        #roots = primitivePart.getRoots()
+        """if func.denominator.degree>2:
             poly = func.denominator
             coeff_rat = func.numerator/func.denominator.differentiate()
             coeff_str = coeff_rat.strCustomVar("y")
@@ -115,7 +174,7 @@ def IntegrateRationalFunction(func): # field=0, func element C(x)
             one = Pol.Polynomial([1])
             a = Rat.RationalFunction(one,denomA)
             b = Rat.RationalFunction(one,denomB)
-            return IntegrateRationalFunction(a*A)+IntegrateRationalFunction(b*B)
+            return IntegrateRationalFunction(a*A)+IntegrateRationalFunction(b*B)"""
     else:
         return HermiteReduction(func)
     
@@ -212,7 +271,8 @@ def IntegratePolynomialPartLogExt(poly, fieldTower):
     
     integralPoly = Pol.Polynomial(fieldTower=fieldTower)
     for i in range(l+1,-1,-1):
-        integralPoly.setCoefficient(q[i], i)
+        integralPoly.setCoefficient(q[i], i,callUpdates=False)
+    integralPoly.updateCoefficientsAll()
         
     return Int.Integral(poly_rationals=[integralPoly])
 
@@ -325,8 +385,20 @@ def IntegratePolynomialPartExpExt(func, fieldTower):
     red = func.reduceToLowestPossibleFieldTower()
     if red.fieldTower.towerHeight<fieldTower.towerHeight:
         return Integrate(red)
-    
-    raise NotImplementedError()
+    #q = [0]*(func.degree+1)
+    up = fieldTower.getLastExtension().characteristicFunction.differentiate()
+    integralPoly = Pol.Polynomial(fieldTower=fieldTower)
+    for i in range(1,func.degree+1):
+        s = RischEquation.solveRischEquation(i*up, func.getCoefficient(i), fieldTower.prevTower())
+        if s==None:
+            raise Int.IntegralNotElementaryError()
+        integralPoly.setCoefficient(s, i,callUpdates=False)
+    integralPoly.updateCoefficientsAll()
+    q0 = Integrate(func.getCoefficient(0))
+    integral = Int.Integral(poly_rationals=[integralPoly])+q0
+    return integral
+        
+    #raise NotImplementedError()
 def IntegrateRationalPartExpExt(func, fieldTower):
     if func.numerator==0 or func.numerator.isZero():
         return Int.Integral()
@@ -399,12 +471,15 @@ def IntegrateRationalPartExpExt(func, fieldTower):
         roots = primitivePart.getRoots()
         vfunc = []
         for c in roots:
-            vfunc.append(Pol.PolyGCD(a+bp*(-c), b))
+            x = a+bp*(-c)
+            vfunc.append(Pol.PolyGCD(x, b))
         intPart = Int.Integral()
         for (c,v) in zip(roots,vfunc):
             logExpr = Int.LogFunction(v,c)
             intPart += Int.Integral(logs=[logExpr])
-            polyPart = (-c)*v.degree*fieldTower.getLastExtension().characteristicFunction
+            vd = v.degree
+            k = c*vd*(-1)
+            polyPart = k*fieldTower.getLastExtension().characteristicFunction
             intPart += Int.Integral(poly_rationals=[polyPart])
         integral += intPart
     
@@ -422,7 +497,7 @@ def logExpression(arg):
 def printIntegral(func,fieldTower=None):
     integral = Integrate(func)#, fieldTower)
     if integral!=None:
-        integral.combine_rationals()
+        integral.simplify()
     return "Integral is not elementary" if integral==None else integral.printFull()+"  + C"
 def integratetest(expected, got):
     return "integratetest: should be {}, got {}".format(expected, got)

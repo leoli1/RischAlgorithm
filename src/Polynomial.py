@@ -12,6 +12,15 @@ from FieldExtension import fieldTower
 from Parse import parseExpressionFromStr
 import Number
 
+
+def call_counter(func):
+    def helper(*args, **kwargs):
+        helper.calls += 1
+        return func(*args, **kwargs)
+    helper.calls = 0
+    helper.__name__= func.__name__
+    return helper
+
 if "derivativecalled" not in dir() and "squarefreecalled" not in dir() and "gcdcalls" not in dir():
     derivativecalled = {}
     squarefreecalled = {}
@@ -40,16 +49,19 @@ class Polynomial(object):
                 raise TypeError("coefficients argument must be either None or a list.")
             self._coefficients = coefficients
         
-        self.updateCoefficients()
-        self.updateCoefficientsFields()
+        if self._coefficients!=[0]:
+            self.updateCoefficientsAll()
         self.derivativecalled = 0
         
     # ========================================== Coefficients stuff =========================================
-    def setCoefficient(self, coeff, power): # coefficient of T^power
+    def setCoefficient(self, coeff, power,callUpdates=True): # coefficient of T^power
         if power>self.degree:
             self._coefficients += [0]*(power-self.degree)
         self._coefficients[power] = coeff
         
+        if callUpdates:
+            self.updateCoefficientsAll()
+    def updateCoefficientsAll(self):
         self.updateCoefficients()
         self.updateCoefficientsFields()
         
@@ -68,8 +80,7 @@ class Polynomial(object):
         for i in range(len(coeffs)):
             self._coefficients[i] = coeffs[i]
         
-        self.updateCoefficients()
-        self.updateCoefficientsFields()
+        self.updateCoefficientsAll()
         
     def getCoefficients(self):
         return self._coefficients
@@ -77,6 +88,7 @@ class Polynomial(object):
     def coeffIsZero(self, power):
         return objEqualsNumber(self.getCoefficient(power),0)
     
+    @call_counter
     def updateCoefficients(self):
         """
         Removes leading coefficients equal to Zero
@@ -87,7 +99,7 @@ class Polynomial(object):
                 newDeg = i
                 break
         self._coefficients = self._coefficients[0:newDeg+1]
-        
+    @call_counter    
     def updateCoefficientsFields(self):   # if fieldTower=C(x,T1,...TN), makes coefficients elements of C(x,T1,...T(N-1))
         fieldTower = self.fieldTower
         for i in range(len(self._coefficients)):
@@ -181,12 +193,12 @@ class Polynomial(object):
     # ========================================== Mixed stuff =========================================
     @property
     def degree(self):
-        self.updateCoefficients()
+        #self.updateCoefficients()
         return len(self.getCoefficients())-1#-1 if self.isZero() else len(self.getCoefficients())-1
     
     @property
     def lowestDegree(self):
-        for i in range(self.degree):
+        for i in range(self.degree+1):
             if not self.coeffIsZero(i):
                 return i
         return 0
@@ -211,12 +223,15 @@ class Polynomial(object):
             sum += self.getCoefficient(i)*(val**i)
         return sum
     
+    def hasRationalRoots(self):
+        pass # TODO
+    
     def getRoots(self):
         coeffs = self.getConstantCoefficients()
         if coeffs==None:
-            return NotImplementedError()
+            raise NotImplementedError()
         if self.degree>2:
-            return NotImplementedError()
+            raise NotImplementedError()
         
         if self.degree==1:
             return [-coeffs[0]/coeffs[1]]
@@ -224,7 +239,8 @@ class Polynomial(object):
             a = coeffs[2]
             p = coeffs[1]/a
             q = coeffs[0]/a
-            disc = Number.sqrt((p/2)**2-q)
+            rad = (p/2)**2-q
+            disc = Number.sqrt(rad)
             zero0 = -p/2+disc
             zero1 = -p/2-disc
             return [zero0,zero1]
@@ -256,7 +272,7 @@ class Polynomial(object):
         if r==None:
             return self
         else:
-            return r
+            return r.reduceToLowestPossibleFieldTower()
     def isLowestFieldTower(self):
         r = self.reduceToFieldTower(self.fieldTower.prevTower())
         return r==None
@@ -317,7 +333,7 @@ class Polynomial(object):
                 
             if fieldExtension==None:
                 if i>0:
-                    dPoly.setCoefficient(p*i, i-1)
+                    dPoly.setCoefficient(p*i, i-1,callUpdates=False)
             elif fieldExtension.extensionType==FE.TRANS_EXP: # (p*T^i)'=p'T^i+p*i*T'*T^(i-1) = p'T^i+i*p*u'*T^i since T'=u'T
                 dPoly += Monomial(i, p.differentiate(), fieldTower=fieldTower)
                 dPoly += i*Monomial(i,p*uP,fieldTower=fieldTower)
@@ -331,6 +347,12 @@ class Polynomial(object):
         #        return Polynomial([dPoly],fieldTower=fieldTower)
         #    else:
         #        return dPoly.numerator
+        dPoly.updateCoefficientsAll()
+        if not isPoly(dPoly):
+            if dPoly.fieldTower.isExtendedTowerOf(fieldTower):
+                return Polynomial([dPoly],fieldTower=fieldTower)
+            else:
+                return dPoly.numerator/dPoly.denominator
         return dPoly
     
     def differentiateWRTtoPolyVar(self):
@@ -342,13 +364,14 @@ class Polynomial(object):
         dPoly = Polynomial(fieldTower=self.getFieldTower())
         for i in range(self.degree,0,-1):
             p = self.getCoefficient(i)
-            dPoly.setCoefficient(p*i, i-1)
+            dPoly.setCoefficient(p*i, i-1,callUpdates=False)
+        dPoly.updateCoefficientsAll()
         return dPoly
     # ========================================== Arithmetic stuff =========================================
     def __radd__(self, other):
         return self.__add__(other)
     def __add__(self, other):
-        if other==0:
+        if id(other)==id(0):
             return self
         if type(other)==Rat.RationalFunction:
             return other.__add__(self)
@@ -356,7 +379,7 @@ class Polynomial(object):
             deg0Part = self.getCoefficient(0)
             tPoly = Polynomial(fieldTower=self.getFieldTower())
             for i in range(self.degree,0,-1):
-                tPoly.setCoefficient(self.getCoefficient(i), i)
+                tPoly.setCoefficient(self.getCoefficient(i), i,callUpdates=False)
             tPoly.setCoefficient(deg0Part+other,0)
             return tPoly
         if (self.fieldTower!=other.fieldTower):
@@ -373,7 +396,8 @@ class Polynomial(object):
         for i in range(tDeg,-1,-1):
             a = self.getCoefficient(i)
             b = other.getCoefficient(i)
-            tPoly.setCoefficient(a+b, i)
+            tPoly.setCoefficient(a+b, i,callUpdates=False)
+        tPoly.updateCoefficientsAll()
         return tPoly
     
     def __sub__(self, other):
@@ -381,14 +405,15 @@ class Polynomial(object):
     def __rmul__(self, other):
         return self.__mul__(other)
     def __mul__(self, other):
-        #if other==1:
-        #    return self
+        if id(other)==id(1):
+            return self
         #if other==0:
         #    return 0
         if isNumber(other):
             tPoly = Polynomial(fieldTower=self.getFieldTower())
             for i in range(self.degree,-1,-1):
-                tPoly.setCoefficient(self.getCoefficient(i)*other, i)
+                tPoly.setCoefficient(self.getCoefficient(i)*other, i,callUpdates=False)
+            tPoly.updateCoefficientsAll()
             return tPoly
             #raise Exception("??")
         if type(other) == Rat.RationalFunction:
@@ -411,8 +436,9 @@ class Polynomial(object):
                 a = self.getCoefficient(j)
                 b = other.getCoefficient(i-j)
                 newCoeff += a*b
-            tPoly.setCoefficient(newCoeff, i)
+            tPoly.setCoefficient(newCoeff, i,callUpdates=False)
             
+        tPoly.updateCoefficientsAll()            
         return tPoly
     
     def __rtruediv__(self, other): # other/self
@@ -420,11 +446,19 @@ class Polynomial(object):
     def __truediv__(self, other): # self/other
         if isNumber(other):
             return self.__mul__(1/other)
+        if type(other) is Rat.RationalFunction:
+            if other.fieldTower.towerHeight<self.fieldTower.towerHeight:
+                return self.__mul__(Polynomial([other.Inverse()],self.fieldTower))
+            else:
+                return self.__mul__(other.Inverse())
         (quot,rem)= PolyDiv(self, other)
         if rem==0:
             return quot
         
-        return Rat.RationalFunction(self,other)
+        x = Rat.RationalFunction(self,other)
+        if x.denominator==1:
+            return x.numerator
+        return x
         
     def __pow__(self, other):
         if not isNumber(other) or int(other)!=other or other<0:
@@ -433,6 +467,9 @@ class Polynomial(object):
             return 1
         return (self**(other-1))*self
     
+    def __neg__(self):
+        return (-1)*self
+    
     # ========================================== Object comparison =========================================
     def __eq__(self, other):
         if other==None:
@@ -440,7 +477,8 @@ class Polynomial(object):
         return polyEqual(self, other)
     def __ne__(self, other):
         return not self.__eq__(other)
-
+    def __hash__(self):
+        return self.__str__()
     # ========================================== String output =========================================
     def getVariable(self):
         return "x" if self.getFieldTower().towerHeight==0 else self.getFieldExtension().variable
@@ -462,7 +500,11 @@ class Polynomial(object):
                     coeff = str(coeff_v)
                 elif not isNumber(coeff_v) and coeff_v.isConstant():# and coeff_v.getConstant()>0:
                     if coeff_v.getConstant()!=1 or i==0:
-                        coeff = str(coeff_v.getConstant())
+                        c = coeff_v.getConstant()
+                        if type(c)==Number.SqrRootPolynomial and c.a!=0:
+                            coeff = "("+str(c)+")"
+                        else:
+                            coeff = str(coeff_v.getConstant())
                 #elif isNumber(coeff_v):
                 #    coeff = "({})".format(str(coeff_v))
                 else:
@@ -544,6 +586,13 @@ def PolyDiv(polA, polB):
             return PolyDiv(Polynomial([polA],fieldTower=polB.fieldTower), polB)
         else:
             raise Exception()
+      
+    (s,r) = _PolyDiv(polA._coefficients, polB._coefficients)
+    s = 0 if s==0 else Polynomial(s,polA.fieldTower)
+    r = 0 if r==0 else  Polynomial(r,polA.fieldTower)
+    return (s,r)
+    """
+     
     '''if polB==1:
         return (polA,0)
     if (polA.fieldTower!=polB.fieldTower):
@@ -589,13 +638,43 @@ def PolyDiv(polA, polB):
     
     else:
         (quot,remainder) = PolyDiv(newA,polB)
-        return (monomial+quot,remainder)
-    
+        return (monomial+quot,remainder)"""
+@call_counter   
+def _PolyDiv(coeffsA, coeffsB):
+    degA = len(coeffsA)-1
+    degB = len(coeffsB)-1
+    if degA<degB:
+        return ([0],coeffsA)
+    power = degA-degB
+    coeff = coeffsA[-1]/coeffsB[-1]
+    if isNumber(coeffsB[-1]):
+        coeff = coeffsA[-1]/coeffsB[-1]
+    else:
+        if isPoly(coeffsB[-1]):
+            coeff = coeffsA[-1]*coeffsB[-1].asRational().Inverse()
+        else:
+            coeff = coeffsA[-1]*coeffsB[-1].Inverse()
+    monomial = [0]*power+[coeff] 
+    sub = mulListWithList(monomial,mulObjectToListElements(-1,coeffsB))
+    newA = addListToList(sub, coeffsA)
+    newA = newA[0:len(newA)-1]
+    if listIsZero(newA):
+        return (monomial,0)
+    else:
+        (quot, remainder)  = _PolyDiv(newA, coeffsB)
+        return (addListToList(quot,monomial),remainder)
+@call_counter     
 def PolyGCD(polA,polB):
     """
     calculates gcd(polA,polB) (monic)
     """
-    if polB==0:
+    g = _PolyGCD(polA._coefficients, polB._coefficients)
+    if len(g)==1:
+        return 1
+    else:
+        p = Polynomial(g,polA.fieldTower)
+        return p.makeMonic()
+    """if polB==0:
         return polA
     if polA==0:
         return polB
@@ -616,7 +695,22 @@ def PolyGCD(polA,polB):
         else:
             return gcd
     else:
-        return 1
+        return 1"""
+@call_counter
+def _PolyGCD(coeffsA, coeffsB):
+    if listIsZero(coeffsA):
+        return coeffsB
+    if listIsZero(coeffsB):
+        return coeffsA
+    degA = len(coeffsA)-1
+    degB = len(coeffsB)-1
+    (A,B) = (coeffsA,coeffsB) if degA>=degB else (coeffsB,coeffsA)
+    (s,r) = _PolyDiv(A, B)
+    r = 0 if r==0 else listStripZeros(r)
+    if r==0 or listIsZero(r):
+        return B
+    gcd = _PolyGCD(B,r)
+    return gcd
 
 def __extendedEuclid(p,q):
     """

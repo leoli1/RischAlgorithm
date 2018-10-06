@@ -13,14 +13,15 @@ class RationalFunction(object):
         self.numerator = numerator
         self.denominator = denominator
         
-        if type(self.numerator)==RationalFunction:
-            tempNum = self.numerator
-            self.numerator = self.numerator.numerator
-            self.denominator = self.denominator*tempNum.denominator
-        if type(self.denominator)==RationalFunction:
-            tempDenom = self.denominator
-            self.numerator = self.numerator*self.denominator.denominator
-            self.denominator = tempDenom.numerator
+        while type(self.numerator) is RationalFunction or type(self.denominator) is RationalFunction:
+            if type(self.numerator)==RationalFunction:
+                tempNum = self.numerator
+                self.numerator = self.numerator.numerator
+                self.denominator = self.denominator*tempNum.denominator
+            if type(self.denominator)==RationalFunction:
+                tempDenom = self.denominator
+                self.numerator = self.numerator*self.denominator.denominator
+                self.denominator = tempDenom.numerator
         
         if isNumber(self.numerator):
             if isNumber(denominator):
@@ -134,6 +135,10 @@ class RationalFunction(object):
         return RationalFunction(dp*q+(-1)*p*dq,q*q)# (p/q)' = (p'q-pq')/(q^2)
     
     # ========================================== Arithmetic stuff =========================================
+    def updateCoefficientsAll(self):
+        self.numerator.updateCoefficientsAll()
+        self.denominator.updateCoefficientsAll()
+        
     def Inverse(self):
         return RationalFunction(self.denominator,self.numerator)
     def makeDenominatorMonic(self):
@@ -158,6 +163,16 @@ class RationalFunction(object):
             self.numerator = self.numerator/lcoeff_poly
         self.denominator = self.denominator/lcoeff_poly
         
+    def asPolynomial(self):
+        self.numerator.simplifyCoefficients()
+        self.denominator.simplifyCoefficients()
+        c = self.denominator.getConstant()
+        if c==None:
+            denom = self.denominator.reduceToLowestPossibleFieldTower()
+            if denom.fieldTower.towerHeight<self.numerator.fieldTower.towerHeight:
+                return self.numerator/denom
+            return None
+        return self.numerator*(1/c)
     def PartialFraction(self, denomFactorization):
         return Pol.PartialFractionWithPowerFactorization(self.numerator, denomFactorization)
     
@@ -169,8 +184,8 @@ class RationalFunction(object):
     def __radd__(self, other):
         return self.__add__(other)
     def __add__(self, other):
-        if other==0:
-            return self
+        #if other==0:
+        #    return self
         if isNumber(other):
             return self.__add__(Pol.Polynomial([other],fieldTower=self.fieldTower))
         if other.isZero():
@@ -199,19 +214,24 @@ class RationalFunction(object):
         den = self.denominator*other.denominator
         return RationalFunction(num,den)
     
-    """ def __truediv__(self, other):
+    def __neg__(self):
+        return (-1)*self
+    def __truediv__(self, other):
         if isNumber(other):
             return self.__mul__(1/other)
         if isPoly(other):
             return self.__truediv__(other.asRational())
-        newNum = """
+        newNum = self.numerator*other.denominator
+        newDenom = self.denominator*other.numerator
+        return RationalFunction(newNum,newDenom)
     def __eq__(self, other):
         if other==None:
             return False
         return (self+(-1)*other).isZero()
     def __ne__(self, other):
         return not self.__eq__(other)
-    
+    def __hash__(self):
+        return self.__str__()
     # ========================================== String output =========================================
     def __str__(self):
         out = ""

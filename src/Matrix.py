@@ -4,7 +4,8 @@ Created on 28.09.2018
 @author: Leonard
 '''
 from __future__ import division
-from Utils import isNumber, argmax
+from Utils import *
+import RationalFunction as Rat
 
 class QuadMatrix(object):
     """
@@ -35,9 +36,36 @@ class QuadMatrix(object):
         
     
     def determinant(self):
-        return self.determinantLaplace()
+        return self.determinantGauss()#self.determinantLaplace()
     def determinantGauss(self):
-        pass
+        if self.size==1:
+            return self.getElement(0, 0)
+        factor = 1
+        #i_max  = argmax(list(map(abs,[self.getElement(i, 0) for i in range(self.size)])))
+        i_max = 0
+        for i in range(self.size):
+            if self.getElement(i,0)!=0:
+                i_max = i
+                break
+        M = self.copy()
+        if self.getElement(i_max, 0)==0:
+            return 0
+        else:
+            M.swapRows(0,i_max)
+            if i_max!=0:
+                factor *= (-1)
+            subM = M.getSubMatrix(0, 0)
+            mainRow = M.getRow(0)[1:self.size]
+            lcoeff = M.getElement(0, 0)
+            for i in range(1,self.size):
+                f = -M.getElement(i, 0)/lcoeff
+                s = mulObjectToListElements(f, mainRow)
+                newRow = addListToList(subM.getRow(i-1), s)
+                subM.setRow(i-1,newRow)
+            return M.getElement(0, 0)*subM.determinantGauss()*factor
+            #(subTri, vecn) = subM.getTriangularMatrix(vec[1:self.size])
+            
+            
     def determinantLaplace(self): # determinant calculation using laplace theorem, complexity = O(n!) (n=size)
         if self.size==1:
             return self.getElement(0,0)
@@ -72,7 +100,7 @@ class QuadMatrix(object):
         M = self.copy()
         subM = self.getSubMatrix(0, 0)
         i_max  = argmax(list(map(abs,[self.getElement(i, 0) for i in range(self.size)])))
-        if self.getElement(i, 0)==0:
+        if self.getElement(i_max, 0)==0:
             (subTri, vecn) = subM.getTriangularMatrix(vec[1:self.size])
             vec = [vec[0]]+vecn
         else:
@@ -85,8 +113,8 @@ class QuadMatrix(object):
             lcoeff = M.getElement(0, 0)
             for i in range(1,self.size):
                 f = -M.getElement(i, 0)/lcoeff
-                s = _mulObjectToListElements(f, mainRow)
-                newRow = _addListToList(subM.getRow(i-1), s)
+                s = mulObjectToListElements(f, mainRow)
+                newRow = addListToList(subM.getRow(i-1), s)
                 subM.setRow(i-1,newRow)
                 vec[i] += vec[0]*f
             (subTri, vecn) = subM.getTriangularMatrix(vec[1:self.size])
@@ -194,7 +222,13 @@ def Resultant(coeffsA,coeffsB):
         
     if len(coeffsA)==0 or len(coeffsB)==0:
         raise Exception()
-    return SylvesterMatrix(coeffsA,coeffsB).determinant()
+    sylv = SylvesterMatrix(coeffsA,coeffsB)
+    res = timeMethod(sylv.determinant)
+    if type(res) is Rat.RationalFunction:
+        r = res.asPolynomial()
+        if r!=None:
+            return r
+    return res
             
 def solveLinearSystem(coeffs, vec):
     (tri, vec) = coeffs.getTriangularMatrix(vec)
@@ -204,7 +238,7 @@ def solveLinearSystem(coeffs, vec):
         return None # last row : 0 0 0 ... 0 | x, x!=0 => no solution
     unique = True
     for i in range(n):
-        if tri.getElement(n-1-1,n-1-i):
+        if tri.getElement(n-1-i,n-1-i)==0:
             xs.append(1)
             unique = False
             continue
@@ -215,28 +249,6 @@ def solveLinearSystem(coeffs, vec):
         xs.append(d/tri.getElement(n-1-i,n-1-i))
     return (_reverseList(xs), unique)
     
-    
-def _addListToList(l1, l2):
-    """
-    l1 = [a1,a2,...,an]
-    l1 = [b1,b2,...,bn]
-    returns [a1+b1,a2+b2,...,an+b2]
-    """
-    if len(l1)!=len(l2):
-        raise Exception()
-    nl = []
-    for i in range(len(l1)):
-        nl.append(l1[i]+l2[i])
-    return nl
-def _mulObjectToListElements(el, l):
-    """
-    l = [a1,a2,...,an]
-    returns [a1*el,a2*el,...,an*el]
-    """
-    nl = []
-    for e in l:
-        nl.append(e*el)
-    return nl
 
 def _reverseList(a):
     b = []
@@ -248,7 +260,7 @@ def matrixtest(expected, got):
     print("matrixtest: should be {}, got {}".got(expected,got))
 if __name__ == '__main__':
     from Number import Rational
-    """"M = QuadMatrix(4)
+    """ M = QuadMatrix(4)
     M.setElement(2,3,42)
     M.setElement(3,1,-1)
     M.setElement(3,3,2)
@@ -258,16 +270,15 @@ if __name__ == '__main__':
     print(M)
     print(M.copy())
     print(M.getSubMatrix(2, 3))
-    print("-----")
+    print("-----")"""
     A = QuadMatrix(2,data=[[3,2],[43,101]])
-    print(A.getElement(1,0))
-    print(A)
-    print(A.determinant())
+    #print(A)
+    print(A.determinant()) # 217
     B = QuadMatrix(3,data=[[-2,2,-3],[-1,1,3],[2,0,1]])
-    print(B.determinant())"""
+    print(B.determinant()) # 18
     C = SylvesterMatrix([-2,-1,1,3,3],[5,1,-3,1])
-    print(C)
-    print(Resultant([-2,-1,1,3,3],[5,1,-3,1]))
+    #print(C)
+    print(Resultant([-2,-1,1,3,3],[5,1,-3,1])) # 0
     
     M = QuadMatrix(3,data=[[2,1,-1],[-3,-1,2],[-2,1,2]])
     #print(M.getTriangularMatrix([8,-11,-3]))
@@ -279,3 +290,6 @@ if __name__ == '__main__':
     
     M = QuadMatrix(2,data=[[1,1],[2,2]])
     print(solveLinearSystem(M, [1,2]))
+    
+    M = QuadMatrix(4,data=[[3,5,-1,0],[0,2,0,3],[-1,-2,0,1],[3,3,1,2]])
+    print(M.determinant())
