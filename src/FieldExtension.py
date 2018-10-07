@@ -48,6 +48,13 @@ class FieldExtension(object):
         self.characteristicFunction = characteristicFunction # = u
         self.variable = variable
         
+        
+    def __eq__(self, other):
+        if type(other)!=FieldExtension:
+            return False
+        return self.extensionType==other.extensionType and self.characteristicFunction==other.characteristicFunction
+    def __ne__(self, other):
+        return not self.__eq__(other)
     def getFVar(self):
         return "exp" if self.extensionType==TRANS_EXP else ("log" if self.extensionType==TRANS_LOG else "")
     def __str__(self):

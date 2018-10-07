@@ -171,6 +171,9 @@ class RationalFunction(object):
             denom = self.denominator.reduceToLowestPossibleFieldTower()
             if denom.fieldTower.towerHeight<self.numerator.fieldTower.towerHeight:
                 return self.numerator/denom
+            (q,r) = Pol.PolyDiv(self.numerator, self.denominator)
+            if r==0:
+                return q
             return None
         return self.numerator*(1/c)
     def PartialFraction(self, denomFactorization):

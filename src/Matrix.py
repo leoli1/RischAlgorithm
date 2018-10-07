@@ -59,10 +59,17 @@ class QuadMatrix(object):
             lcoeff = M.getElement(0, 0)
             for i in range(1,self.size):
                 f = -M.getElement(i, 0)/lcoeff
+                if type(f) is Rat.RationalFunction:
+                    f.makeDenominatorMonicInPlace()
                 s = mulObjectToListElements(f, mainRow)
                 newRow = addListToList(subM.getRow(i-1), s)
                 subM.setRow(i-1,newRow)
-            return M.getElement(0, 0)*subM.determinantGauss()*factor
+            r = M.getElement(0, 0)*subM.determinantGauss()*factor
+            if type(r)is Rat.RationalFunction:
+                p = r.asPolynomial()
+                if p!=None:
+                    return p
+            return r
             #(subTri, vecn) = subM.getTriangularMatrix(vec[1:self.size])
             
             

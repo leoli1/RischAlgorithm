@@ -57,7 +57,7 @@ def timeMethod(method):
     a = time.time()
     out = method()
     b = time.time()
-    print("{}: {}".format(method,b-a))
+    #print("{}: {}".format(method,b-a))
     return out
 
 def addListToList(l1, l2):

@@ -28,7 +28,7 @@ if "derivativecalled" not in dir() and "squarefreecalled" not in dir() and "gcdc
     
 class Polynomial(object):
     
-    def __init__(self, coefficients=None, fieldTower=None):
+    def __init__(self, coefficients=None, fieldTower=None, callUpdateCoeffs=True):
         """
         fieldTower = C(x,T1,T2,...,TN)
         polynomial in C(x,T1,T2,...T(N-1))[TN]
@@ -49,7 +49,7 @@ class Polynomial(object):
                 raise TypeError("coefficients argument must be either None or a list.")
             self._coefficients = coefficients
         
-        if self._coefficients!=[0]:
+        if self._coefficients!=[0] and callUpdateCoeffs:
             self.updateCoefficientsAll()
         self.derivativecalled = 0
         
@@ -216,15 +216,33 @@ class Polynomial(object):
         return self/poly
     
     def evaluate(self, val):
-        if self.getFieldTower().towerHeight!=0:
-            raise Exception()
+        #if self.getFieldTower().towerHeight!=0:
+        #    raise Exception()
         sum = 0
         for i in range(self.degree+1):
             sum += self.getCoefficient(i)*(val**i)
         return sum
     
     def hasRationalRoots(self):
-        pass # TODO
+        return len(self.getAllRationalRoots())>0
+    
+    def getRationalRoots(self):
+        coeffs = self.getConstantCoefficients()
+        lcm = Number.NumberLCMList([(x._q if type(x)==Number.Rational else (1 if isInt(x) else Number.Rational.fromFloat(x)._q)) for x in coeffs])
+        newCoeffs = mulObjectToListElements(lcm, coeffs)
+        lc = newCoeffs[len(coeffs)-1]
+        ac = newCoeffs[0]
+        ps = Number.getAllDivisors(int(abs(ac)))
+        qs = Number.getAllDivisors(int(abs(lc)))
+        roots = []
+        for p in ps+map(lambda x: -x, ps):
+            for q in qs:
+                x = Number.Rational(p,q)
+                v = self.evaluate(x)
+                if v==0:
+                    if x not in roots:
+                        roots.append(x)
+        return roots
     
     def getRoots(self):
         coeffs = self.getConstantCoefficients()
@@ -380,7 +398,7 @@ class Polynomial(object):
             tPoly = Polynomial(fieldTower=self.getFieldTower())
             for i in range(self.degree,0,-1):
                 tPoly.setCoefficient(self.getCoefficient(i), i,callUpdates=False)
-            tPoly.setCoefficient(deg0Part+other,0)
+            tPoly.setCoefficient(deg0Part+other,0,callUpdates=False)
             return tPoly
         if (self.fieldTower!=other.fieldTower):
             if self.fieldTower.isExtendedTowerOf(other.fieldTower):
@@ -413,7 +431,7 @@ class Polynomial(object):
             tPoly = Polynomial(fieldTower=self.getFieldTower())
             for i in range(self.degree,-1,-1):
                 tPoly.setCoefficient(self.getCoefficient(i)*other, i,callUpdates=False)
-            tPoly.updateCoefficientsAll()
+            #tPoly.updateCoefficientsAll()
             return tPoly
             #raise Exception("??")
         if type(other) == Rat.RationalFunction:
@@ -444,6 +462,8 @@ class Polynomial(object):
     def __rtruediv__(self, other): # other/self
         return Rat.RationalFunction(other,self)
     def __truediv__(self, other): # self/other
+        if self.isZero():
+            return self
         if isNumber(other):
             return self.__mul__(1/other)
         if type(other) is Rat.RationalFunction:
@@ -459,6 +479,10 @@ class Polynomial(object):
         if x.denominator==1:
             return x.numerator
         return x
+    
+    def isMultipleOf(self, other):
+        (s,r) = PolyDiv(self, other)
+        return r==0 or r.isZero()
         
     def __pow__(self, other):
         if not isNumber(other) or int(other)!=other or other<0:

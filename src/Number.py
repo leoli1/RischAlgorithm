@@ -237,8 +237,17 @@ def NumberGCD(a,b):
         return B
     else:
         return NumberGCD(B,r)
+def NumberGCDList(l):
+    if len(l)==2:
+        return NumberGCD(l[0], l[1])
+    return NumberGCD(l[0],NumberGCDList(l[1:len(l)]))
+
 def NumberLCM(a,b):
     return a*b/NumberGCD(a, b)
+def NumberLCMList(l):
+    if len(l)==2:
+        return NumberLCM(l[0], l[1])
+    return NumberLCM(l[0],NumberLCMList(l[1:len(l)]))
 ONE = Rational(1,1)
 ZERO = Rational(0,1)
 
@@ -265,6 +274,18 @@ def sqrt(x):
         r = x
     return SqrRootPolynomial(r,0,f)
 
+def getAllDivisors(n):
+    r = int(n**0.5)
+    step = 2 if n%2 else 1
+    a = []
+    b = []
+    for i in xrange(1,r+1,step):
+        if n%i==0:
+            a.append(i)
+            if i!=r:
+                b.append(n//i)
+    return a+list(reversed(b))
+
 if __name__=='__main__':
     a = Rational(12,8)
     b = Rational(5,4)
@@ -275,3 +296,5 @@ if __name__=='__main__':
     print(5+2*sqrt(5))
     print(sqrt(4/5))
     print((1+2*sqrt(-3))/sqrt(-3))
+    print(getAllDivisors(120))
+    print(NumberLCMList([2,3,4]))
