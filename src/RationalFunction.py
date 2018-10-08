@@ -10,6 +10,11 @@ from Utils import *
 
 class RationalFunction(object):
     def __init__(self, numerator, denominator):
+        
+        self.__derivative = None
+        self.__logDerivative = None
+         
+         
         self.numerator = numerator
         self.denominator = denominator
         
@@ -132,7 +137,14 @@ class RationalFunction(object):
         else:
             dq = q.differentiate()
             
-        return RationalFunction(dp*q+(-1)*p*dq,q*q)# (p/q)' = (p'q-pq')/(q^2)
+        self.__derivative = RationalFunction(dp*q+(-1)*p*dq,q*q)
+            
+        return self.__derivative# (p/q)' = (p'q-pq')/(q^2)
+    def logDifferentiate(self):
+        if id(self.__logDerivative)!=id(None):
+            return self.__logDerivative
+        self.__logDerivative = self.differentiate()/self
+        return self.__logDerivative
     
     # ========================================== Arithmetic stuff =========================================
     def updateCoefficientsAll(self):
@@ -184,12 +196,18 @@ class RationalFunction(object):
             self.numerator.replaceNumbersWithRationals()
         if not isNumber(self.denominator):
             self.denominator.replaceNumbersWithRationals()
+            
+    def completeEvaluate(self, val):
+        return self.numerator.completeEvaluate(val)/self.denominator.completeEvaluate(val)
+    
     def __radd__(self, other):
         return self.__add__(other)
     def __add__(self, other):
         #if other==0:
         #    return self
         if isNumber(other):
+            if other==0:
+                return self
             return self.__add__(Pol.Polynomial([other],fieldTower=self.fieldTower))
         if other.isZero():
             return self
@@ -209,6 +227,10 @@ class RationalFunction(object):
         #if other==0:
         #    return 0
         if isNumber(other):
+            if other==0:
+                return 0
+            elif other==1:
+                return self
             return RationalFunction(self.numerator*other,self.denominator)
 
         if type(other)==Pol.Polynomial or isPoly(other):
@@ -227,6 +249,12 @@ class RationalFunction(object):
         newNum = self.numerator*other.denominator
         newDenom = self.denominator*other.numerator
         return RationalFunction(newNum,newDenom)
+    
+    def isConstantMultipleOf(self, other):
+        c = (self/other).getConstant()
+        return False if c==None else c
+    
+    
     def __eq__(self, other):
         if other==None:
             return False

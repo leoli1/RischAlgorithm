@@ -7,6 +7,8 @@ from __future__ import division
 from Matrix import QuadMatrix
 import Polynomial as Pol
 import RationalFunction as Rat
+import FieldExtension as FE
+from Number import Rational
 
 def solveRischEquation(p,q, fieldTower):
     if fieldTower.towerHeight>0:
@@ -61,7 +63,66 @@ def __helperSolve(p,q,degree):
         return s + mon
     
     
+def getADBEG(p,q):
+    A = p.numerator
+    D = p.denominator
+    B = q.numerator
+    E = q.denominator
+    
+    G = Pol.PolyGCD(D,E)
+    return (A,D,B,E,G)
 
+def getDenominator(f,g):
+    """
+    Finds the denominator of the solution y of y'+py=q
+    f=A/D, g=B/E, y=Q/T
+    G = gcd(D,E)
+    T = gcd(E,dE/DT)/gcd(G,dG/dT)
+    """
+    (A,D,B,E,G) = getADBEG(f, g)
+    
+    dE_dT = E.differentiateWRTtoPolyVar()
+    dG_dT = G.differentiateWRTtoPolyVar()
+    
+    T = Pol.PolyGCD(E, dE_dT) / Pol.PolyGCD(G,dG_dT)
+    
+    return T
+
+def getNumeratorEquation(f,g):
+    """
+    returns the coefficients of the equation for the numerator of y
+    DTQ' + (AT-DT')Q = BD(T^2)/E
+    returns (a,b,c) with aQ' + bQ = c
+    """
+    (A,D,B,E,G) = getADBEG(f, g)
+    T = getDenominator(f, g)
+    
+    (s,r) = Pol.PolyDiv(D*T*T, E)
+    if r==0 or r.isZero():
+        raise NoRischDESolutionError("E doesn't divide D *T^2")
+    return (D*T, A*T-D*T.differentiate(), B*s)
+
+def getFinalNumeratorEquation(f,g,fieldTower):
+    (a,b,c) = getNumeratorEquation(f, g)
+    k = a.lowestDegree
+    T_pk = Pol.Monomial(k, Rational(1,1), fieldTower=fieldTower)
+    a = a/T_pk
+    b = b/T_pk
+    c = c/T_pk
+    return (a,b,c)
+    #fieldExtension = fieldTower.getLastExtension()
+    #if fieldExtension==None or fieldExtension.extensionType!=FE.TRANS_EXP:
+    #    return (a,b,c)
+    
+def find_m(a,b,c):
+    """
+    finds the smallest number m such that q=T^m * Q el F[Q] (i.e. so that q doesn't contain negative powers, only for exponential extensions)
+    """
+    pass
+
+
+class NoRischDESolutionError(Exception):
+    pass
 if __name__ == '__main__':
     x = Pol.Polynomial([0,1])
     x.replaceNumbersWithRationals()

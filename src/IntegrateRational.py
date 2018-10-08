@@ -12,7 +12,7 @@ import RootSum as RS
 from Utils import *
 
 from Matrix import Resultant
-from Number import sqrt
+from Number import sqrt,Rational
 
 
 def IntegratePolynomialPart(poly):
@@ -108,10 +108,16 @@ def IntegrateRationalFunction(func): # field=0, func element C(x)
             coeffsB.append(Pol.Polynomial([bc],fieldTower=newFieldTower))
         #v = Pol._PolyGCD(coeffsA, coeffsB)
         
+        LOOK_FOR_RATIONAL_ROOTS = False
         for fac in sqrfreeFact:
             if fac[0]==1:
                 continue
             d = fac[0].degree
+            if d== b.degree and d>3: # can't simplify, need full splitting field of b: # TODO: Test for rational roots
+                coeff_rat = a/bp
+                coeff_str = coeff_rat.strCustomVar("y")
+                rootSum = RS.RootSum(b,"({}){}".format(coeff_str, logExpression("x-y")),exprVar="y")
+                return Int.Integral([],[],[rootSum])
             if d<=2:
                 roots = fac[0].getRoots()
                 for c in roots:
@@ -119,19 +125,22 @@ def IntegrateRationalFunction(func): # field=0, func element C(x)
                     log = Int.LogFunction(v,c)
                     integral += Int.Integral(logs=[log])
             else:
-                ratRoots = fac[0].getRationalRoots()
-                if len(ratRoots)>0:
-                    div = 1
-                    for root in ratRoots:
-                        p = Pol.Polynomial([-root,1],fieldTower=newFieldTower)
-                        div *= p
-                        sqrfreeFact.append((p,1))
-                        
-                    (s,r) = Pol.PolyDiv(fac[0],div)
-                    if r!=0:
-                        raise Exception(str(r))
-                    sqrfreeFact.append((s,1)) # s has no rational roots, but it will be tested again -> TODO
-                else:
+                if LOOK_FOR_RATIONAL_ROOTS:
+                    ratRoots = fac[0].getRationalRoots()
+                    hasRatRoots=ratRoots>0
+                    if hasRatRoots:
+                        div = 1
+                        for root in ratRoots:
+                            p = Pol.Polynomial([-root,1],fieldTower=newFieldTower)
+                            div *= p
+                            sqrfreeFact.append((p,1))
+                            
+                        (s,r) = Pol.PolyDiv(fac[0],div)
+                        if r!=0:
+                            raise Exception(str(r))
+                        sqrfreeFact.append((s,1)) # s has no rational roots, but it will be tested again -> TODO
+                    
+                if not LOOK_FOR_RATIONAL_ROOTS or not hasRatRoots:
                     v = Pol.Polynomial( _PolyGCDWithAlgebraicParameter(coeffsA, coeffsB, fac[0]),callUpdateCoeffs =False)
                     rootSum = RS.RootSum(fac[0],"z*{}".format(logExpression(v)), exprVar="z")
                     integral += Int.Integral(rootSums=[rootSum])
@@ -162,6 +171,7 @@ def HermiteReduction(rational):
         q_i = frac[1]
         r_ij = frac[0] # rational = sum(i=1...n, j=1...i : r_ij/q_i^j
         if j>1: # denominator = q_i^j not square free -> reduce power j -> make it squarefree
+            j = Rational.fromFloat(j)
             (s,t) = Pol.extendedEuclidGenF(q_i, q_i.differentiate(), r_ij) # finds s,t with s*q_i+t*q_i'=r_ij
             tPrime = 0 if isNumber(t) else t.differentiate() # t'
             p1 = Int.Integral(poly_rationals=[(-1)*t/(j-1)/(q_i**(j-1))]) # integral(r_ij/q_i^j) = p1+p2 = -t/(j-1)/q_i^(j-1) + integral([s+t'/(j-1)]/[q_i^(j-1)])
@@ -201,7 +211,6 @@ def _PolyDivWithAlgebraicParameter(coeffsA, coeffsB,poly):
     for coeff in newA:
         if not coeff.isConstant() or not coeff.isZero():
             zPolys.append(coeff)
-    print(zPolys)
     isZero = False
     if len(zPolys)==1:
         zPoly = zPolys[0]

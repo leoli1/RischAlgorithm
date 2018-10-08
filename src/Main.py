@@ -65,8 +65,8 @@ def Main():
             sys.exit()
         f = parseExpressionFromStr(f_str, FE.fieldTower)
         print("Integral({}) = {}".format(f.printFull(),printIntegral(f, FE.fieldTower)))
-        print(Pol.Polynomial.updateCoefficientsFields.calls)
-        print(Pol.Polynomial.updateCoefficients.calls)
+        #print(Pol.Polynomial.updateCoefficientsFields.calls)
+        #print(Pol.Polynomial.updateCoefficients.calls)
 
         
         

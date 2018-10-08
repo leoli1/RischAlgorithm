@@ -38,6 +38,11 @@ class Polynomial(object):
         
         """
         
+        self.__derivative = None
+        self.__logDerivative = None # u'/u
+        self.__logGCD = None # GCD(u,u') TODO
+        
+        
         if fieldTower==None:
             self.fieldTower = FE.FieldTower()
         else:
@@ -53,6 +58,7 @@ class Polynomial(object):
         if self._coefficients!=[0] and callUpdateCoeffs:
             self.updateCoefficientsAll()
         self.derivativecalled = 0
+        
         
     # ========================================== Coefficients stuff =========================================
     def setCoefficient(self, coeff, power,callUpdates=True): # coefficient of T^power
@@ -107,7 +113,7 @@ class Polynomial(object):
             coeff = self.getCoefficient(i)
             coeff_tower = FE.FieldTower()
             if not isNumber(coeff):
-                #return  #               remove this if something doesn't work
+                return  #               remove this if something doesn't work
                 coeff_tower = coeff.fieldTower.copy()
                 if coeff.isZero():
                     continue
@@ -185,12 +191,18 @@ class Polynomial(object):
         return self.degree==0
     
     def replaceNumbersWithRationals(self):
-        if self.fieldTower.towerHeight==0:
-            for i in range(len(self._coefficients)):
-                self._coefficients[i] = Number.Rational.fromFloat(self._coefficients[i])
-        else:
-            for c in self._coefficients:
-                c.replaceNumbersWithRationals()
+        for i in range(len(self._coefficients)):
+            c = self._coefficients[i]
+            if isNumber(c):
+                self._coefficients[i] = Number.Rational.fromFloat(c)
+            else:
+                self._coefficients[i].replaceNumbersWithRationals()
+        #if self.fieldTower.towerHeight==0:
+        #    for i in range(len(self._coefficients)):
+        #        self._coefficients[i] = Number.Rational.fromFloat(self._coefficients[i])
+        #else:
+        #    for c in self._coefficients:
+        #        c.replaceNumbersWithRationals()
     
     # ========================================== Mixed stuff =========================================
     @property
@@ -207,7 +219,8 @@ class Polynomial(object):
     
     def asRational(self):
         return Rat.RationalFunction(self,1)
-    
+    def Inverse(self):
+        return self.asRational().Inverse()
     def isMonic(self):
         return objEqualsNumber(self.getLeadingCoefficient(), 1)
     def makeMonic(self):
@@ -223,6 +236,15 @@ class Polynomial(object):
         sum = 0
         for i in range(self.degree+1):
             sum += self.getCoefficient(i)*(val**i)
+        return sum
+    def completeEvaluate(self, val):
+        sum = 0
+        for i in range(self.degree+1):
+            if isNumber(i):
+                c = self.getCoefficient(i)
+            else:
+                c = self.getCoefficient(i).completeEvalute(val)
+            sum += c*(val**i)
         return sum
     
     def hasRationalRoots(self):
@@ -328,12 +350,14 @@ class Polynomial(object):
     
     # ========================================== Differentiate stuff =========================================
     def differentiate(self):
+        if id(self.__derivative)!=id(None):
+            return self.__derivative
         
         fieldTower = self.getFieldTower()
         dPoly = Polynomial(fieldTower=fieldTower)
         fieldExtension = self.getFieldExtension()
         if fieldExtension!=None:
-            u = fieldExtension.characteristicFunction
+            u = fieldExtension.argFunction
             a = u.reduceToFieldTower(u.fieldTower.prevTower())
             if a!=None:
                 u = a
@@ -370,9 +394,12 @@ class Polynomial(object):
         dPoly.updateCoefficientsAll()
         if not isPoly(dPoly):
             if dPoly.fieldTower.isExtendedTowerOf(fieldTower):
-                return Polynomial([dPoly],fieldTower=fieldTower)
+                self.__derivative = Polynomial([dPoly],fieldTower=fieldTower)
+                return self.__derivative
             else:
-                return dPoly.numerator/dPoly.denominator
+                self.__derivative = dPoly.numerator/dPoly.denominator
+                return self.__derivative
+        self.__derivative = dPoly
         return dPoly
     
     def differentiateWRTtoPolyVar(self):
@@ -387,6 +414,11 @@ class Polynomial(object):
             dPoly.setCoefficient(p*i, i-1,callUpdates=False)
         dPoly.updateCoefficientsAll()
         return dPoly
+    def logDifferentiate(self):
+        if id(self.__logDerivative)!=id(None):
+            return self.__logDerivative
+        self.__logDerivative = self.differentiate()/self
+        return self.__logDerivative
     # ========================================== Arithmetic stuff =========================================
     def __radd__(self, other):
         return self.__add__(other)
@@ -427,11 +459,11 @@ class Polynomial(object):
     def __rmul__(self, other):
         return self.__mul__(other)
     def __mul__(self, other):
-        if id(other)==id(1):
-            return self
-        #if other==0:
-        #    return 0
         if isNumber(other):
+            if other==1:
+                return self
+            elif other==0:
+                return 0
             tPoly = Polynomial(fieldTower=self.getFieldTower())
             for i in range(self.degree,-1,-1):
                 tPoly.setCoefficient(self.getCoefficient(i)*other, i,callUpdates=False)
@@ -439,6 +471,8 @@ class Polynomial(object):
             return tPoly
             #raise Exception("??")
         if type(other) == Rat.RationalFunction:
+            if other.numerator.isZero():
+                return 0# other.numerator
             return other.__mul__(self)
         if (self.fieldTower!=other.fieldTower):
             if self.fieldTower.isExtendedTowerOf(other.fieldTower):
@@ -487,6 +521,10 @@ class Polynomial(object):
     def isMultipleOf(self, other):
         (s,r) = PolyDiv(self, other)
         return r==0 or r.isZero()
+    
+    def isConstantMultipleOf(self, other):
+        c = (self/other).getConstant()
+        return False if c==None else c
         
     def __pow__(self, other):
         if not isNumber(other) or int(other)!=other or other<0:

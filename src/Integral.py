@@ -22,11 +22,16 @@ class Integral(object):
                 newPRs.append(pr)
         self.poly_rational_partExpressions = newPRs
         
+    def getLogExpression(self, argFunction):
+        for log in self.logExpressions:
+            if log.argFunction == argFunction:
+                return log
+        return None
     def getNewLogExpressionsInFieldTower(self, fieldTower,fullTower):
         logs = []
         for log in self.logExpressions:
             #if log.argFunction.getFieldTower()==fieldTower: # log must not be in fieldTower, e.g. log(x+1) is not el C(x,log(x)), but log(x^2) is el C(x,log(x)), since log(x^2)=2*log(x)
-            if log.argFunction == fullTower.getLastExtension().characteristicFunction:
+            if log.argFunction == fullTower.getLastExtension().argFunction:
                 logs.append(log)
             else:
                 print("Result may be wrong")
@@ -35,9 +40,9 @@ class Integral(object):
                 elif fieldTower.towerHeight==0:
                     logs.append(log)
                 else:
-                    #if not (fieldTower.getLastExtension().characteristicFunction/log.argFunction).isConstant():
+                    #if not (fieldTower.getLastExtension().argFunction/log.argFunction).isConstant():
                     #    logs.append(log)
-                    (q,r) = Pol.PolyDiv(log.argFunction, fieldTower.getLastExtension().characteristicFunction)
+                    (q,r) = Pol.PolyDiv(log.argFunction, fieldTower.getLastExtension().argFunction)
                     if r==0 or r.isZero():
                         pass
                     else:
@@ -81,7 +86,11 @@ class Integral(object):
         for log in self.logExpressions:
             tower = FE.hasFieldExtension(FE.TRANS_LOG, log.argFunction, FE.fieldTower)
             if tower==None:
-                raise NotImplementedError("")
+                newTower = FE.fieldTower.copy()
+                newTower.addFieldExtension(FE.FieldExtension(FE.TRANS_LOG,log.argFunction,"a"))
+                logExpr = Pol.Polynomial([0,log.factor], newTower)
+                func += logExpr
+                #raise NotImplementedError("")
             else:
                 logExpr = Pol.Polynomial([0,log.factor], tower)
                 func += logExpr

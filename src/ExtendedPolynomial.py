@@ -20,7 +20,7 @@ class ExtendedPolynomial(object):
         fieldExtension = fieldTower.getLastExtension()
         if fieldExtension.extensionType!=FE.TRANS_EXP:
             raise Exception("Extended Polynomials only for exponentials")
-        inverseExtension = FE.FieldExtension(FE.TRANS_EXP, -fieldExtension.characteristicFunction,"{{1/{}}}".format(fieldExtension.variable))
+        inverseExtension = FE.FieldExtension(FE.TRANS_EXP, -fieldExtension.argFunction,"{{1/{}}}".format(fieldExtension.variable))
         self.princFieldTower = self.fieldTower.copy()
         self.princFieldTower.addFieldExtension(inverseExtension)
         
@@ -76,6 +76,12 @@ class ExtendedPolynomial(object):
             norm = self.normPoly+other
             pcoeffs = self.principalPart.getCoefficients()
             return ExtendedPolynomial(norm.getCoefficients(), pcoeffs[1:self.princDegree+1],fieldTower=self.fieldTower)
+        if type(other) == ExtendedPolynomial:
+            if other.fieldTower==self.fieldTower:
+                return extPolyFromPolys(self.normPoly+other.normPoly, self.principalPart+other.principalPart, self.fieldTower)
+            else:
+                raise Exception()
+            
         raise NotImplementedError()
         
     def __str__(self):
@@ -93,6 +99,8 @@ class ExtendedPolynomial(object):
             return n
         return "{}+{}".format(n,p)
     
+def extPolyFromPolys(normPoly,princPoly,fieldTower):
+    return ExtendedPolynomial(normPoly.getCoefficients(),princPoly.getCoefficients()[1:princPoly.degree+1],fieldTower=fieldTower)
 def extPolyFromPol_power(poly,power):  # poly/T^power
     extPoly = ExtendedPolynomial(fieldTower=poly.fieldTower)
     for i in range(poly.degree,-1,-1):

@@ -12,20 +12,15 @@ ALGEBRAIC = 2
 TRANSCENDENTAL_SYMBOL = 3
 
 BASE_FIELD = 0 # C
-##BASEFUNCTION_FIELD = 1 # field of rational functions in x: C(x)
-#EXTENDED_FIELD = 2 # extended field: C(x,T)
 BASE_VARIABLE = "x"
 EXTENSION_VARIABLE = "T"
-#VARIABLES = [BASE_VARIABLE]#,EXTENSION_VARIABLE]
-
-#fieldExtension = None
 
 fieldTower = None
 
 def hasFieldExtension(type,u,tower):
     for i in range(tower.towerHeight):
         ext = tower.getFieldExtension(i)
-        if type==ext.extensionType and u==ext.characteristicFunction:
+        if type==ext.extensionType and u==ext.argFunction:
             return tower.getStrippedTower(i+1)
     return None
 
@@ -35,38 +30,40 @@ class FieldExtension(object):
     stores the data of a differential field extension
     '''
 
-    def __init__(self, extensionType, characteristicFunction, variable):
+    def __init__(self, extensionType, argFunction, variable):
         """
-        logarithmic extension: f' = u'/u where u=characteristicFuntion
-        exponential extension f'=u'f where u=characteristicFuntion
+        logarithmic extension: f' = u'/u where u=argFunction
+        exponential extension f'=u'f where u=argFunction
         u is in the field extension, that is one level lower
         variable : name of the extensionVariable, usually T (for Theta which is often used in literature)
         """
         self.extensionType = extensionType
         if (extensionType==ALGEBRAIC):
             raise NotImplementedError("Algebraic field extensions are not implemented (yet).")
-        self.characteristicFunction = characteristicFunction # = u
+        self.argFunction = argFunction # = u
         self.variable = variable
         
         
     def __eq__(self, other):
         if type(other)!=FieldExtension:
             return False
-        return self.extensionType==other.extensionType and self.characteristicFunction==other.characteristicFunction
+        if id(self)==id(other):
+            return True
+        return self.extensionType==other.extensionType and self.argFunction==other.argFunction
     def __ne__(self, other):
         return not self.__eq__(other)
     def getFVar(self):
         return "exp" if self.extensionType==TRANS_EXP else ("log" if self.extensionType==TRANS_LOG else "")
     def __str__(self):
         var = self.getFVar()
-        out = "K({}), {}={}({})".format(self.variable,self.variable,var,str(self.characteristicFunction)) 
+        out = "K({}), {}={}({})".format(self.variable,self.variable,var,str(self.argFunction)) 
         return out
     def __repr__(self):
         return self.__str__()
     def strFunc(self):
         var = "exp" if self.extensionType==TRANS_EXP else "log"
-        return "{}({})".format(var,self.characteristicFunction.printFull())
-        #return "{}({})".format(var,str(self.characteristicFunction))
+        return "{}({})".format(var,self.argFunction.printFull())
+        #return "{}({})".format(var,str(self.argFunction))
     
 class FieldTower(object):
     """
@@ -105,7 +102,15 @@ class FieldTower(object):
     
     def addFieldExtension(self, fieldExtension):
         self.fieldExtensions.append(fieldExtension)
-
+    
+    def getLogarithms(self):
+        logs = []
+        for fext in self.fieldExtensions:
+            if fext.extensionType==TRANS_LOG:
+                logs.append(fext)
+                
+        return logs
+    
     def copy(self):
         return self.getStrippedTower(self.towerHeight)
     
@@ -121,6 +126,8 @@ class FieldTower(object):
         return True
     
     def __eq__(self, other):
+        if id(self)==id(other):
+            return True
         if type(other)!=FieldTower:
             return False
         if self.towerHeight != other.towerHeight:
@@ -145,9 +152,9 @@ class FieldTower(object):
             ext = self.getFieldExtension(i)
             var = ext.getFVar()
             if i==0:
-                out += "{} = {}({}); ".format(ext.variable,var,str(ext.characteristicFunction))
+                out += "{} = {}({}); ".format(ext.variable,var,str(ext.argFunction))
             else:
-                out += "{} = {}({}) = {}({}); ".format(ext.variable,var,str(ext.characteristicFunction),var,ext.characteristicFunction.printFull())
+                out += "{} = {}({}) = {}({}); ".format(ext.variable,var,str(ext.argFunction),var,ext.argFunction.printFull())
         out = out.strip("; ")
         return out
     def __repr__(self):

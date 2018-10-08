@@ -3,9 +3,12 @@ Created on 28.09.2018
 
 @author: Leonard
 '''
+from __future__ import division
 import Number
 import time
 
+
+global log_algorithm
 log_algorithm = True
 
 numbers = [int,float,complex,Number.Rational,Number.SqrRootPolynomial]
