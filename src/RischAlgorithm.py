@@ -15,6 +15,7 @@ from Matrix import Resultant
 from Number import sqrt
 import RischEquation
 from IntegrateRational import *
+import ExtendedPolynomial as ExtPol
 
 
 logExtensionsInIntegral = []
@@ -27,8 +28,9 @@ def Integrate(func):#, fieldTower):
         (quot, rem) = Pol.PolyDiv(func.numerator, func.denominator)
         rat = Rat.RationalFunction(rem,func.denominator)
     
-    Log("----------\nIntegrate {}.".format(str(func)))
-    Log("Split up in polynomial/rational part: [{}] + [{}]".format(quot,rat))
+    if func!=0:
+        Log("----------\nIntegrate {}.".format(str(func)))
+        Log("Split up in polynomial/rational part: [{}] + [{}]".format(quot,rat))
     fieldTower = func.fieldTower
     lastExtension = fieldTower.getLastExtension()
     try:
@@ -125,8 +127,6 @@ def IntegratePolynomialPartLogExt(poly, fieldTower):
     return Int.Integral(poly_rationals=[integralPoly])
 
         
-    
-    #raise NotImplementedError
 def IntegratePolynomialPartLogExtCheckIntegralConditions(integral,fieldTower):
     if integral==None: # integral of pl is elementary
         raise Int.IntegralNotElementaryError()
@@ -230,12 +230,12 @@ def IntegratePolynomialPartExpExt(func, fieldTower):
     if func == 0 or func.isZero():
         return Int.Integral()
     
-    red = func.reduceToLowestPossibleFieldTower()
-    if red.fieldTower.towerHeight<fieldTower.towerHeight:
-        return Integrate(red)
+    #red = func.reduceToLowestPossibleFieldTower()
+    #if red.fieldTower.towerHeight<fieldTower.towerHeight:
+    #    return Integrate(red)
     #q = [0]*(func.degree+1)
     up = fieldTower.getLastExtension().characteristicFunction.differentiate().reduceToLowestPossibleFieldTower()
-    integralPoly = Pol.Polynomial(fieldTower=fieldTower)
+    integralPoly = ExtPol.ExtendedPolynomial(fieldTower=fieldTower)
     for i in range(1,func.degree+1):
         o = func.getCoefficient(i).reduceToLowestPossibleFieldTower()
         ft = o.fieldTower if o.fieldTower.towerHeight>up.fieldTower.towerHeight else up.fieldTower
@@ -243,18 +243,39 @@ def IntegratePolynomialPartExpExt(func, fieldTower):
         if s==None:
             raise Int.IntegralNotElementaryError()
         integralPoly.setCoefficient(s, i,callUpdates=False)
+    if type(func) is ExtPol.ExtendedPolynomial:
+        for i in range(-func.princDegree,0):
+            o = func.getCoefficient(i).reduceToLowestPossibleFieldTower()
+            ft = o.fieldTower if o.fieldTower.towerHeight>up.fieldTower.towerHeight else up.fieldTower
+            s = RischEquation.solveRischEquation(i*up, o, ft)
+            if s==None:
+                raise Int.IntegralNotElementaryError()
+            integralPoly.setCoefficient(s, i,callUpdates=False)
     integralPoly.updateCoefficientsAll()
+    p = integralPoly.asPolynomial()
+    if p!=None:
+        integralPoly = p
     q0 = Integrate(func.getCoefficient(0))
     integral = Int.Integral(poly_rationals=[integralPoly])+q0
     return integral
         
     #raise NotImplementedError()
 def IntegrateRationalPartExpExt(func, fieldTower):
-    if func.numerator==0 or func.numerator.isZero():
+    if func==0 or func.numerator==0 or func.numerator.isZero():
         return Int.Integral()
+
     func = func.makeDenominatorMonic()
-    if func.denominator.lowestDegree!=0:
-        raise NotImplementedError()
+    l = func.denominator.lowestDegree
+    if l!=0:
+        powerPol = Pol.Polynomial([0,Number.Rational(1,1)],fieldTower=fieldTower)**l # T^l
+        qs = func.denominator/powerPol
+        (rs,w) = Pol.extendedEuclidGenF(powerPol, qs, func.numerator)
+        w_ext = ExtPol.extPolyFromPol_power(w, l) # w/T^l
+        #rat = rs/qs
+        #if type(rat) is Pol.Polynomial:
+        #    ratInt = Integrate()
+        return IntegratePolynomialPartExpExt(w_ext,fieldTower) + Integrate(rs/qs)
+        #raise NotImplementedError()
     
     sqrFreeFactorization = func.denominator.factorSquareFree()
     partialFractions = func.PartialFraction(sqrFreeFactorization)

@@ -11,6 +11,7 @@ from Utils import *
 from FieldExtension import fieldTower
 from Parse import parseExpressionFromStr
 import Number
+import ExtendedPolynomial as ExtPol
 
 
 def call_counter(func):
@@ -106,6 +107,7 @@ class Polynomial(object):
             coeff = self.getCoefficient(i)
             coeff_tower = FE.FieldTower()
             if not isNumber(coeff):
+                #return  #               remove this if something doesn't work
                 coeff_tower = coeff.fieldTower.copy()
                 if coeff.isZero():
                     continue
@@ -400,6 +402,8 @@ class Polynomial(object):
                 tPoly.setCoefficient(self.getCoefficient(i), i,callUpdates=False)
             tPoly.setCoefficient(deg0Part+other,0,callUpdates=False)
             return tPoly
+        if type(other)==ExtPol.ExtendedPolynomial:
+            return other.__add__(self)
         if (self.fieldTower!=other.fieldTower):
             if self.fieldTower.isExtendedTowerOf(other.fieldTower):
                 return self.__add__(Polynomial([other],fieldTower=self.getFieldTower()))
@@ -549,13 +553,14 @@ class Polynomial(object):
             return "0"
         return out.strip("+")
     
-    def printFull(self):
+    def printFull(self,reverse=False):
         """
         writes out field extension variables
         """
         out = ""
         fE = self.getFieldExtension()
-        for i in range(len(self._coefficients)-1,-1,-1):
+        r = range(len(self._coefficients)) if reverse else range(len(self._coefficients)-1,-1,-1)
+        for i in r:
             if self.coeffIsZero(i):
                 continue
             coeff = ""
