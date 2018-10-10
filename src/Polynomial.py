@@ -22,10 +22,6 @@ def call_counter(func):
     helper.__name__= func.__name__
     return helper
 
-if "derivativecalled" not in dir() and "squarefreecalled" not in dir() and "gcdcalls" not in dir():
-    derivativecalled = {}
-    squarefreecalled = {}
-    gcdcalled = {}
     
 class Polynomial(object):
     
@@ -320,9 +316,18 @@ class Polynomial(object):
         return r==None
     
     # ========================================== SquareFree stuff =========================================
+    def getLogGCD(self):
+        """
+        returns the 'logarithmic' gcd: gcd(u,du/dT) # where T is the variable of self
+        """
+        if id(self.__logGCD)==id(None):
+            self.__logGCD = PolyGCD(self, self.differentiateWRTtoPolyVar())
+        return self.__logGCD
+    
     def isSquareFree(self): # polynomial p is square-free iff gcd(p,(d/dT)p)=1
-        gcd = PolyGCD(self,self.differentiateWRTtoPolyVar())#PolyGCD(self,self.differentiate())
+        gcd = self.getLogGCD()#PolyGCD(self,self.differentiate())
         return gcd==1
+    
     def factorSquareFree(self):
         """
         factors self = f = a_1*(a_2^2)*(a_3^3)...
@@ -332,8 +337,7 @@ class Polynomial(object):
         #raise NotImplementedError()
         if self.isSquareFree():
             return [(self,1)]
-        d = self.differentiateWRTtoPolyVar()
-        c = PolyGCD(self, d) # = a_2*(a_3)^2*(a_4)^3...
+        c = self.getLogGCD() # = a_2*(a_3)^2*(a_4)^3...
         w = self/c # = a_1*a_2*a_3...
         y = PolyGCD(c, w) # = a_2*a_3...
         a1 = w/y
@@ -454,6 +458,8 @@ class Polynomial(object):
         tPoly.updateCoefficientsAll()
         return tPoly
     
+    def __rsub__(self, other):
+        return (-self).__add__(other)
     def __sub__(self, other):
         return self.__add__((-1)*other)
     def __rmul__(self, other):
@@ -547,7 +553,9 @@ class Polynomial(object):
         return self.__str__()
     # ========================================== String output =========================================
     def getVariable(self):
-        return "x" if self.getFieldTower().towerHeight==0 else self.getFieldExtension().variable
+        return self.fieldTower.getLastVariable()
+        #raise NotImplementedError()
+        #return #TODO #"x" if self.getFieldTower().towerHeight==0 else self.getFieldExtension().variable
     def __str__(self):
         return self.strCustomVar(self.getVariable())
     
@@ -828,10 +836,11 @@ def extendedEuclidGenF(p,q,f):
     return (sig,tau)
 
 
-def PartialFraction(f,p,q):
+def BasicPartialFraction(f,p,q):
     """
-    f/(pq)=x/p+y/q
+    finds x,y with f/(pq)=x/p+y/q
     gcd(p,q)=1
+    returns (x,y)
     """
     if f.getFieldTower()!=p.getFieldTower() or f.getFieldTower()!=q.getFieldTower():
         raise Exception()
@@ -845,6 +854,7 @@ def PartialFractionWithPowerFactorization(numerator,factorization):
     """
     factorization = squarefree factorization of the denominator = a1* a2^2 * a3^3 * ...
     numerator/factorization = r11/a1 + r21/a2 + r22/a2^2 + r31/a3 + ..., deg(rij)<deg(ai) 
+    returns [(r11,a1,1),(r21,a2,1),(r22,a2,2),...]
     """
     if len(factorization)==1:
         return PartialFractionPower(numerator, factorization[0][0], factorization[0][1])
@@ -854,7 +864,7 @@ def PartialFractionWithPowerFactorization(numerator,factorization):
         otherFactors *= factorization[i][0]**factorization[i][1]
         
     if factorization[0][0]!=1:
-        (r1,r2) = PartialFraction(numerator, factorization[0][0], otherFactors)
+        (r1,r2) = BasicPartialFraction(numerator, factorization[0][0], otherFactors)
         pfrac = PartialFractionPower(r1, factorization[0][0], factorization[0][1])
         return pfrac + PartialFractionWithPowerFactorization(r2, factorization[1:len(factorization)])
     else:
@@ -893,6 +903,8 @@ def Monomial(degree, coeff,fieldTower=None):
 def printFactorization(fact):
     """
     returns string representation of factorization
+    fac = [(a1,1),(a2,2),...]
+    returns "{a1}*{a2}**2*{a3}**3..."
     """
     out = ""
     for i in range(len(fact)):

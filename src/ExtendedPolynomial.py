@@ -20,7 +20,7 @@ class ExtendedPolynomial(object):
         fieldExtension = fieldTower.getLastExtension()
         if fieldExtension.extensionType!=FE.TRANS_EXP:
             raise Exception("Extended Polynomials only for exponentials")
-        inverseExtension = FE.FieldExtension(FE.TRANS_EXP, -fieldExtension.argFunction,"{{1/{}}}".format(fieldExtension.variable))
+        inverseExtension = FE.FieldExtension(FE.TRANS_EXP, -fieldExtension.argFunction,FE.Variable("{{1/{}}}".format(fieldExtension.variable)))
         self.princFieldTower = self.fieldTower.copy()
         self.princFieldTower.addFieldExtension(inverseExtension)
         

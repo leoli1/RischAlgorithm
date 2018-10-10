@@ -46,10 +46,12 @@ def fieldTowerInput():
         bfunc = "exp" if f_e_type == FE.TRANS_EXP else "log"
         print("Field extension: {}(u)".format(bfunc))
         argFunc_str = ""
-        while argFunc_str=="":
+        argFunc = None
+        while argFunc_str=="" or argFunc==None:
             argFunc_str = raw_input("u = ")
-        argFunc = parseExpressionFromStr(argFunc_str, fieldTower)
-        fe = FE.FieldExtension(f_e_type,argFunc,"T_{}".format(i+1))
+            argFunc = parseExpressionFromStr(argFunc_str, fieldTower)
+        variable = FE.Variable("T_{}".format(i+1))
+        fe = FE.FieldExtension(f_e_type,argFunc,variable)
         fieldTower.addFieldExtension(fe)
         
     return fieldTower
@@ -58,12 +60,15 @@ def Main():
     FE.fieldTower = fieldTowerInput()
     print(FE.fieldTower)
     if FE.fieldTower.towerHeight>0:
-        print("Use field-extension Variables, instead of functions, e.g. f=x*{} instead of f=x*{}".format(FE.fieldTower.getFieldExtension(0).variable, FE.fieldTower.getFieldExtension(0).strFunc()))
+        print("Use field-extension Variables instead of the function names, e.g. f=x*{} instead of f=x*{}".format(FE.fieldTower.getFieldExtension(0).variable, FE.fieldTower.getFieldExtension(0).strFunc()))
     while (True):
-        f_str = raw_input("integrate f = ")
-        if f_str.lower()=="quit":
-            sys.exit()
-        f = parseExpressionFromStr(f_str, FE.fieldTower)
+        
+        f = None
+        while f==None:
+            f_str = raw_input("integrate f = ")
+            if f_str.lower()=="quit":
+                sys.exit()
+            f = parseExpressionFromStr(f_str, FE.fieldTower)
         print("Integral({}) = {}".format(f.printFull(),printIntegral(f, FE.fieldTower)))
         #print(Pol.Polynomial.updateCoefficientsFields.calls)
         #print(Pol.Polynomial.updateCoefficients.calls)

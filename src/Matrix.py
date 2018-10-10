@@ -85,20 +85,20 @@ class QuadMatrix(object):
     def getTriangularMatrix(self,vec):
         """
         converts matrix A=
-        ( a11 a12 ... a1n )
-        ( a21 a22 ... a2n )
+        ( a11 a12 ... a1n ) (vec[0])
+        ( a21 a22 ... a2n ) (vec[1])
               .
               .
               .
-        ( an1 an2 ... ann )
+        ( an1 an2 ... ann ) (vec[n-1])
         into a triangular matrix:
-        ( b11 b12 ... b1n )
-        ( 0   b22 ... b2n )
-        ( 0   0 b33...b3n )
+        ( b11 b12 ... b1n ) (new_vec[0])
+        ( 0   b22 ... b2n ) (new_vec[1])
+        ( 0   0 b33...b3n ) (new_vec[2])
               .
               .
               .
-        ( 0   0 ... 0 bnn )
+        ( 0   0 ... 0 bnn ) (new_vec[n-1])
         
         can be used for solving linear system of equations
         """
@@ -249,9 +249,9 @@ def solveLinearSystem(coeffs, vec):
             xs.append(1)
             unique = False
             continue
-        s = 0
-        for j in range(i):
-            s += xs[j]*tri.getElement(n-1-i,n-1-j)
+        s = sum(xs[j] * tri.getElement(n-1-i,n-1-j) for j in range(i))
+        #for j in range(i):
+        #    s += xs[j]*tri.getElement(n-1-i,n-1-j)
         d = (vec[n-1-i]+(-s))
         xs.append(d/tri.getElement(n-1-i,n-1-i))
     return (_reverseList(xs), unique)

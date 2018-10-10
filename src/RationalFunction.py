@@ -188,7 +188,7 @@ class RationalFunction(object):
                 return q
             return None
         return self.numerator*(1/c)
-    def PartialFraction(self, denomFactorization):
+    def BasicPartialFraction(self, denomFactorization):
         return Pol.PartialFractionWithPowerFactorization(self.numerator, denomFactorization)
     
     def replaceNumbersWithRationals(self):

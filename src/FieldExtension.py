@@ -11,11 +11,10 @@ TRANS_EXP = 1
 ALGEBRAIC = 2
 TRANSCENDENTAL_SYMBOL = 3
 
-BASE_FIELD = 0 # C
-BASE_VARIABLE = "x"
-EXTENSION_VARIABLE = "T"
-
 fieldTower = None
+
+if not "variables" in dir():
+    variables = []
 
 def hasFieldExtension(type,u,tower):
     for i in range(tower.towerHeight):
@@ -25,9 +24,37 @@ def hasFieldExtension(type,u,tower):
     return None
 
 
+class Variable(object):
+    def __init__(self, stringRepr):
+        self.stringRepr = stringRepr
+        variables.append(self)
+        
+    def __eq__(self, other):
+        if type(other)!=Variable:
+            return False
+        return self.stringRepr==other.stringRepr
+    def __ne__(self, other):
+        return not self.__eq__(other)
+    
+    def __str__(self):
+        return self.stringRepr
+    def __repr__(self):
+        return self.__str__()
+    
+    
+def Variables(l):
+    vs = [] 
+    for v in l:
+        vs.append(Variable(v))
+    return vs
+
+if "BASEVARIABLE" not in dir():
+    BASEVARIABLE = Variable('x') # base variable for C(x) functions
+    
+    
 class FieldExtension(object):
     '''
-    stores the data of a differential field extension
+    stores the data of a particular differential field extension
     '''
 
     def __init__(self, extensionType, argFunction, variable):
@@ -35,12 +62,15 @@ class FieldExtension(object):
         logarithmic extension: f' = u'/u where u=argFunction
         exponential extension f'=u'f where u=argFunction
         u is in the field extension, that is one level lower
-        variable : name of the extensionVariable, usually T (for Theta which is often used in literature)
+        variable : instance of Variable to represent the field extension
         """
         self.extensionType = extensionType
         if (extensionType==ALGEBRAIC):
             raise NotImplementedError("Algebraic field extensions are not implemented (yet).")
         self.argFunction = argFunction # = u
+        
+        if type(variable)!=Variable:
+            raise TypeError()
         self.variable = variable
         
         
@@ -63,7 +93,6 @@ class FieldExtension(object):
     def strFunc(self):
         var = "exp" if self.extensionType==TRANS_EXP else "log"
         return "{}({})".format(var,self.argFunction.printFull())
-        #return "{}({})".format(var,str(self.argFunction))
     
 class FieldTower(object):
     """
@@ -94,6 +123,10 @@ class FieldTower(object):
         if self.towerHeight==0:
             return None
         return self.getFieldExtension(self.towerHeight-1)
+    def getLastVariable(self):
+        if self.towerHeight==0:
+            return BASEVARIABLE
+        return self.getLastExtension().variable
     
     def getStrippedTower(self, index):
         return FieldTower(fieldExtensions=self.fieldExtensions[0:index])
@@ -142,7 +175,7 @@ class FieldTower(object):
     def __str__(self):
         out = "C(x,"
         for i in range(self.towerHeight):
-            out += self.getFieldExtension(i).variable+","
+            out += self.getFieldExtension(i).variable.stringRepr+","
         out = out.strip(",")
         out += ")"
         if self.towerHeight==0:
@@ -152,9 +185,9 @@ class FieldTower(object):
             ext = self.getFieldExtension(i)
             var = ext.getFVar()
             if i==0:
-                out += "{} = {}({}); ".format(ext.variable,var,str(ext.argFunction))
+                out += "{} = {}({}); ".format(ext.variable.stringRepr,var,str(ext.argFunction))
             else:
-                out += "{} = {}({}) = {}({}); ".format(ext.variable,var,str(ext.argFunction),var,ext.argFunction.printFull())
+                out += "{} = {}({}) = {}({}); ".format(ext.variable.stringRepr,var,str(ext.argFunction),var,ext.argFunction.printFull())
         out = out.strip("; ")
         return out
     def __repr__(self):

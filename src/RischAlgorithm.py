@@ -33,7 +33,7 @@ def Integrate(func):
         rat = Rat.RationalFunction(rem,func.denominator)
     
     if func!=0:
-        Log("----------\nIntegrate {}.".format(str(func)))
+        Log("---------------\nBegin: Integrate {}.".format(str(func)))
         Log("Split up in polynomial/rational part: [{}] + [{}]".format(quot,rat))
     fieldTower = func.fieldTower
     lastExtension = fieldTower.getLastExtension()
@@ -57,7 +57,10 @@ def Integrate(func):
         out2 = None
     
     if out1==None or out2==None: return None
-    return out1+out2
+    integral = out1+out2
+    if func !=0:
+        Log("Finished integrating {} : {}\n---------------".format(str(func),str(integral)))
+    return integral
     
 def IntegratePolynomialPartLogExt(poly, fieldTower):
     """
@@ -110,9 +113,9 @@ def IntegratePolynomialPartLogExt(poly, fieldTower):
                 raise Int.IntegralNotElementaryError()
             
         prev = fieldTower.prevTower()
-        logs = P_i.getNewLogExpressionsInFieldTower(prev,fieldTower)
+        #logs = P_i.getNewLogExpressionsInFieldTower(prev,fieldTower)
         logTerm = P_i.getLogExpression(u)
-        otherLogs = [log for log in P_i.logExpressions if log not in logs]
+        otherLogs = [log for log in P_i.logExpressions if not log==logTerm]#in logs]
         ci = zero if logTerm==None else logTerm.factor # integral = P_i = c_i*T+d_i, d_i = P_i\logs
         d[i] = Int.Integral(poly_rationals=P_i.poly_rational_partExpressions,logs=otherLogs,rootSums=P_i.rootSums).asFunction()
         b[i+1] = ci/(i+1)
@@ -168,7 +171,7 @@ def IntegrateRationalPartLogExt(func, fieldTower): # Hermite Reduction
         return Integrate(red)
     func = func.makeDenominatorMonic()
     sqrFreeFactorization = func.denominator.factorSquareFree()
-    partialFractions = func.PartialFraction(sqrFreeFactorization)
+    partialFractions = func.BasicPartialFraction(sqrFreeFactorization)
     integral = Int.Integral()
     integratedPart = 0
     toIntegratePart = 0 # squarefree part
@@ -202,7 +205,8 @@ def IntegrateRationalPartLogExt(func, fieldTower): # Hermite Reduction
         b = toIntegratePart.denominator
         bp = b.differentiate()
         
-        zExtension = FE.FieldExtension(FE.TRANSCENDENTAL_SYMBOL,1,"z")
+        zvar = FE.Variable('z')
+        zExtension = FE.FieldExtension(FE.TRANSCENDENTAL_SYMBOL,1,zvar)
         newFieldTower = fieldTower.getStrippedTower(fieldTower.towerHeight-1)
         newFieldTower.addFieldExtension(zExtension)
         
@@ -294,7 +298,7 @@ def IntegrateRationalPartExpExt(func, fieldTower):
         #raise NotImplementedError()
     
     sqrFreeFactorization = func.denominator.factorSquareFree()
-    partialFractions = func.PartialFraction(sqrFreeFactorization)
+    partialFractions = func.BasicPartialFraction(sqrFreeFactorization)
     integral = Int.Integral()
     integratedPart = 0
     toIntegratePart = 0 # squarefree part

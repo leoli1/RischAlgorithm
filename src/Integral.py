@@ -6,6 +6,7 @@ Created on 28.09.2018
 from Utils import isNumber,objEqualsNumber
 import FieldExtension as FE
 import Polynomial as Pol
+import FieldTowerStructure as FTS
 
 class Integral(object):
 
@@ -28,10 +29,18 @@ class Integral(object):
                 return log
         return None
     def getNewLogExpressionsInFieldTower(self, fieldTower,fullTower):
+        """
+        returns logarithms appearing in the integral (self) that are not in fieldTower
+        e.g. fieldTower = C(x,log(x)) = F
+             integral = log(x) + log(log(x))
+             will return [log(log(x))] since log(x) el F but log(log(x)) not el F
+        """
         logs = []
         for log in self.logExpressions:
             #if log.argFunction.getFieldTower()==fieldTower: # log must not be in fieldTower, e.g. log(x+1) is not el C(x,log(x)), but log(x^2) is el C(x,log(x)), since log(x^2)=2*log(x)
-            if log.argFunction == fullTower.getLastExtension().argFunction:
+            if not FTS.logarithmIsInFieldTower(log, fieldTower):
+                logs.append(log)
+            """if log.argFunction == fullTower.getLastExtension().argFunction:
                 logs.append(log)
             else:
                 print("Result may be wrong")
@@ -40,13 +49,14 @@ class Integral(object):
                 elif fieldTower.towerHeight==0:
                     logs.append(log)
                 else:
+                    if FTS.logarithmIsInFieldTower(log, fieldTower)
                     #if not (fieldTower.getLastExtension().argFunction/log.argFunction).isConstant():
                     #    logs.append(log)
-                    (q,r) = Pol.PolyDiv(log.argFunction, fieldTower.getLastExtension().argFunction)
-                    if r==0 or r.isZero():
-                        pass
-                    else:
-                        logs.append(log)
+                    #(q,r) = Pol.PolyDiv(log.argFunction, fieldTower.getLastExtension().argFunction)
+                    #if r==0 or r.isZero():
+                    #    pass
+                    #else:
+                    #    logs.append(log)"""
         return logs
     
     def simplify(self):
@@ -87,7 +97,7 @@ class Integral(object):
             tower = FE.hasFieldExtension(FE.TRANS_LOG, log.argFunction, FE.fieldTower)
             if tower==None:
                 newTower = FE.fieldTower.copy()
-                newTower.addFieldExtension(FE.FieldExtension(FE.TRANS_LOG,log.argFunction,"a"))
+                newTower.addFieldExtension(FE.FieldExtension(FE.TRANS_LOG,log.argFunction,FE.Variable('a')))
                 logExpr = Pol.Polynomial([0,log.factor], newTower)
                 func += logExpr
                 #raise NotImplementedError("")

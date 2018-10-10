@@ -4,7 +4,7 @@ Created on 03.10.2018
 @author: Leonard
 '''
 from __future__ import division
-import Utils
+
 
 class AlgebraicNumber(object):
     def __init__(self, poly):
@@ -248,6 +248,7 @@ def NumberLCMList(l):
     if len(l)==2:
         return NumberLCM(l[0], l[1])
     return NumberLCM(l[0],NumberLCMList(l[1:len(l)]))
+
 ONE = Rational(1,1)
 ZERO = Rational(0,1)
 
@@ -285,6 +286,8 @@ def getAllDivisors(n):
             if i!=r:
                 b.append(n//i)
     return a+list(reversed(b))
+
+import Utils
 
 if __name__=='__main__':
     a = Rational(12,8)

@@ -63,7 +63,8 @@ def IntegrateRationalFunction(func): # field=0, func element C(x)
         bp = b.differentiate()
         bpm = bp*(-1)
         
-        zExtension = FE.FieldExtension(FE.TRANSCENDENTAL_SYMBOL,1,"z")
+        zvar = FE.Variable('z')
+        zExtension = FE.FieldExtension(FE.TRANSCENDENTAL_SYMBOL,1,zvar)
         newFieldTower = FE.FieldTower(zExtension)
         
         poly = Pol.Polynomial([a,bpm],fieldTower=newFieldTower)
@@ -91,8 +92,8 @@ def IntegrateRationalFunction(func): # field=0, func element C(x)
         sqrfreeFact = primitivePart.factorSquareFree()
         Log("Squarefree factorization of resultant: {}".format(Pol.printFactorization(sqrfreeFact)))
         integral = Int.Integral()
-        zExtension = FE.FieldExtension(FE.TRANSCENDENTAL_SYMBOL,1,"z")
-        newFieldTower = FE.FieldTower(zExtension)
+        #zExtension = FE.FieldExtension(FE.TRANSCENDENTAL_SYMBOL,1,"z")
+        #newFieldTower = FE.FieldTower(zExtension)
         
         
         # gcd_x(a-z*b',b)
@@ -164,7 +165,7 @@ def HermiteReduction(rational):
     hermite reduction for rational el C(x), with rational=p/q, dep(p)<deg(q)
     """
     sqrFreeFactorization = rational.denominator.factorSquareFree()
-    partialFractions = rational.PartialFraction(sqrFreeFactorization)
+    partialFractions = rational.BasicPartialFraction(sqrFreeFactorization)
     integral = Int.Integral()
     for frac in partialFractions:
         j = frac[2]

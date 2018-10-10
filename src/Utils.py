@@ -9,9 +9,10 @@ import time
 
 
 global log_algorithm
-log_algorithm = True
+log_algorithm = False
 
 numbers = [int,float,complex,Number.Rational,Number.SqrRootPolynomial]
+
 
 eps = 10**(-5) # 
 

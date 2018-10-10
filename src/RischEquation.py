@@ -4,7 +4,6 @@ Created on 06.10.2018
 @author: Leonard
 '''
 from __future__ import division
-from Matrix import QuadMatrix
 import Polynomial as Pol
 import RationalFunction as Rat
 import FieldExtension as FE
@@ -62,7 +61,8 @@ def __helperSolve(p,q,degree):
     else:
         return s + mon
     
-    
+  
+# general solution, not finished (yet)
 def getADBEG(p,q):
     A = p.numerator
     D = p.denominator
@@ -81,10 +81,10 @@ def getDenominator(f,g):
     """
     (A,D,B,E,G) = getADBEG(f, g)
     
-    dE_dT = E.differentiateWRTtoPolyVar()
-    dG_dT = G.differentiateWRTtoPolyVar()
+    #dE_dT = E.differentiateWRTtoPolyVar()
+    #dG_dT = G.differentiateWRTtoPolyVar()
     
-    T = Pol.PolyGCD(E, dE_dT) / Pol.PolyGCD(G,dG_dT)
+    T = E.getLogGCD()/G.getLogGCD()#Pol.PolyGCD(E, dE_dT) / Pol.PolyGCD(G,dG_dT)
     
     return T
 
