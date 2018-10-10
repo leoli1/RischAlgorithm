@@ -31,9 +31,9 @@ def logIsTranscendental(u, fieldTower):
     N = len(logs)
     if N==0:
         if u.isConstant():
-            return False
+            return (False,[1])
         else:
-            return (True, [1])
+            return True
             
     
     vs = [u.differentiate()*reduce(lambda x,y:x*y, [logs[j] for j in range(N)])]+  [logs[i].differentiate()*u*reduce(lambda x,y:x*y, [1]+[logs[j] for j in range(N) if j!=i]) for i in range(N)]
