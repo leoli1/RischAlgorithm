@@ -36,27 +36,11 @@ class Integral(object):
              will return [log(log(x))] since log(x) el F but log(log(x)) not el F
         """
         logs = []
+        self.combine_logs()
         for log in self.logExpressions:
             #if log.argFunction.getFieldTower()==fieldTower: # log must not be in fieldTower, e.g. log(x+1) is not el C(x,log(x)), but log(x^2) is el C(x,log(x)), since log(x^2)=2*log(x)
             if not FTS.logarithmIsInFieldTower(log, fieldTower):
                 logs.append(log)
-            """if log.argFunction == fullTower.getLastExtension().argFunction:
-                logs.append(log)
-            else:
-                print("Result may be wrong")
-                if fieldTower.towerHeight>1:
-                    raise NotImplementedError()
-                elif fieldTower.towerHeight==0:
-                    logs.append(log)
-                else:
-                    if FTS.logarithmIsInFieldTower(log, fieldTower)
-                    #if not (fieldTower.getLastExtension().argFunction/log.argFunction).isConstant():
-                    #    logs.append(log)
-                    #(q,r) = Pol.PolyDiv(log.argFunction, fieldTower.getLastExtension().argFunction)
-                    #if r==0 or r.isZero():
-                    #    pass
-                    #else:
-                    #    logs.append(log)"""
         return logs
     
     def simplify(self):

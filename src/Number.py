@@ -145,8 +145,8 @@ class Rational(AlgebraicNumber):
     def removeCommonFactors(self):
         gcd = NumberGCD(abs(self._p),abs(self._q))
         if gcd!=1:
-            self._p /= gcd
-            self._q /= gcd
+            self._p //= gcd
+            self._q //= gcd
         
     def __radd__(self, other):
         return self.__add__(other)

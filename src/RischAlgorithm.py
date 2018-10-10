@@ -12,10 +12,12 @@ import RootSum as RS
 from Utils import *
 
 from Matrix import Resultant
-from Number import sqrt,Rational
+from Number import ONE
 import RischEquation
 from IntegrateRational import *
 import ExtendedPolynomial as ExtPol
+
+import FieldTowerStructure as FTS
 
 
 logExtensionsInIntegral = []
@@ -148,17 +150,21 @@ def IntegratePolynomialPartLogExtCheckIntegralConditions(integral,fieldTower):
     if integral==None: # integral of pl is elementary
         raise Int.IntegralNotElementaryError()
     logs = integral.getNewLogExpressionsInFieldTower(fieldTower.prevTower(),fieldTower)
-    if len(logs)>1: # at most one log extension of C(x,T_1,...,T_(N-1))
-        if len(logs)==2:
-            x = logs[0].factor if isNumber(logs[0].factor) else logs[0].factor.getConstant()
-            y = logs[1].factor if isNumber(logs[1].factor) else logs[1].factor.getConstant()
-            if abs(x)==abs(y):
-                a = logs[0].argFunction if sign(x)==1 else logs[0].argFunction.Inverse()
-                b = logs[1].argFunction if sign(y)==1 else logs[1].argFunction.Inverse()
-                logs = [Int.LogFunction(a*b,abs(x))]
-                integral.logExpressions = logs
+    if len(logs)>=1: # at most one log extension of C(x,T_1,...,T_(N-1))
+        lcombo = FTS.getLinearLogCombination(logs, fieldTower.getLastExtension())
+        if lcombo==False:
+            raise Int.IntegralNotElementaryError()
         else:
-            raise NotImplementedError()#Int.IntegralNotElementaryError()
+            lcombo = lcombo[1]
+            j = min(i for i in range(len(lcombo)) if lcombo[i]!=0)
+            factor = lcombo[j]/logs[j].factor
+            for i in range(len(logs)):
+                f = lcombo[i]/logs[i].factor
+                if f!=factor:
+                    raise Int.IntegralNotElementaryError()
+            logs = [Int.LogFunction(fieldTower.getLastExtension().argFunction, 1/factor)]
+            integral.logExpressions = logs
+
     if len(logs)!=0: # if a log extension appears, it must be T_N
         if logs[0].argFunction != fieldTower.getLastExtension().argFunction:
             raise Int.IntegralNotElementaryError()
@@ -421,7 +427,7 @@ if __name__ == '__main__':
 
     print(integratetest("2.0x+[4.25x]/[x+1.0]+[(-0.25)x]/[x**2+2.0x+1.0]+[(-0.25)x]/[x+1.0]+0.375*log(x+(-1.0))+(-4.375)log(x+1.0)",printIntegral(ratA)))
     print("----")
-    fieldExtension1 = FE.FieldExtension(FE.TRANS_LOG,Pol.Polynomial([0,1]),"T_1") # field extension with log(x)
+    fieldExtension1 = FE.FieldExtension(FE.TRANS_LOG,Pol.Polynomial([0,1]),FE.Variable("T_1")) # field extension with log(x)
     FE.fieldTower = FE.FieldTower(fieldExtensions=[fieldExtension1])
     
     one = parseField0RatFromStr("1/1")
@@ -463,7 +469,7 @@ if __name__ == '__main__':
     #print(p.printFull())
     print(integratetest("Integral is not elementary", printIntegral(p,FE.fieldTower)))
     
-    fieldExtension2 = FE.FieldExtension(FE.TRANS_LOG,Pol.Polynomial([0,1],fieldTower=FE.FieldTower(fieldExtension1)),"T_2") # field extension with log(log(x))
+    fieldExtension2 = FE.FieldExtension(FE.TRANS_LOG,Pol.Polynomial([0,1],fieldTower=FE.FieldTower(fieldExtension1)),FE.Variable("T_2")) # field extension with log(log(x))
     FE.fieldTower = FE.FieldTower(fieldExtensions=[fieldExtension1,fieldExtension2])
     
     
@@ -478,7 +484,7 @@ if __name__ == '__main__':
     # print(pol.printFull())
     print(integratetest("Integral not elementary", printIntegral(pol, FE.fieldTower)))
     #  print(Integrate(pol, FE.fieldTower))
-    ratX = Rat.RationalFunction(1,Pol.Polynomial([0,1]))
+    ratX = Rat.RationalFunction(ONE,Pol.Polynomial([0,ONE]))
     pol = Pol.Polynomial([0,ratX],fieldTower=FE.fieldTower) # (1/x) log(log(x))
     print(integratetest("log(x)*log(log(x))+(-1)*log(x)",printIntegral(pol, FE.fieldTower)))
     
@@ -503,7 +509,7 @@ if __name__ == '__main__':
     
     
     
-    fieldExtension1 = FE.FieldExtension(FE.TRANS_LOG,Pol.Polynomial([0,0,1]),"T") # field extension with log(x^2)
+    fieldExtension1 = FE.FieldExtension(FE.TRANS_LOG,Pol.Polynomial([0,0,1]),FE.Variable("T")) # field extension with log(x^2)
     FE.fieldTower = FE.FieldTower(fieldExtensions=[fieldExtension1])
     
     rat = Rat.RationalFunction(2,Pol.Polynomial([0,parseField0PolyFromStr("x")],fieldTower=FE.fieldTower))#1/(x log(x^2))
