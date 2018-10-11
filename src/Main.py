@@ -52,15 +52,15 @@ def fieldTowerInput():
             argFunc = parseExpressionFromStr(argFunc_str, fieldTower)
         variable = FE.Variable("T_{}".format(i+1))
         fe = FE.FieldExtension(f_e_type,argFunc,variable)
-        fieldTower.addFieldExtension(fe)
+        fieldTower = fieldTower.addFieldExtension(fe)
         
     return fieldTower
     
 def Main():
     FE.fieldTower = fieldTowerInput()
     print(FE.fieldTower)
-    if FE.fieldTower.towerHeight>0:
-        print("Use field-extension Variables instead of the function names, e.g. f=x*{} instead of f=x*{}".format(FE.fieldTower.getFieldExtension(0).variable, FE.fieldTower.getFieldExtension(0).strFunc()))
+    if FE.fieldTower.towerHeight>1:
+        print("Use field-extension Variables instead of the function names, e.g. f=x*{} instead of f=x*{}".format(FE.fieldTower.getFieldExtension(1).variable, FE.fieldTower.getFieldExtension(1).strFunc()))
     while (True):
         
         f = None
@@ -73,9 +73,8 @@ def Main():
         a = time.time()
         print("Integral({}) = {}".format(f.printFull(),printIntegral(f, FE.fieldTower)))
         b = time.time()
-        print("calculating and printing time: {}s".format(b-a))
-        print(Pol.Polynomial.updateCoefficientsFields.calls)
-        print(Pol.Polynomial.updateCoefficients.calls)
+        print("calculating and printing time: {}s".format(b-a))#0.00032901763916s
+        #print(Pol.Polynomial.updateCoefficients.calls)
 
         
         

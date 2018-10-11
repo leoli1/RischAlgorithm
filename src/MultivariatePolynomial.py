@@ -137,7 +137,7 @@ class ExtendedMultivariatePolynomial(object):
         output = ExtendedMultivariatePolynomial()
         for i in range(polynomial.degree+1):
             coeff = polynomial.getCoefficient(i)
-            polyVarIndex = MultiIndex(data=[(polynomial.getVariable(),i)])
+            polyVarIndex = MultiIndex(data=[(polynomial.variable,i)])
             polyVarMonomial = ExtendedMultivariateMonomial(coefficient=Number.ONE,multiIndex=polyVarIndex)
             
             if isNumber(coeff):

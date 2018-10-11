@@ -13,21 +13,26 @@ class ExtendedPolynomial(object):
     """
 
 
-    def __init__(self, normCoeffs=None, princCoeffs=None, fieldTower=None):
-        self.fieldTower = fieldTower
-        if fieldTower==None or fieldTower.towerHeight==0:
+    def __init__(self, normCoeffs=None, princCoeffs=None, variable=None):
+        self.variable = variable
+        if variable==None:
+            self.variable = FE.BASEVARIABLE
+        elif type(variable)!=FE.Variable:
+            raise TypeError()
+        fieldTower = self.variable.fieldExtension.fieldTower
+        if fieldTower==None or fieldTower.towerHeight==1:
             raise Exception("Extended Polynomials only for exponentials")
         fieldExtension = fieldTower.getLastExtension()
         if fieldExtension.extensionType!=FE.TRANS_EXP:
             raise Exception("Extended Polynomials only for exponentials")
         inverseExtension = FE.FieldExtension(FE.TRANS_EXP, -fieldExtension.argFunction,FE.Variable("{{1/{}}}".format(fieldExtension.variable)))
         self.princFieldTower = self.fieldTower.copy()
-        self.princFieldTower.addFieldExtension(inverseExtension)
+        self.princFieldTower = self.princFieldTower.addFieldExtension(inverseExtension)
         
         if princCoeffs!=None:
             princCoeffs = [0]+princCoeffs
-        self.normPoly = Pol.Polynomial(normCoeffs, fieldTower=self.fieldTower)
-        self.principalPart = Pol.Polynomial(princCoeffs, fieldTower=self.princFieldTower)
+        self.normPoly = Pol.Polynomial(normCoeffs, variable=self.variable)
+        self.principalPart = Pol.Polynomial(princCoeffs, variable=self.variable)
         
         
     @property
@@ -36,6 +41,9 @@ class ExtendedPolynomial(object):
     @property
     def princDegree(self):
         return self.principalPart.degree
+    @property
+    def fieldTower(self):
+        return self.variable.fieldExtension.fieldTower
     
     def isZero(self):
         return self.normPoly.isZero() and self.principalPart.isZero()
@@ -50,20 +58,21 @@ class ExtendedPolynomial(object):
         else:
             return self.principalPart.getCoefficient(-power)
 
-    def setCoefficient(self, coeff, power,callUpdates=True):
+    def setCoefficient(self, power, coeff,callUpdates=True):
+        if type(power)!=int: raise TypeError()
         if power>=0:
-            self.normPoly.setCoefficient(coeff, power,callUpdates=callUpdates)
+            self.normPoly.setCoefficient(power,coeff,callUpdates=callUpdates)
         else:
-            self.principalPart.setCoefficient(coeff, -power,callUpdates=callUpdates)
+            self.principalPart.setCoefficient(-power,coeff,callUpdates=callUpdates)
             
     def updateCoefficientsAll(self):
         self.normPoly.updateCoefficientsAll()
         self.principalPart.updateCoefficientsAll()
             
     def mulByMonicMonomial(self,power): # multiplies self by x^power
-        newExtPoly = ExtendedPolynomial(fieldTower=self.fieldTower)
+        newExtPoly = ExtendedPolynomial(variable=self.variable)
         for i in range(self.degree,-self.princDegree-1,-1):
-            newExtPoly.setCoefficient(self.getCoefficient(i), i+power,callUpdates=False)
+            newExtPoly.setCoefficient(i+power, self.getCoefficient(i),callUpdates=False)
 
         return newExtPoly
     
@@ -75,10 +84,10 @@ class ExtendedPolynomial(object):
         if type(other) == Pol.Polynomial:
             norm = self.normPoly+other
             pcoeffs = self.principalPart.getCoefficients()
-            return ExtendedPolynomial(norm.getCoefficients(), pcoeffs[1:self.princDegree+1],fieldTower=self.fieldTower)
+            return ExtendedPolynomial(norm.getCoefficients(), pcoeffs[1:self.princDegree+1],variable=self.variable)
         if type(other) == ExtendedPolynomial:
             if other.fieldTower==self.fieldTower:
-                return extPolyFromPolys(self.normPoly+other.normPoly, self.principalPart+other.principalPart, self.fieldTower)
+                return extPolyFromPolys(self.normPoly+other.normPoly, self.principalPart+other.principalPart, self.variable)
             else:
                 raise Exception()
             
@@ -99,12 +108,12 @@ class ExtendedPolynomial(object):
             return n
         return "{}+{}".format(n,p)
     
-def extPolyFromPolys(normPoly,princPoly,fieldTower):
-    return ExtendedPolynomial(normPoly.getCoefficients(),princPoly.getCoefficients()[1:princPoly.degree+1],fieldTower=fieldTower)
+def extPolyFromPolys(normPoly,princPoly,variable):
+    return ExtendedPolynomial(normPoly.getCoefficients(),princPoly.getCoefficients()[1:princPoly.degree+1],variable=variable)
 def extPolyFromPol_power(poly,power):  # poly/T^power
-    extPoly = ExtendedPolynomial(fieldTower=poly.fieldTower)
+    extPoly = ExtendedPolynomial(variable=poly.variable)
     for i in range(poly.degree,-1,-1):
-        extPoly.setCoefficient(poly.getCoefficient(i), i-power, callUpdates=False)
+        extPoly.setCoefficient(i-power, poly.getCoefficient(i), callUpdates=False)
     return extPoly
 if __name__ == '__main__':
     o = Number.Rational(1,1)

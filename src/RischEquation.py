@@ -10,7 +10,7 @@ import FieldExtension as FE
 from Number import Rational
 
 def solveRischEquation(p,q, fieldTower):
-    if fieldTower.towerHeight>0:
+    if fieldTower.towerHeight>1:
         raise NotImplementedError()
     if type(p) is Rat.RationalFunction:
         pn = p.asPolynomial()

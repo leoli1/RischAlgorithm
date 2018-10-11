@@ -31,28 +31,35 @@ class RationalFunction(object):
         if isNumber(self.numerator):
             if isNumber(denominator):
                 self.denominator = Pol.Polynomial([self.denominator])
-            self.numerator = Pol.Polynomial([self.numerator],fieldTower=self.denominator.fieldTower)
+            self.numerator = Pol.Polynomial([self.numerator],variable=self.denominator.variable)#fieldTower=self.denominator.fieldTower)
         elif isNumber(self.denominator):
-            self.denominator = Pol.Polynomial([self.denominator],fieldTower = self.numerator.fieldTower)
+            self.denominator = Pol.Polynomial([self.denominator],variable=self.numerator.variable)#fieldTower = self.numerator.fieldTower)
             
         numFieldTower = self.numerator.getFieldTower()
         denomFieldTower = self.denominator.getFieldTower()    
         if numFieldTower!=denomFieldTower:
             if numFieldTower.isExtendedTowerOf(denomFieldTower):
-                self.denominator = Pol.Polynomial([self.denominator],fieldTower=numFieldTower)
+                self.denominator = Pol.Polynomial([self.denominator],variable=self.denominator.variable)#fieldTower=numFieldTower)
             elif denomFieldTower.isExtendedTowerOf(numFieldTower):
-                self.numerator = Pol.Polynomial([self.numerator],fieldTower=denomFieldTower)
+                self.numerator = Pol.Polynomial([self.numerator],variable=self.numerator.variable)#fieldTower=denomFieldTower)
             else:
                 raise Exception()
-        self.fieldTower = self.numerator.fieldTower
+        
+        #self.fieldTower = self.numerator.fieldTower
+        self.variable = self.numerator.variable
         
         self.removeCommonFactors()
         
         if self.denominator.isConstant():
             self.numerator = self.numerator/self.denominator.getConstant()
-            self.denominator = Pol.Polynomial([1],fieldTower=self.fieldTower)
+            self.denominator = Pol.Polynomial([1],variable=self.variable)
             
         #self.makeDenominatorMonicInPlace()
+        
+    @property
+    def fieldTower(self):
+        return self.variable.fieldExtension.fieldTower
+    
     def isConstant(self):
         if isNumber(self.numerator):
             return numberIsZero(self.numerator) or isNumber(self.denominator) or self.denominator.isConstant()
@@ -79,7 +86,7 @@ class RationalFunction(object):
                 return self.numerator.getConstant()/self.denominator.getConstant()
             
     def isZero(self):
-        return objEqualsNumber(self.getConstant(),Number.Rational(0,1))
+        return objEqualsNumber(self.getConstant(),Number.ZERO)
 
     # ========================================== Field Tower/Extension =========================================
     def getFieldTower(self):
@@ -112,7 +119,7 @@ class RationalFunction(object):
         return RationalFunction(newNum,newDenom)#newNum/newDenom#RationalFunction(newNum,newDenom,fieldTower=targetFieldTower)
     
     def reduceToLowestPossibleFieldTower(self):
-        if self.fieldTower.towerHeight==0:
+        if self.fieldTower.towerHeight==1:
             return self
         r = self.reduceToFieldTower(self.fieldTower.prevTower())
         if r==None:
@@ -168,7 +175,7 @@ class RationalFunction(object):
         if isNumber(self.denominator):
             return
         lcoeff = self.denominator.getLeadingCoefficient()
-        lcoeff_poly = Pol.Polynomial(coefficients=[lcoeff],fieldTower=self.getFieldTower())
+        lcoeff_poly = Pol.Polynomial(coefficients=[lcoeff],variable=self.variable)
         if isNumber(self.numerator):
             self.numerator = Pol.Polynomial([self.numerator],fieldTower=self.getFieldTower())/lcoeff_poly
         else:
@@ -208,7 +215,7 @@ class RationalFunction(object):
         if isNumber(other):
             if other==0:
                 return self
-            return self.__add__(Pol.Polynomial([other],fieldTower=self.fieldTower))
+            return self.__add__(Pol.Polynomial([other],variable=self.variable))
         if other.isZero():
             return self
         if type(other)==Pol.Polynomial or isPoly(other):
@@ -241,6 +248,8 @@ class RationalFunction(object):
     
     def __neg__(self):
         return (-1)*self
+    def __rtruediv__(self, other):
+        return self.Inverse()*other
     def __truediv__(self, other):
         if isNumber(other):
             return self.__mul__(1/other)

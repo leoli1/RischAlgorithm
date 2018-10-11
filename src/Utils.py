@@ -45,7 +45,7 @@ def isPoly(x):
 def sign(x):
     return 0 if x==0 else x/abs(x)
 def objEqualsNumber(obj, num):
-    if obj==None:
+    if id(obj)==id(None):
         return False
     x = None
     if isNumber(obj):

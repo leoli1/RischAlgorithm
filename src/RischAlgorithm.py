@@ -25,8 +25,8 @@ logExtensionsInIntegral = []
 def Integrate(func):
     if isNumber(func):
         func = Pol.Polynomial([func])
-    else:
-        func = func.reduceToLowestPossibleFieldTower()
+    #else:
+    #    func = func.reduceToLowestPossibleFieldTower()
     if isPoly(func):
         quot = func
         rat = 0
@@ -40,7 +40,7 @@ def Integrate(func):
     fieldTower = func.fieldTower
     lastExtension = fieldTower.getLastExtension()
     try:
-        if lastExtension == None:
+        if fieldTower.towerHeight==1:
             out1 = IntegratePolynomialPart(quot)
             out2 = IntegrateRationalFunction(rat)
         elif lastExtension.extensionType==FE.TRANS_LOG:
@@ -133,9 +133,9 @@ def IntegratePolynomialPartLogExt(poly, fieldTower):
         q_0 = (P_i+Int.Integral(logs=[Int.LogFunction(u,(-1)*b[1])])).asFunction()
     q[0] = q_0
     
-    integralPoly = Pol.Polynomial(fieldTower=fieldTower)
+    integralPoly = Pol.Polynomial(variable=fieldTower.getLastVariable())
     for i in range(l+1,-1,-1):
-        integralPoly.setCoefficient(q[i], i,callUpdates=False)
+        integralPoly.setCoefficient(i,q[i], callUpdates=False)
     integralPoly.updateCoefficientsAll()
         
     return Int.Integral(poly_rationals=[integralPoly])
@@ -208,8 +208,8 @@ def IntegrateRationalPartLogExt(func, fieldTower): # Hermite Reduction
         
         zvar = FE.Variable('z')
         zExtension = FE.FieldExtension(FE.TRANSCENDENTAL_SYMBOL,1,zvar)
-        newFieldTower = fieldTower.getStrippedTower(fieldTower.towerHeight-1)
-        newFieldTower.addFieldExtension(zExtension)
+        newFieldTower = fieldTower.getStrippedTower(fieldTower.towerHeight-1).addFieldExtension(zExtension)
+        
         
         coeffsA = []
         Adeg = max(a.degree,bp.degree)   
@@ -251,22 +251,28 @@ def IntegratePolynomialPartExpExt(func, fieldTower):
     if func == 0 or func.isZero():
         return Int.Integral()
     
-    #red = func.reduceToLowestPossibleFieldTower()
-    #if red.fieldTower.towerHeight<fieldTower.towerHeight:
-    #    return Integrate(red)
-    #q = [0]*(func.degree+1)
+    red = func.reduceToLowestPossibleFieldTower()
+    if red.fieldTower.towerHeight<fieldTower.towerHeight:
+        return Integrate(red)
+
     up = fieldTower.getLastExtension().argFunction.differentiate().reduceToLowestPossibleFieldTower()
-    integralPoly = ExtPol.ExtendedPolynomial(fieldTower=fieldTower)
+    integralPoly = ExtPol.ExtendedPolynomial(variable=fieldTower.getLastVariable())
+    
     for i in range(1,func.degree+1):
         o = func.getCoefficient(i).reduceToLowestPossibleFieldTower()
+        if isNumber(o):
+            o = Pol.Polynomial([o],variable=FE.BASEVARIABLE)
         ft = o.fieldTower if o.fieldTower.towerHeight>up.fieldTower.towerHeight else up.fieldTower
         s = RischEquation.solveRischEquation(i*up, o, ft)
         if s==None:
             raise Int.IntegralNotElementaryError()
-        integralPoly.setCoefficient(s, i,callUpdates=False)
+        integralPoly.setCoefficient(i, s, callUpdates=False)
+        
     if type(func) is ExtPol.ExtendedPolynomial:
         for i in range(-func.princDegree,0):
             o = func.getCoefficient(i).reduceToLowestPossibleFieldTower()
+            if isNumber(o):
+                o = Pol.Polynomial([o],variable=FE.BASEVARIABLE)
             ft = o.fieldTower if o.fieldTower.towerHeight>up.fieldTower.towerHeight else up.fieldTower
             s = RischEquation.solveRischEquation(i*up, o, ft)
             if s==None:
@@ -288,7 +294,7 @@ def IntegrateRationalPartExpExt(func, fieldTower):
     func = func.makeDenominatorMonic()
     l = func.denominator.lowestDegree
     if l!=0:
-        powerPol = Pol.Polynomial([0,Number.Rational(1,1)],fieldTower=fieldTower)**l # T^l
+        powerPol = Pol.Polynomial([0,Number.Rational(1,1)],variable=fieldTower.getLastVariable())**l # T^l
         qs = func.denominator/powerPol
         (rs,w) = Pol.extendedEuclidGenF(powerPol, qs, func.numerator)
         w_ext = ExtPol.extPolyFromPol_power(w, l) # w/T^l
@@ -333,20 +339,20 @@ def IntegrateRationalPartExpExt(func, fieldTower):
         b = toIntegratePart.denominator
         bp = b.differentiate()
         
-        zExtension = FE.FieldExtension(FE.TRANSCENDENTAL_SYMBOL,1,"z")
-        newFieldTower = fieldTower.getStrippedTower(fieldTower.towerHeight-1)
-        newFieldTower.addFieldExtension(zExtension)
+        zvar = FE.Variable('z')
+        zExtension = FE.FieldExtension(FE.TRANSCENDENTAL_SYMBOL,1,zvar)
+        newFieldTower = fieldTower.getStrippedTower(fieldTower.towerHeight-1).addFieldExtension(zExtension)
         
         coeffsA = []
         Adeg = max(a.degree,bp.degree)
         for i in range(Adeg+1):
-            polZ = Pol.Polynomial([a.getCoefficient(i),bp.getCoefficient(i)*(-1)],fieldTower=newFieldTower)
+            polZ = Pol.Polynomial([a.getCoefficient(i),bp.getCoefficient(i)*(-1)],variable=zvar)
             coeffsA.append(polZ)
             
         b_coeffs = b.getCoefficients()
         coeffsB = []
         for bc in b_coeffs:
-            coeffsB.append(Pol.Polynomial([bc],fieldTower=newFieldTower))
+            coeffsB.append(Pol.Polynomial([bc],variable=zvar))
         res = Resultant(coeffsA, coeffsB) # res_T (a-z*b',b)
         if res!=0:
             primitivePart = res.makeMonic().reduceToLowestPossibleFieldTower()

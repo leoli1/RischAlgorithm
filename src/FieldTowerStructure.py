@@ -31,7 +31,7 @@ def getLinearLogCombination(logs, log):
     fieldTower = FE.FieldTower()
     for i in range(len(logs)):
         l = logs[i]
-        fieldTower.addFieldExtension(FE.FieldExtension(FE.TRANS_LOG, l.argFunction, FE.Variable("L_{}".format(i))))
+        fieldTower = fieldTower.addFieldExtension(FE.FieldExtension(FE.TRANS_LOG, l.argFunction, FE.Variable("L_{}".format(i))))
     
     # step 2: log is rational linear combination of the logs iff log is algebraic over this field tower
     trans = logIsTranscendental(log.argFunction, fieldTower)

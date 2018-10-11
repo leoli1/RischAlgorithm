@@ -81,13 +81,13 @@ class Integral(object):
         for log in self.logExpressions:
             tower = FE.hasFieldExtension(FE.TRANS_LOG, log.argFunction, FE.fieldTower)
             if tower==None:
-                newFieldTower.addFieldExtension(FE.FieldExtension(FE.TRANS_LOG,log.argFunction,FE.Variable('a')))
+                newFieldTower = newFieldTower.addFieldExtension(FE.FieldExtension(FE.TRANS_LOG,log.argFunction,FE.Variable('a')))
                 newTower = newFieldTower.copy()
-                logExpr = Pol.Polynomial([0,log.factor], newTower)
+                logExpr = Pol.Polynomial([0,log.factor], newFieldTower.getLastVariable())
                 func += logExpr
                 #raise NotImplementedError("")
             else:
-                logExpr = Pol.Polynomial([0,log.factor], tower)
+                logExpr = Pol.Polynomial([0,log.factor], tower.getLastVariable())
                 func += logExpr
         
         if self.rootSums!=[]:

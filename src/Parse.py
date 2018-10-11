@@ -9,6 +9,7 @@ import Polynomial as Pol
 import RationalFunction as Rat
 import FieldExtension as FE
 from Utils import *
+import Number
 
 
 def parseField0PolyFromStr(poly_raw,var="x"):
@@ -38,20 +39,22 @@ def parseField0RatFromStr(rat_raw,var="x"):
         return 
     return Rat.RationalFunction(parseField0PolyFromStr(parts[0], var), parseField0PolyFromStr(parts[1], var))
 
-def parseExpressionFromStr(expr_str,fieldTower):
-    variables = [(fieldTower.getFieldExtension(i).variable, fieldTower.getStrippedTower(i+1)) for i in range(fieldTower.towerHeight)]
+def parseExpressionFromStr(expr_str,fieldTower=None):
+    if fieldTower==None:
+        fieldTower = FE.BASEFIELD
+    variables = [fieldTower.getFieldExtension(i).variable for i in range(fieldTower.towerHeight)]#[(fieldTower.getFieldExtension(i).variable, fieldTower.getStrippedTower(i+1)) for i in range(fieldTower.towerHeight)]
 
     for variable in variables:
-        var = variable[0]
-        tower = variable[1]
-        poly = Pol.Polynomial([0,1],fieldTower=tower)
-        exec (var.stringRepr + "=poly")
-    x = Pol.Polynomial([0,1])
+        poly = Pol.Polynomial([Number.ZERO,Number.ONE],variable=variable)#fieldTower=tower)
+        exec (variable.stringRepr + "=poly")
     i = complex(0,1)
     try:
         expr = eval(expr_str)
         if isNumber(expr) or expr.fieldTower.towerHeight<fieldTower.towerHeight:
-            expr = Pol.Polynomial([expr],fieldTower=fieldTower)
+        if isNumber(expr):
+            expr = Pol.Polynomial([expr],variable=FE.BASEVARIABLE)
+       # if isNumber(expr) or expr.fieldTower.towerHeight<fieldTower.towerHeight:
+       #     expr = Pol.Polynomial([expr],fieldTower=fieldTower)
             
         expr.replaceNumbersWithRationals()
         return expr

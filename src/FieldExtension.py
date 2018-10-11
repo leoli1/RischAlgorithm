@@ -27,6 +27,7 @@ def hasFieldExtension(type,u,tower):
 class Variable(object):
     def __init__(self, stringRepr):
         self.stringRepr = stringRepr
+        self.fieldExtension = None
         variables.append(self)
         
     def __eq__(self, other):
@@ -42,14 +43,16 @@ class Variable(object):
         return self.__str__()
     
     
+def getVariable(stringReprs):
+    for var in variables:
+        if var.stringRepr == stringReprs:
+            return var
 def Variables(l):
     vs = [] 
     for v in l:
         vs.append(Variable(v))
     return vs
 
-if "BASEVARIABLE" not in dir():
-    BASEVARIABLE = Variable('x') # base variable for C(x) functions
     
     
 class FieldExtension(object):
@@ -72,6 +75,8 @@ class FieldExtension(object):
         if type(variable)!=Variable:
             raise TypeError()
         self.variable = variable
+        self.variable.fieldExtension = self
+        self.fieldTower = None
         
         
     def __eq__(self, other):
@@ -98,20 +103,28 @@ class FieldTower(object):
     """
     Tower of field extensions
     """
-    def __init__(self, fieldExtension=None,fieldExtensions=None):
+    def __init__(self, fieldExtension=None,fieldExtensions=None,_withoutBaseExtension=False):
         """
         FieldTower() = C(x)
         FieldTower(fieldExtension) = C(x,fieldExtension.variable)
         etc...
         """
+        k = []
+        if not _withoutBaseExtension:
+            k = [BASEEXTENSION]
         if fieldExtensions!=None:
-            self.fieldExtensions = fieldExtensions
-        elif fieldExtension!=None:
-            self.fieldExtensions = [fieldExtension]
-        else:
-            self.fieldExtensions = []
+            self.fieldExtensions = k + fieldExtensions
             
-        #updateVariables()
+        elif fieldExtension!=None:
+            self.fieldExtensions = k+[fieldExtension]
+        else:
+            self.fieldExtensions = k
+            
+        for fe in self.fieldExtensions:
+            if fe.fieldTower==None:
+                fe.fieldTower = self.copy()
+            
+
     
     @property
     def towerHeight(self):
@@ -129,12 +142,19 @@ class FieldTower(object):
         return self.getLastExtension().variable
     
     def getStrippedTower(self, index):
-        return FieldTower(fieldExtensions=self.fieldExtensions[0:index])
+        ft = FieldTower(_withoutBaseExtension=True)
+        ft.fieldExtensions = self.fieldExtensions[0:index]
+        return ft
+    
     def prevTower(self):
         return self.getStrippedTower(self.towerHeight-1)
     
     def addFieldExtension(self, fieldExtension):
-        self.fieldExtensions.append(fieldExtension)
+        ft = self.copy()
+        ft.fieldExtensions.append(fieldExtension)
+        if fieldExtension.fieldTower==None:
+            fieldExtension.fieldTower = ft
+        return ft
     
     def getLogarithms(self):
         logs = []
@@ -173,23 +193,33 @@ class FieldTower(object):
     def __ne__(self, other):
         return not (self==other)
     def __str__(self):
-        out = "C(x,"
+        out = "C("
         for i in range(self.towerHeight):
             out += self.getFieldExtension(i).variable.stringRepr+","
         out = out.strip(",")
         out += ")"
         if self.towerHeight==0:
+            raise Exception()
+        if self.towerHeight==1:
             return out
         out += " where "
         for i in range(self.towerHeight):
             ext = self.getFieldExtension(i)
+            if ext.argFunction==None:
+                continue
             var = ext.getFVar()
-            if i==0:
+            if i==1:
                 out += "{} = {}({}); ".format(ext.variable.stringRepr,var,str(ext.argFunction))
             else:
                 out += "{} = {}({}) = {}({}); ".format(ext.variable.stringRepr,var,str(ext.argFunction),var,ext.argFunction.printFull())
         out = out.strip("; ")
-        return out
+        return out.strip(" where ")
     def __repr__(self):
         return str(self)
+    
+    
+if "BASEVARIABLE" not in dir():
+    BASEVARIABLE = Variable('x') # base variable for C(x) functions
+    BASEEXTENSION = FieldExtension(TRANSCENDENTAL_SYMBOL,None,BASEVARIABLE)
+    BASEFIELD = FieldTower(BASEEXTENSION,_withoutBaseExtension=True)
     

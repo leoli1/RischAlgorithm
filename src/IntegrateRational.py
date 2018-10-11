@@ -21,7 +21,7 @@ def IntegratePolynomialPart(poly):
     """
     if poly==0:
         return Int.Integral([],[])
-    if poly.fieldTower.towerHeight!=0:
+    if poly.fieldTower.towerHeight!=1:
         raise Exception()
     
     Log("Integrate polynomial part: {}.".format(poly.printFull()))
@@ -29,7 +29,7 @@ def IntegratePolynomialPart(poly):
     intPoly = Pol.Polynomial()
     for i in range(poly.degree+1):
         coeff = poly.getCoefficient(i)/(i+1)
-        intPoly.setCoefficient(coeff, i+1,callUpdates=False)
+        intPoly.setCoefficient(i+1,coeff,callUpdates=False)
         
     intPoly.updateCoefficientsAll()
     
@@ -67,19 +67,19 @@ def IntegrateRationalFunction(func): # field=0, func element C(x)
         zExtension = FE.FieldExtension(FE.TRANSCENDENTAL_SYMBOL,1,zvar)
         newFieldTower = FE.FieldTower(zExtension)
         
-        poly = Pol.Polynomial([a,bpm],fieldTower=newFieldTower)
+        poly = Pol.Polynomial([a,bpm],variable=zvar)
         Log("Calculate resultant: res_x[{},{}]".format(poly,b)) 
         
         coeffsA = []
         Adeg = max(a.degree,bp.degree)   
         for i in range(Adeg+1):
-            polZ = Pol.Polynomial([a.getCoefficient(i),bpm.getCoefficient(i)],fieldTower=newFieldTower)
+            polZ = Pol.Polynomial([a.getCoefficient(i),bpm.getCoefficient(i)], variable=zvar)
             coeffsA.append(polZ)
             
         b_coeffs = b.getCoefficients()
         coeffsB = []
         for bc in b_coeffs:
-            coeffsB.append(Pol.Polynomial([bc],fieldTower=newFieldTower))
+            coeffsB.append(Pol.Polynomial([bc],variable=zvar))
         res = Resultant(coeffsA, coeffsB) # res_T (a-z*b',b)
         
         Log("Resultant: {}".format(res))
@@ -100,25 +100,41 @@ def IntegrateRationalFunction(func): # field=0, func element C(x)
         coeffsA = []
         Adeg = max(a.degree,bp.degree)   
         for i in range(Adeg+1):
-            polZ = Pol.Polynomial([a.getCoefficient(i),bp.getCoefficient(i)*(-1)],fieldTower=newFieldTower)
+            polZ = Pol.Polynomial([a.getCoefficient(i),bp.getCoefficient(i)*(-1)],variable=zvar)
             coeffsA.append(polZ)
             
         b_coeffs = b.getCoefficients()
         coeffsB = []
         for bc in b_coeffs:
-            coeffsB.append(Pol.Polynomial([bc],fieldTower=newFieldTower))
+            coeffsB.append(Pol.Polynomial([bc],variable=zvar))
         #v = Pol._PolyGCD(coeffsA, coeffsB)
         
-        LOOK_FOR_RATIONAL_ROOTS = False
+        LOOK_FOR_RATIONAL_ROOTS = True
         for fac in sqrfreeFact:
             if fac[0]==1:
                 continue
             d = fac[0].degree
-            if d== b.degree and d>3: # can't simplify, need full splitting field of b: # TODO: Test for rational roots
-                coeff_rat = a/bp
-                coeff_str = coeff_rat.strCustomVar("y")
-                rootSum = RS.RootSum(b,"({}){}".format(coeff_str, logExpression("x-y")),exprVar="y")
-                return Int.Integral([],[],[rootSum])
+            if d== b.degree and d>=3: # can't simplify, need full splitting field of b: # TODO: Test for rational roots
+                if LOOK_FOR_RATIONAL_ROOTS:
+                    ratRoots = fac[0].getRationalRoots()
+                    hasRatRoots=len(ratRoots)>0
+                    if hasRatRoots:
+                        div = 1
+                        for root in ratRoots:
+                            p = Pol.Polynomial([-root,1],variable=zvar)
+                            div *= p
+                            sqrfreeFact.append((p,1))
+                            
+                        (s,r) = Pol.PolyDiv(fac[0],div)
+                        if r!=0:
+                            raise Exception(str(r))
+                        sqrfreeFact.append((s,1)) # s has no rational roots, but it will be tested again -> TODO
+                if not LOOK_FOR_RATIONAL_ROOTS or not hasRatRoots:
+                    coeff_rat = a/bp
+                    coeff_str = coeff_rat.strCustomVar("y")
+                    rootSum = RS.RootSum(b,"({}){}".format(coeff_str, logExpression("x-y")),exprVar="y")
+                    return Int.Integral([],[],[rootSum])
+                continue
             if d<=2:
                 roots = fac[0].getRoots()
                 for c in roots:
@@ -128,11 +144,11 @@ def IntegrateRationalFunction(func): # field=0, func element C(x)
             else:
                 if LOOK_FOR_RATIONAL_ROOTS:
                     ratRoots = fac[0].getRationalRoots()
-                    hasRatRoots=ratRoots>0
+                    hasRatRoots=len(ratRoots)>0
                     if hasRatRoots:
                         div = 1
                         for root in ratRoots:
-                            p = Pol.Polynomial([-root,1],fieldTower=newFieldTower)
+                            p = Pol.Polynomial([-root,1],variable=zvar)
                             div *= p
                             sqrfreeFact.append((p,1))
                             
@@ -142,7 +158,7 @@ def IntegrateRationalFunction(func): # field=0, func element C(x)
                         sqrfreeFact.append((s,1)) # s has no rational roots, but it will be tested again -> TODO
                     
                 if not LOOK_FOR_RATIONAL_ROOTS or not hasRatRoots:
-                    v = Pol.Polynomial( _PolyGCDWithAlgebraicParameter(coeffsA, coeffsB, fac[0]),callUpdateCoeffs =False)
+                    v = Pol.Polynomial( _PolyGCDWithAlgebraicParameter(coeffsA, coeffsB, fac[0]))#,callUpdateCoeffs =False)
                     rootSum = RS.RootSum(fac[0],"z*{}".format(logExpression(v)), exprVar="z")
                     integral += Int.Integral(rootSums=[rootSum])
                     

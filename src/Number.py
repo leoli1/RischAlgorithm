@@ -127,7 +127,10 @@ class Rational(AlgebraicNumber):
             self._p *= -1
             self._q *= -1
         
-        self.removeCommonFactors()    
+        if self._p==0:
+            self._q=1
+        else:
+            self.removeCommonFactors()    
         self._p = int(self._p)
         self._q = int(self._q)
         
@@ -145,9 +148,15 @@ class Rational(AlgebraicNumber):
     def removeCommonFactors(self):
         gcd = NumberGCD(abs(self._p),abs(self._q))
         if gcd!=1:
-            self._p //= gcd
-            self._q //= gcd
+            self._p /= gcd
+            self._q /= gcd
         
+        
+    # polynomial stuff
+    def differentiate(self):
+        return ZERO
+    def reduceToLowestPossibleFieldTower(self):
+        return self
     def __radd__(self, other):
         return self.__add__(other)
     def __add__(self, other):
@@ -184,6 +193,8 @@ class Rational(AlgebraicNumber):
             return self.__truediv__(Rational.fromFloat(other))
         if type(other) is SqrRootPolynomial:
             return self*other.Inverse()
+        if type(other) is Pol.Polynomial or type(other) is Rat.RationalFunction:
+            return other.__mul__(self)
         return Rational(self._p*other._q,self._q*other._p)
     def __neg__(self):
         return Rational(-self._p,self._q) 
@@ -205,7 +216,7 @@ class Rational(AlgebraicNumber):
     def __gt__(self,other):
         return float(self)>float(other)
     def __eq__(self, other):
-        if other==None:
+        if id(other)==id(None):
             return False
         if type(other) is SqrRootPolynomial:
             return SqrRootPolynomial.__eq__(self)
@@ -288,6 +299,8 @@ def getAllDivisors(n):
     return a+list(reversed(b))
 
 import Utils
+import Polynomial as Pol
+import RationalFunction as Rat
 
 if __name__=='__main__':
     a = Rational(12,8)

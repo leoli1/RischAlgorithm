@@ -22,76 +22,53 @@ def call_counter(func):
     helper.__name__= func.__name__
     return helper
 
-    
 class Polynomial(object):
-    
-    def __init__(self, coefficients=None, fieldTower=None, callUpdateCoeffs=True):
-        """
-        fieldTower = C(x,T1,T2,...,TN)
-        polynomial in C(x,T1,T2,...T(N-1))[TN]
-        -> coeffs in C(x,T1,T2,...T(N-1))
-        (if n=0, then fieldTower=C(x),polynomial in C[x] -> coeffs in C)
-        
-        """
+    def __init__(self, coefficients=None,variable=None):
         
         self.__derivative = None
         self.__logDerivative = None # u'/u
-        self.__logGCD = None # GCD(u,u') TODO
+        self.__logGCD = None # GCD(u,u')
         
         
-        if fieldTower==None:
-            self.fieldTower = FE.FieldTower()
-        else:
-            self.fieldTower = fieldTower
-            
         if coefficients == None:
-            self._coefficients = [0]
+            self._coefficients = [Number.ZERO]
         else:
-            if type(coefficients)!=list:
-                raise TypeError("coefficients argument must be either None or a list.")
             self._coefficients = coefficients
+            
+        if variable==None:
+            variable = FE.getVariable('x')
+        self.variable = variable
         
-        if self._coefficients!=[0] and callUpdateCoeffs:
+        if type(variable)!=None and type(variable) != FE.Variable:
+            raise TypeError()
+        
+        if coefficients!=None:
             self.updateCoefficientsAll()
-        self.derivativecalled = 0
-        
         
     # ========================================== Coefficients stuff =========================================
-    def setCoefficient(self, coeff, power,callUpdates=True): # coefficient of T^power
+    def getCoefficient(self, power):
         if power>self.degree:
-            self._coefficients += [0]*(power-self.degree)
+            return Number.ZERO
+        return self._coefficients[power]
+    def setCoefficient(self, power, coeff, callUpdates=True):
+        if type(power)!=int: raise TypeError()
+        if power>self.degree:
+            self._coefficients += [Number.ZERO]*(power-self.degree)
         self._coefficients[power] = coeff
-        
         if callUpdates:
             self.updateCoefficientsAll()
-    def updateCoefficientsAll(self):
-        self.updateCoefficients()
-        self.updateCoefficientsFields()
-        
-    def getCoefficient(self, power):
-        if power>=len(self._coefficients):
-            return 0
-        return self._coefficients[power]
-            
+    
     def getLeadingCoefficient(self):
         return self.getCoefficient(self.degree)
-    def setCoefficients(self,coeffs):
-        if type(coeffs)!=list:
-            raise TypeError("coefficients argument must be either None or a list.")
-        if len(coeffs)<=self.degree:
-            self._coefficients = self._coefficients[0:len(coeffs)]
-        for i in range(len(coeffs)):
-            self._coefficients[i] = coeffs[i]
-        
-        self.updateCoefficientsAll()
-        
+    
     def getCoefficients(self):
         return self._coefficients
-    
     def coeffIsZero(self, power):
         return objEqualsNumber(self.getCoefficient(power),0)
     
-    @call_counter
+    def updateCoefficientsAll(self):
+        self.updateCoefficients()
+
     def updateCoefficients(self):
         """
         Removes leading coefficients equal to Zero
@@ -102,86 +79,61 @@ class Polynomial(object):
                 newDeg = i
                 break
         self._coefficients = self._coefficients[0:newDeg+1]
-    @call_counter    
-    def updateCoefficientsFields(self):   # if fieldTower=C(x,T1,...TN), makes coefficients elements of C(x,T1,...T(N-1))
-        fieldTower = self.fieldTower
-        for i in range(len(self._coefficients)):
-            coeff = self.getCoefficient(i)
-            coeff_tower = FE.FieldTower()
-            if not isNumber(coeff):
-                return  #               remove this if something doesn't work
-                coeff_tower = coeff.fieldTower.copy()
-                if coeff.isZero():
-                    continue
-            if not isNumber(coeff) and not (fieldTower.isExtendedTowerOf(coeff_tower)):
-                reduced = coeff.reduceToFieldTower(fieldTower.prevTower())
-                if reduced==None:
-                    raise Exception("Coefficients of polynomial {} have to be in sub-towers of the polynomials field tower.".format(str(self)))
-                coeff = reduced
-                self._coefficients[i] = reduced
-                continue
-            
-            newCoeff = coeff
-            while coeff_tower.towerHeight< fieldTower.towerHeight-1 or (isNumber(newCoeff) and fieldTower.towerHeight>0):
-                newExtension = fieldTower.getFieldExtension(coeff_tower.towerHeight)
-                coeff_tower.addFieldExtension(newExtension)
-                prev_tower = coeff_tower.getStrippedTower(coeff_tower.towerHeight-1)
-                if not isNumber(newCoeff) and newCoeff.fieldTower==prev_tower:
-                    pol = newCoeff
-                else:
-                    pol = Polynomial([newCoeff],fieldTower=prev_tower)
-                if not isNumber(newCoeff):
-                    newCoeff = Rat.RationalFunction(Polynomial([pol],fieldTower=coeff_tower),1)#Rat.RationalFunction(Polynomial([newCoeff],fieldTower=prev_tower),1,fieldTower=prev_tower)
-                else:
-                    newCoeff = Rat.RationalFunction(pol,1)#,fieldTower=prev_tower) # numbers are 'below' C[x] Polynomials / C(x) Rational first, so they have to be converted to a C(x)
-                    coeff_tower = FE.FieldTower()
-            self._coefficients[i] = newCoeff
-    
+        
     def simplifyCoefficients(self):
-        for i in range(len(self._coefficients)):
-            coeff = self.getCoefficient(i)
-            if not isNumber(coeff):
-                self._coefficients[i] = coeff.reduceToLowestPossibleFieldTower()
-                
-        self.updateCoefficientsFields()   
+        pass#TODO #raise NotImplementedError()
+    
     def isConstant(self):
         if self.deg0():
             if isNumber(self.getCoefficient(0)):
                 return True
             else:
                 return self.getCoefficient(0).isConstant()
-        else:
-            return False
-        
+            
     def getConstant(self):
-        if not self.isConstant():
+        if self.deg0():
+            if isNumber(self.getCoefficient(0)):
+                return self.getCoefficient(0)
+            else:
+                return self.getCoefficient(0).getConstant()
+        else:
             return None
-        if isNumber(self.getCoefficient(0)):
-            return self.getCoefficient(0)
-        return self.getCoefficient(0).getConstant()
+        
+    def isZero(self):
+        return self.getConstant()==0
     
     def getConstantCoefficients(self):
-        if not self.hasOnlyConstantCoefficients():
-            return None
         coeffs = []
         for c in self.getCoefficients():
-            if (isNumber(c)):
+            if isNumber(c):
                 coeffs.append(c)
             else:
+                cc = c.getConstant()
+                if cc==None:
+                    return None
                 coeffs.append(c.getConstant())
         return coeffs
     
     def hasOnlyConstantCoefficients(self):
-        self.simplifyCoefficients()
+        self.simplifyCoefficients() # TODO
         for coeff in self.getCoefficients():
             if isNumber(coeff):
                 continue
             if not coeff.isConstant():
                 return False
+            
         return True
+            
+    @property
+    def degree(self):
+        return len(self._coefficients)-1
     
-    def isZero(self):
-        return objEqualsNumber(self.getConstant(),0)
+    @property
+    def lowestDegree(self):
+        for i in range(self.degree+1):
+            if not self.coeffIsZero(i):
+                return i
+        return 0
     
     def deg0(self):
         return self.degree==0
@@ -193,26 +145,8 @@ class Polynomial(object):
                 self._coefficients[i] = Number.Rational.fromFloat(c)
             else:
                 self._coefficients[i].replaceNumbersWithRationals()
-        #if self.fieldTower.towerHeight==0:
-        #    for i in range(len(self._coefficients)):
-        #        self._coefficients[i] = Number.Rational.fromFloat(self._coefficients[i])
-        #else:
-        #    for c in self._coefficients:
-        #        c.replaceNumbersWithRationals()
     
     # ========================================== Mixed stuff =========================================
-    @property
-    def degree(self):
-        #self.updateCoefficients()
-        return len(self.getCoefficients())-1#-1 if self.isZero() else len(self.getCoefficients())-1
-    
-    @property
-    def lowestDegree(self):
-        for i in range(self.degree+1):
-            if not self.coeffIsZero(i):
-                return i
-        return 0
-    
     def asRational(self):
         return Rat.RationalFunction(self,1)
     def Inverse(self):
@@ -223,16 +157,11 @@ class Polynomial(object):
         if self.isZero():
             return self
         x = self.getLeadingCoefficient()
-        poly = Polynomial([x],fieldTower=self.getFieldTower())
+        poly = Polynomial([x],variable=self.variable)
         return self/poly
     
     def evaluate(self, val):
-        #if self.getFieldTower().towerHeight!=0:
-        #    raise Exception()
-        sum = 0
-        for i in range(self.degree+1):
-            sum += self.getCoefficient(i)*(val**i)
-        return sum
+        return sum(self.getCoefficient(i)*(val**i) for i in range(self.degree+1))
     def completeEvaluate(self, val):
         sum = 0
         for i in range(self.degree+1):
@@ -282,19 +211,23 @@ class Polynomial(object):
             zero0 = -p/2+disc
             zero1 = -p/2-disc
             return [zero0,zero1]
+        
+        
+     # ========================================== Field Tower/Extension =========================================
             
-    # ========================================== Field Tower/Extension =========================================
-            
+    @property
+    def fieldTower(self):
+        return self.getFieldTower()
     def getFieldTower(self):
-        return self.fieldTower
+        return self.variable.fieldExtension.fieldTower
     def getFieldExtension(self):
         return self.getFieldTower().getLastExtension()
 
-    def increaseToFieldTower(self, targetFieldTower):
-        if targetFieldTower.isExtendedTowerOf(self.fieldTower):
+    """def increaseToFieldTower(self, targetFieldTower):
+        if targetFieldTower.isExtendedTowerOf(self.getFieldTower()):
             return Polynomial([self],targetFieldTower)
         else:
-            raise Exception("")
+            raise Exception("")"""
     def reduceToFieldTower(self, targetFieldTower):
         if targetFieldTower==self.fieldTower:
             return self
@@ -303,8 +236,9 @@ class Polynomial(object):
         if self.deg0():
             return self.getCoefficient(0)
         return None
+    
     def reduceToLowestPossibleFieldTower(self):
-        if self.fieldTower.towerHeight==0:
+        if self.fieldTower.towerHeight==1:
             return self
         r = self.reduceToFieldTower(self.fieldTower.prevTower())
         if r==None:
@@ -312,9 +246,9 @@ class Polynomial(object):
         else:
             return r.reduceToLowestPossibleFieldTower()
     def isLowestFieldTower(self):
-        r = self.reduceToFieldTower(self.fieldTower.prevTower())
+        r = self.reduceToFieldTowr(self.fieldTower.prevTower())
         return r==None
-    
+
     # ========================================== SquareFree stuff =========================================
     def getLogGCD(self):
         """
@@ -358,9 +292,9 @@ class Polynomial(object):
             return self.__derivative
         
         fieldTower = self.getFieldTower()
-        dPoly = Polynomial(fieldTower=fieldTower)
+        dPoly = Polynomial(variable=self.variable)
         fieldExtension = self.getFieldExtension()
-        if fieldExtension!=None:
+        if fieldTower.towerHeight>1:
             u = fieldExtension.argFunction
             a = u.reduceToFieldTower(u.fieldTower.prevTower())
             if a!=None:
@@ -379,30 +313,25 @@ class Polynomial(object):
                     dPoly += p.differentiate()
                     continue
                 
-            if fieldExtension==None:
+            if fieldTower.towerHeight==1:
                 if i>0:
-                    dPoly.setCoefficient(p*i, i-1,callUpdates=False)
+                    dPoly.setCoefficient(i-1,p*i,callUpdates=False)
             elif fieldExtension.extensionType==FE.TRANS_EXP: # (p*T^i)'=p'T^i+p*i*T'*T^(i-1) = p'T^i+i*p*u'*T^i since T'=u'T
-                dPoly += Monomial(i, p.differentiate(), fieldTower=fieldTower)
-                dPoly += i*Monomial(i,p*uP,fieldTower=fieldTower)
+                dPoly += Monomial(i, p.differentiate(), variable=self.variable)
+                dPoly += i*Monomial(i,p*uP,variable=self.variable)
             elif fieldExtension.extensionType==FE.TRANS_LOG: # (p*T^i)'=p'T^i+p*i*T'*T^(i-1) = p'T^i+i*p*u'/u*T^(i-1)
-                dPoly += Monomial(i,p.differentiate(),fieldTower=fieldTower)
-                #log_diff_u = Rat.RationalFunction(uP,u,fieldTower=fieldTower.getStrippedTower(fieldTower.towerHeight-1))
-                dPoly += i*Monomial(i-1, p* log_diff_u,fieldTower=fieldTower)
+                dPoly += Monomial(i,p.differentiate(),variable=self.variable)
+                dPoly += i*Monomial(i-1, p* log_diff_u,variable=self.variable)
                 
-        #if not isPoly(dPoly):
-        #    if dPoly.fieldTower.isExtendedTowerOf(fieldTower):
-        #        return Polynomial([dPoly],fieldTower=fieldTower)
-        #    else:
-        #        return dPoly.numerator
+
         dPoly.updateCoefficientsAll()
-        if not isPoly(dPoly):
+        """if not isPoly(dPoly):
             if dPoly.fieldTower.isExtendedTowerOf(fieldTower):
                 self.__derivative = Polynomial([dPoly],fieldTower=fieldTower)
                 return self.__derivative
             else:
                 self.__derivative = dPoly.numerator/dPoly.denominator
-                return self.__derivative
+                return self.__derivative"""
         self.__derivative = dPoly
         return dPoly
     
@@ -412,17 +341,19 @@ class Polynomial(object):
         p = 2*T**2+T+1
         -> differentiateWRTtoPolyVar(p) = (d/dT)p = 4T+1
         """
-        dPoly = Polynomial(fieldTower=self.getFieldTower())
+        dPoly = Polynomial(variable=self.variable)
         for i in range(self.degree,0,-1):
             p = self.getCoefficient(i)
-            dPoly.setCoefficient(p*i, i-1,callUpdates=False)
+            dPoly.setCoefficient(i-1,p*i,callUpdates=False)
         dPoly.updateCoefficientsAll()
         return dPoly
+    
     def logDifferentiate(self):
         if id(self.__logDerivative)!=id(None):
             return self.__logDerivative
         self.__logDerivative = self.differentiate()/self
         return self.__logDerivative
+    
     # ========================================== Arithmetic stuff =========================================
     def __radd__(self, other):
         return self.__add__(other)
@@ -433,34 +364,34 @@ class Polynomial(object):
             return other.__add__(self)
         if isNumber(other):
             deg0Part = self.getCoefficient(0)
-            tPoly = Polynomial(fieldTower=self.getFieldTower())
+            tPoly = Polynomial(variable=self.variable)
             for i in range(self.degree,0,-1):
-                tPoly.setCoefficient(self.getCoefficient(i), i,callUpdates=False)
-            tPoly.setCoefficient(deg0Part+other,0,callUpdates=False)
+                tPoly.setCoefficient(i, self.getCoefficient(i), callUpdates=False)
+            tPoly.setCoefficient(0,deg0Part+other,callUpdates=False)
             return tPoly
         if type(other)==ExtPol.ExtendedPolynomial:
             return other.__add__(self)
-        if (self.fieldTower!=other.fieldTower):
+        
+        if self.variable != other.variable:
             if self.fieldTower.isExtendedTowerOf(other.fieldTower):
-                return self.__add__(Polynomial([other],fieldTower=self.getFieldTower()))
+                return self.__add__(Polynomial([other],variable=self.variable))
             elif other.fieldTower.isExtendedTowerOf(self.fieldTower):
                 return other.__add__(self)
             else:
                 raise Exception("Polynomials have too different field towers")
-            #raise Exception("Polynomials have to have coefficients in the same field in order to multiply them")
         
         tDeg = max(self.degree,other.degree)
-        tPoly = Polynomial(fieldTower=self.fieldTower)
+        tPoly = Polynomial(variable=self.variable)
         for i in range(tDeg,-1,-1):
             a = self.getCoefficient(i)
             b = other.getCoefficient(i)
-            tPoly.setCoefficient(a+b, i,callUpdates=False)
+            tPoly.setCoefficient(i,a+b,callUpdates=False)
         tPoly.updateCoefficientsAll()
         return tPoly
     
-    def __rsub__(self, other):
+    def __rsub__(self, other): # other-self
         return (-self).__add__(other)
-    def __sub__(self, other):
+    def __sub__(self, other): # self -other
         return self.__add__((-1)*other)
     def __rmul__(self, other):
         return self.__mul__(other)
@@ -469,28 +400,27 @@ class Polynomial(object):
             if other==1:
                 return self
             elif other==0:
-                return 0
-            tPoly = Polynomial(fieldTower=self.getFieldTower())
+                return Number.ZERO
+            tPoly = Polynomial(variable=self.variable)
             for i in range(self.degree,-1,-1):
-                tPoly.setCoefficient(self.getCoefficient(i)*other, i,callUpdates=False)
-            #tPoly.updateCoefficientsAll()
+                tPoly.setCoefficient(i, self.getCoefficient(i)*other,callUpdates=False)
             return tPoly
-            #raise Exception("??")
+
         if type(other) == Rat.RationalFunction:
             if other.numerator.isZero():
-                return 0# other.numerator
+                return Number.ZERO
             return other.__mul__(self)
-        if (self.fieldTower!=other.fieldTower):
+        if self.variable != other.variable:
             if self.fieldTower.isExtendedTowerOf(other.fieldTower):
-                return self.__mul__(Polynomial([other],fieldTower=self.getFieldTower()))
+                return self.__mul__(Polynomial([other],variable=self.variable))
             elif other.fieldTower.isExtendedTowerOf(self.fieldTower):
                 return other.__mul__(self)
             else:
                 raise Exception("Polynomials have too different field towers")
-            #raise Exception("Polynomials have to have coefficients in the same field in order to multiply them")
+
         
         tDeg = self.degree+other.degree
-        tPoly = Polynomial(fieldTower=self.getFieldTower())
+        tPoly = Polynomial(variable=self.variable)
         # calcs new coefficients using Cauchy-Product
         for i in range(tDeg,-1,-1):
             newCoeff = 0
@@ -498,9 +428,9 @@ class Polynomial(object):
                 a = self.getCoefficient(j)
                 b = other.getCoefficient(i-j)
                 newCoeff += a*b
-            tPoly.setCoefficient(newCoeff, i,callUpdates=False)
+            tPoly.setCoefficient(i,newCoeff,callUpdates=False)
             
-        tPoly.updateCoefficientsAll()            
+        #tPoly.updateCoefficientsAll()            
         return tPoly
     
     def __rtruediv__(self, other): # other/self
@@ -549,15 +479,10 @@ class Polynomial(object):
         return polyEqual(self, other)
     def __ne__(self, other):
         return not self.__eq__(other)
-    def __hash__(self):
-        return self.__str__()
-    # ========================================== String output =========================================
-    def getVariable(self):
-        return self.fieldTower.getLastVariable()
-        #raise NotImplementedError()
-        #return #TODO #"x" if self.getFieldTower().towerHeight==0 else self.getFieldExtension().variable
+
+     # ========================================== String output =========================================
     def __str__(self):
-        return self.strCustomVar(self.getVariable())
+        return self.strCustomVar(self.variable)
     
     def __repr__(self):
         return self.__str__()
@@ -617,8 +542,6 @@ class Polynomial(object):
                 elif not isNumber(coeff_v) and coeff_v.isConstant():# and (type(coeff_v)!=complex and coeff_v.getConstant()>0):
                     if coeff_v.getConstant()!=1 or i==0:
                         coeff = str(coeff_v.getConstant())
-               # elif isNumber(coeff_v):
-                #    coeff = "({})".format(str(coeff_v))
                 else:
                     c = coeff_v.printFull()
                     if coeff_v.isConstant() and c.startswith("(") and c.endswith(")"):
@@ -633,8 +556,8 @@ class Polynomial(object):
                 power = ""
             var = ""
             if i>0:
-                if fE==None:
-                    var += "x"
+                if fE.argFunction==None:
+                    var += fE.variable.stringRepr
                 else:
                     var += fE.strFunc()
             
@@ -642,10 +565,17 @@ class Polynomial(object):
         if len(out)==0:
             return "0"
         return out.strip("+")
+    
+    
 
 def polyEqual(A,B):
     if isNumber(A) and isNumber(B):
         return A==B
+    if isNumber(B):
+        return A.getConstant()==B
+    if isNumber(A):
+        return B.getConstant()==A
+    
     return (A+(-1)*B).isZero()
 
 def PolyDiv(polA, polB):
@@ -656,15 +586,15 @@ def PolyDiv(polA, polB):
         raise Exception()
     if polA.fieldTower!=polB.fieldTower:
         if polA.fieldTower.isExtendedTowerOf(polB.fieldTower):
-            return PolyDiv(polA,Polynomial([polB],fieldTower=polA.fieldTower))
+            return PolyDiv(polA,Polynomial([polB],variable=polA.variable))
         elif polB.fieldTower.isExtendedTowerOf(polA.fieldTower):
-            return PolyDiv(Polynomial([polA],fieldTower=polB.fieldTower), polB)
+            return PolyDiv(Polynomial([polA],variable=polB.variable), polB)
         else:
             raise Exception()
       
     (s,r) = _PolyDiv(polA._coefficients, polB._coefficients)
-    s = 0 if s==0 else Polynomial(s,polA.fieldTower)
-    r = 0 if r==0 else  Polynomial(r,polA.fieldTower)
+    s = 0 if s==0 else Polynomial(s,variable=polA.variable)
+    r = 0 if r==0 else  Polynomial(r,variable=polA.variable)
     return (s,r)
     """
      
@@ -714,7 +644,6 @@ def PolyDiv(polA, polB):
     else:
         (quot,remainder) = PolyDiv(newA,polB)
         return (monomial+quot,remainder)"""
-@call_counter   
 def _PolyDiv(coeffsA, coeffsB):
     degA = len(coeffsA)-1
     degB = len(coeffsB)-1
@@ -747,7 +676,7 @@ def PolyGCD(polA,polB):
     if len(g)==1:
         return 1
     else:
-        p = Polynomial(g,polA.fieldTower)
+        p = Polynomial(g,variable=polA.variable)
         return p.makeMonic()
     """if polB==0:
         return polA
@@ -771,7 +700,6 @@ def PolyGCD(polA,polB):
             return gcd
     else:
         return 1"""
-@call_counter
 def _PolyGCD(coeffsA, coeffsB):
     if listIsZero(coeffsA):
         return coeffsB
@@ -800,7 +728,7 @@ def __extendedEuclid(p,q):
             r_inv_poly = Polynomial([1/r.getLeadingCoefficient()])
             return (r_inv_poly,r_inv_poly*(-1)*s)
         else:
-            r_inv_poly = Polynomial([r.getLeadingCoefficient().Inverse()],fieldTower=r.getFieldTower())#Rat.RationalFunction(1,r,field=r.field)
+            r_inv_poly = Polynomial([r.getLeadingCoefficient().Inverse()],variable=r.variable)#Rat.RationalFunction(1,r,field=r.field)
             return (r_inv_poly,r_inv_poly*(-1)*s)
     (x,y) = extendedEuclid(Q, r)
     return (y,x+(-1)*s*y)
@@ -888,15 +816,15 @@ def PartialFractionPower(p,q,n):
     (L,J) = PolyDiv(p,q)
     return PartialFractionPower(L, q, n-1)+[(J,q,n)]
 
-def Monomial(degree, coeff,fieldTower=None):
+def Monomial(degree, coeff,variable=None):
     """
     T = variable of last extension of fieldTower
     returns coeff * (T)^degree
     """
-    ft = fieldTower
-    if ft==None:
-        ft = FE.FieldTower()
-    return Polynomial([0]*degree+[coeff], fieldTower=ft)
+    var = variable
+    if var==None:
+        var = FE.BASEVARIABLE
+    return Polynomial([0]*degree+[coeff], variable=var)
     
 
 
@@ -933,37 +861,52 @@ def polytest(expected, got):
     return "polytest: should be {}, got {}".format(expected, got)
 
 if __name__ == '__main__': #tests
-    from Parse import parseField0PolyFromStr,parseField0RatFromStr
-    fieldExtension1 = FE.FieldExtension(FE.TRANS_LOG,Polynomial([0,1]),"T_1") # field extension with log(x)
+    from Parse import parseField0PolyFromStr,parseField0RatFromStr,parseExpressionFromStr
+    
+    [T1,T2] = FE.Variables(['T_1','T_2'])
+    
+    
+    fieldExtension1 = FE.FieldExtension(FE.TRANS_LOG,Polynomial([0,Number.ONE]),T1) # field extension with log(x)
     FE.fieldTower = FE.FieldTower(fieldExtensions=[fieldExtension1])
-    fieldExtension2 = FE.FieldExtension(FE.TRANS_LOG,Polynomial([0,1],fieldTower=FE.fieldTower.copy()),"T_2") # field extension with log(log(x))
-    FE.fieldTower.addFieldExtension(fieldExtension2)
+    fieldExtension2 = FE.FieldExtension(FE.TRANS_LOG,Polynomial([0,Number.ONE],variable=T1),T2) # field extension with log(log(x))
+    FE.fieldTower = FE.fieldTower.addFieldExtension(fieldExtension2)
+    
+    p1 = Polynomial(coefficients=[0,0,1,2,3,4])
+    p1.replaceNumbersWithRationals()
+    print(p1)
+    
+    p2 = Polynomial(coefficients=[Number.ONE, p1],variable=T1)
+    print(p2)
+    
+    print(p1.fieldTower)
+    print(p2.fieldTower)
+    print(p1+p2)
     
     print("Field Tower: {}".format(FE.fieldTower))
     
     polA = Polynomial([1,1])
     print("polytest: should be x+1, got {}".format(polA))
-    polB = Polynomial([1,1],fieldTower=FE.fieldTower.getStrippedTower(1))
-    print("polytest: should be T1+1, got {}".format(polB))
-    print("polytest: should be rationalfunction, got {}".format(type(polB.getCoefficient(0))))
-    print("polytest: should be 0, got {}".format(polB.getCoefficient(0).getFieldTower().towerHeight))
+    polB = Polynomial([1,1],variable=T1)
+    print("polytest: should be T_1+1, got {}".format(polB))
+    #print("polytest: should be rationalfunction, got {}".format(type(polB.getCoefficient(0))))
+    #print("polytest: should be 0, got {}".format(polB.getCoefficient(0).getFieldTower().towerHeight))
     ratA = Rat.RationalFunction(1,polA)
     print("polytest: should be 1/[x+1], got {}".format(ratA))
     
-    polD = Polynomial([ratA,3],fieldTower=FE.fieldTower.getStrippedTower(1))
-    print("polytest: should be 3T1+(1/[x+1]), got {}".format(polD))
-    print("polytest: should be 2x 0, got {}, {}".format(polD.getCoefficient(0).getFieldTower().towerHeight,polD.getCoefficient(1).getFieldTower().towerHeight))
+    polD = Polynomial([ratA,3],variable=T1)
+    print("polytest: should be 3T_1+(1/[x+1]), got {}".format(polD))
+    #print("polytest: should be 2x 0, got {}, {}".format(polD.getCoefficient(0).getFieldTower().towerHeight,polD.getCoefficient(1).getFieldTower().towerHeight))
     
-    polC = Polynomial([ratA,1], fieldTower=FE.fieldTower)
+    polC = Polynomial([ratA,1], variable=T2)
     print("polytest: should be T2+(1/[x+1]), got {}".format(polC))
-    print("polytest: should be 2x RationalFunction, got {},{}".format(type(polC.getCoefficient(0)),type(polC.getCoefficient(1))))
-    print("polytest: should be 2, got {}".format(polC.getFieldTower().towerHeight))
-    print("polytest: should be 2x 1, got {},{}".format(polC.getCoefficient(0).getFieldTower().towerHeight,polC.getCoefficient(1).getFieldTower().towerHeight))
+    #print("polytest: should be 2x RationalFunction, got {},{}".format(type(polC.getCoefficient(0)),type(polC.getCoefficient(1))))
+    #print("polytest: should be 2, got {}".format(polC.getFieldTower().towerHeight))
+    #print("polytest: should be 2x 1, got {},{}".format(polC.getCoefficient(0).getFieldTower().towerHeight,polC.getCoefficient(1).getFieldTower().towerHeight))
     
-    polE = Polynomial([0,],fieldTower=FE.fieldTower)
+    polE = Polynomial([0],variable=T2)
     print(polytest("0",polE))
-    print(polytest("2",polE.getFieldTower().towerHeight))
-    print(polytest("Rationalfunction",type(polE.getCoefficient(0))))
+    print(polytest("3",polE.getFieldTower().towerHeight))
+    #print(polytest("Rationalfunction",type(polE.getCoefficient(0))))
     
     
     print("======================== Arithmetic stuff tests ==============================")
@@ -1007,20 +950,20 @@ if __name__ == '__main__': #tests
     # print("[{}] * [{}] = {}".format(polA,polB,polD))
     print(polytest("8x**5+8x**4+2x**3+2x**2+x",str(polD)))
     
-    polF_T = Polynomial(coefficients=[polA,polB],fieldTower=FE.fieldTower.getStrippedTower(1)) # polB*(T_1)**1+polA = 
+    polF_T = Polynomial(coefficients=[polA,polB],variable=T1) # polB*(T_1)**1+polA = 
     print(polytest("(2x**2+x)T1+(4x**3+2x**2+1)",str(polF_T)))#polF_T)
     polG_T = polF_T*polF_T
     print(polytest("(4x**4+4x**3+x**2)T1**2+(16x**5+16x**4+4x**3+4x**2+2x)T1+(16x**6+16x**5+4x**4+8x**3+4x**2+1)",polG_T))#print("[{}] * [{}] = {}".format(polF_T,polF_T,polG_T))
     
-    polH = Polynomial(coefficients=[0,Polynomial([1])], fieldTower=FE.fieldTower.getStrippedTower(1))
-    polG = Polynomial(coefficients=[polH,polH],fieldTower=FE.fieldTower.getStrippedTower(2))
+    polH = Polynomial(coefficients=[0,Polynomial([1])], variable=T1)
+    polG = Polynomial(coefficients=[polH,polH],variable=T2)
     print(polytest("T1",polH))
     print(polytest("(T1)T2+(T1)",polG))
     print(polytest("(log(x))log(log(x))+(log(x))",polG.printFull()))
     
     ratA = parseField0RatFromStr("1/x")
     ratB = parseField0RatFromStr("x**2/x+1")
-    polA = Polynomial(coefficients=[ratA,ratB],fieldTower=FE.fieldTower.getStrippedTower(1)) # x^2/(x+1)*T1+1/x
+    polA = Polynomial(coefficients=[ratA,ratB],variable=T1) # x^2/(x+1)*T1+1/x
     print(polytest("T1+([x+1]/[x**3])",polA.makeMonic()))
     
     #polA = Polynomial([0,1]) # x in C(x)
@@ -1030,7 +973,7 @@ if __name__ == '__main__': #tests
     #print(polC,polC.field)
     #print(polA*polB)
     print("---------- Diff poly tests") #################################################################################
-    pol = parseExpressionFromStr("(x/(x+0.5)) * T_1 - x/(x+0.5)", FE.fieldTower.getStrippedTower(1))
+    pol = parseExpressionFromStr("(x/(x+0.5)) * T_1 - x/(x+0.5)", FE.fieldTower.getStrippedTower(3))
     print(pol)
     print(pol.differentiate())
     print(polytest("([x**2+2x]/[x**2+2x+1])T1+([x**3+(-1.0)x+(-1.0)]/[x**3+x**2])",polA.differentiate()))#"[{}]'={}".format(polA,polA.differentiate()))
@@ -1047,8 +990,8 @@ if __name__ == '__main__': #tests
     (quot,rem) = PolyDiv(polA, polB)
     print(polytest("3x**2+(-5)x+6, 0", (quot,rem)))#"[{}] / [{}] = {} R {}".format(polA,polB,quot,rem)) # (12x^3-11x^2+9x+18)/(4x+3)
     #polA = parseField0PolyFromStr("x**2+")
-    polA = Polynomial(coefficients=[parseField0PolyFromStr("(-1)*x**2"),0,1],fieldTower=FE.fieldTower.getStrippedTower(1))
-    polB = Polynomial(coefficients=[parseField0PolyFromStr("x"),1],fieldTower=FE.fieldTower.getStrippedTower(1))
+    polA = Polynomial(coefficients=[parseField0PolyFromStr("(-1)*x**2"),0,1],variable=T1)
+    polB = Polynomial(coefficients=[parseField0PolyFromStr("x"),1],variable=T2)
     (quot,rem) = PolyDiv(polA, polB)
     print(polytest("T1+(-1)x, 0",(quot,rem)))
     (quot,rem) = PolyDiv(polG_T, polF_T)
@@ -1073,21 +1016,21 @@ if __name__ == '__main__': #tests
     
     ratA = parseField0RatFromStr("1/1")
     ratB = parseField0RatFromStr("(-1)*x**2/1")
-    polA = Polynomial([ratB,0,ratA],fieldTower=FE.fieldTower.getStrippedTower(1)) # = -x^2+T^2=(T-x)(T+x)
+    polA = Polynomial([ratB,0,ratA],variable=T1) # = -x^2+T^2=(T-x)(T+x)
     ratC = parseField0RatFromStr("x**2+1/x")
-    polB = Polynomial([ratA,ratC,ratA],fieldTower=FE.fieldTower.getStrippedTower(1))# = T^2+(x^2+1)/x*T+1=(T+x)(T+1/x)
+    polB = Polynomial([ratA,ratC,ratA],variable=T1)# = T^2+(x^2+1)/x*T+1=(T+x)(T+1/x)
     print(polytest("T1+(x)",PolyGCD(polA, polB)))
     
     (x,y) = extendedEuclid(polA,polB)
     print(polytest("([x]/[(-1.0)x**2+(-1.0)]), ([(-1.0)x]/[(-1.0)x**2+(-1.0)])",(x,y)))
     #print("extended euclid: {}, {}, {}".format(x,y,PolyGCD(polA, polB)))
-    f = PolyGCD(polA, polB)*Polynomial([Polynomial([1,1]),1],fieldTower=FE.fieldTower.getStrippedTower(1)) #*(1+x+T+T^2)
+    f = PolyGCD(polA, polB)*Polynomial([Polynomial([1,1]),1],variable=T1) #*(1+x+T+T^2)
     (x,y) = extendedEuclidGenF(polA, polB, f)
     print(polytest("([(-1.0)x**2+(-1.0)x+1.0]/[x**2+1.0]), ([2.0x**2+x]/[x**2+1.0])",(x,y)))
 
     print(polytest("True",polA.isSquareFree()))
     
-    polC = Polynomial([Polynomial([0,1]).asRational(),ratA],fieldTower=FE.fieldTower.getStrippedTower(1))
+    polC = Polynomial([Polynomial([0,1]).asRational(),ratA],variable=T1)
     polD = polC*polA # (T+x)*(T-x)*(T+x)
     print(polytest("False",polD.isSquareFree()))
 
@@ -1113,18 +1056,16 @@ if __name__ == '__main__': #tests
     #print("{} = {}".format(str(polA),printFactorization(fact)))
     
     ratA = parseField0RatFromStr("x+1/x+2")
-    polA = Polynomial([ratA,1],fieldTower=FE.fieldTower.getStrippedTower(1))**2
+    polA = Polynomial([ratA,Number.ONE],variable=T1)**2
     print(polytest("False",polA.isSquareFree()))
-    #print("{} is squarefree: {}, should be false".format(polA,polA.isSquareFree()))
     fact = polA.factorSquareFree()
     print(polytest("(T1+([x+1.0]/[x+2.0]))**2",printFactorization(fact)))
     #print("{} = {}".format(polA,printFactorization(fact)))
     assert polA.isSquareFree()==False
     
-    ratB = parseField0RatFromStr("(-1)*x/1")
-    polB = Polynomial([ratB,1],fieldTower=FE.fieldTower.getStrippedTower(1))*polA
+    ratB = parseExpressionFromStr("(-1)*x/1",FE.fieldTower)
+    polB = Polynomial([ratB,Number.ONE],variable=T1)*polA # = (-x+T1)*((x+1)/(x+2)+T1)**2
     print(polytest("False",polB.isSquareFree()))
-    #print("{} is squarefree: {}, should be false".format(polB,polB.isSquareFree()))
     fact = polB.factorSquareFree()
     print(polytest("(T1+((-1.0)x))*(T1+([x+1.0]/[x+2.0]))**2",printFactorization(fact)))
     #print("{} = {}".format(polB,printFactorization(fact)))
@@ -1132,12 +1073,12 @@ if __name__ == '__main__': #tests
     
     
     # http://www.wolframalpha.com/input/?i=expand+(T-x)(T%2B(x%2B1)%2F(x%2B2))%5E2+at+T%3D0
-    ratA = parseField0RatFromStr("x+2*x**2+x**3/4+4*x+x**2")
-    ratB = parseField0RatFromStr("1+(-2)*x+(-5)*x**2+(-2)*x**3/4+4*x+x**2")
-    ratC = parseField0RatFromStr("2+(-1)*x**2/2+x")
-    ratD = parseField0RatFromStr("1/1")
+    ratA = parseExpressionFromStr("(x+2*x**2+x**3)/(4+4*x+x**2)")
+    ratB = parseExpressionFromStr("(1+(-2)*x+(-5)*x**2+(-2)*x**3)/(4+4*x+x**2)")
+    ratC = parseExpressionFromStr("(2+(-1)*x**2)/(2+x)")
+    ratD = parseExpressionFromStr("1/1")
     
-    polA = Polynomial([ratA*(-1),ratB,ratC,1],fieldTower=FE.fieldTower.getStrippedTower(1))
+    polA = Polynomial([ratA*(-1),ratB,ratC,ratD],variable=T1)
     #print(polA)
     fact = polA.factorSquareFree()
     #print(polyEqual(polA, polB))
@@ -1170,10 +1111,10 @@ if __name__ == '__main__': #tests
     
     one = parseField0RatFromStr("1/1")
     x = parseField0RatFromStr("x/1")
-    polA = Polynomial([(-1)*x,one],fieldTower=FE.fieldTower.getStrippedTower(1)) # T-x
-    polB = Polynomial([x,one],fieldTower=FE.fieldTower.getStrippedTower(1)) # T+x
+    polA = Polynomial([(-1)*x,one],variable=T1) # T-x
+    polB = Polynomial([x,one],variable=T1) # T+x
     
-    num = Polynomial([one,one],fieldTower=FE.fieldTower.getStrippedTower(1))#1+T
+    num = Polynomial([one,one],variable=T1)#1+T
     denom = polA*(polB**2) # (T-x)(T+x)^2
     
     factorization = denom.factorSquareFree()
