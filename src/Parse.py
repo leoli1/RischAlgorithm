@@ -50,7 +50,6 @@ def parseExpressionFromStr(expr_str,fieldTower=None):
     i = complex(0,1)
     try:
         expr = eval(expr_str)
-        if isNumber(expr) or expr.fieldTower.towerHeight<fieldTower.towerHeight:
         if isNumber(expr):
             expr = Pol.Polynomial([expr],variable=FE.BASEVARIABLE)
        # if isNumber(expr) or expr.fieldTower.towerHeight<fieldTower.towerHeight:
