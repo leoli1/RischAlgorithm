@@ -1,3 +1,3 @@
 # RischAlgorithm
 
-Implementation of Risch's Algorithm for simple transcendental (logarithmic/exponential) field extensions.
+Implementation of Risch's Algorithm for transcendental (logarithmic/exponential) field extensions.
