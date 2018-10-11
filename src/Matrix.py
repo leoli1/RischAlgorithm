@@ -115,7 +115,12 @@ class Matrix(object):
             return self
         M = self.copy()
         subM = self.getSubMatrix(0, 0)
-        i_max  = argmax(list(map(abs,[self[i,0] for i in range(self.rows)])))
+        i_max = 0
+        for i in range(self.rows):
+            if self.getElement(i,0)!=0:
+                i_max = i
+                break
+        #i_max  = argmax(list(map(abs,[self[i,0] for i in range(self.rows)])))
         if self.getElement(i_max, 0)==0:
             subTri = subM.getRowEchelonForm()
         else:
@@ -139,6 +144,8 @@ class Matrix(object):
     def getReducedRowEchelonForm(self):
         tri = self.getRowEchelonForm()
         for i in range(self.rows-1,-1,-1):
+            if i>=self.columns:
+                continue
             if tri[i,i]!=0:
                 if i>0:
                     for ii in range(i):

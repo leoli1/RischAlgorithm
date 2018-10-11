@@ -13,7 +13,7 @@ import FieldExtension as FE
 import Polynomial as Pol
 import RationalFunction as Rat
 import MultivariatePolynomial
-
+import Integral as Int
 from Number import Rational,ONE
 from itertools import product
 
@@ -37,7 +37,8 @@ def getLinearLogCombination(logs, log):
     if trans==True:
         return False
     else: # step 3: 
-        rationalCombo = [-trans[1][i]/trans[1][0] for i in range(1,len(logs)+1)]
+        factors = [l.factor if type(l)==Int.LogFunction else 1 for l in logs]
+        rationalCombo = [-trans[1][i]/trans[1][0] / factors[i-1] for i in range(1,len(logs)+1)]
         return (True,rationalCombo)
 
 def logIsTranscendental(u, fieldTower):
@@ -59,6 +60,13 @@ def logIsTranscendental(u, fieldTower):
             
     
     vs = [u.differentiate()*reduce(lambda x,y:x*y, [logs[j] for j in range(N)])]+  [logs[i].differentiate()*u*reduce(lambda x,y:x*y, [1]+[logs[j] for j in range(N) if j!=i]) for i in range(N)]
+    
+    p = 1
+    for v in vs:
+        if type(v)==Rat.RationalFunction:
+            p *= v.denominator
+    
+    vs = [v*p for v in vs]
 
 
     vs_emp = [MultivariatePolynomial.ExtendedMultivariatePolynomial.fromNormalPolynomial(v) for v in vs] # convert the vs to ExtendedMultivariatePolynomials which will make combining alike terms easier

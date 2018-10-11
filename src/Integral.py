@@ -77,11 +77,12 @@ class Integral(object):
             func += p
         #if self.logExpressions!=[]:
         #    raise NotImplementedError()
+        newFieldTower = FE.fieldTower.copy()
         for log in self.logExpressions:
             tower = FE.hasFieldExtension(FE.TRANS_LOG, log.argFunction, FE.fieldTower)
             if tower==None:
-                newTower = FE.fieldTower.copy()
-                newTower.addFieldExtension(FE.FieldExtension(FE.TRANS_LOG,log.argFunction,FE.Variable('a')))
+                newFieldTower.addFieldExtension(FE.FieldExtension(FE.TRANS_LOG,log.argFunction,FE.Variable('a')))
+                newTower = newFieldTower.copy()
                 logExpr = Pol.Polynomial([0,log.factor], newTower)
                 func += logExpr
                 #raise NotImplementedError("")
