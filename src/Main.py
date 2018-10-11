@@ -8,7 +8,7 @@ import FieldExtension as FE
 from Polynomial import *
 from RationalFunction import RationalFunction
 from RischAlgorithm import *
-
+import time
 from Parse import parseField0PolyFromStr,parseExpressionFromStr
 
 PYTHON3 = False
@@ -69,9 +69,13 @@ def Main():
             if f_str.lower()=="quit":
                 sys.exit()
             f = parseExpressionFromStr(f_str, FE.fieldTower)
+            
+        a = time.time()
         print("Integral({}) = {}".format(f.printFull(),printIntegral(f, FE.fieldTower)))
-        #print(Pol.Polynomial.updateCoefficientsFields.calls)
-        #print(Pol.Polynomial.updateCoefficients.calls)
+        b = time.time()
+        print("calculating and printing time: {}s".format(b-a))
+        print(Pol.Polynomial.updateCoefficientsFields.calls)
+        print(Pol.Polynomial.updateCoefficients.calls)
 
         
         

@@ -28,7 +28,7 @@ def IntegratePolynomialPart(poly):
     
     intPoly = Pol.Polynomial()
     for i in range(poly.degree+1):
-        coeff = poly.getCoefficient(i)*(1/(i+1))
+        coeff = poly.getCoefficient(i)/(i+1)
         intPoly.setCoefficient(coeff, i+1,callUpdates=False)
         
     intPoly.updateCoefficientsAll()

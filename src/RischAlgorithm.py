@@ -12,7 +12,7 @@ import RootSum as RS
 from Utils import *
 
 from Matrix import Resultant
-from Number import ONE
+from Number import ONE,ZERO
 import RischEquation
 from IntegrateRational import *
 import ExtendedPolynomial as ExtPol
@@ -78,20 +78,15 @@ def IntegratePolynomialPartLogExt(poly, fieldTower):
     red = poly.reduceToLowestPossibleFieldTower()
     if red.fieldTower.towerHeight<fieldTower.towerHeight:
         return Integrate(red)
-    p = []
-    for c in poly.getCoefficients():
-        p.append(c)
+    p = poly.getCoefficients()
     l = len(p)-1
-    q = [0]*(len(p)+1)
-    b = [0]*(len(p)+1)
-    d = [0]*(len(p)+1)
+    q = [ZERO]*(len(p)+1)
+    b = [ZERO]*(len(p)+1)
+    d = [ZERO]*(len(p)+1)
     
     
     u = fieldTower.getLastExtension().argFunction # last fieldExtension with T=log(u)
     log_diff_u = u.logDifferentiate()#u.differentiate()/u # u'/u
-    
-    one = Rational(1,1)
-    zero = Rational(0,1)
     
     # p_l *T^l + p_(l-1)*T^(l-1) + ... + p_0 = (q_(l+1)*T^(l+1) + q_l*T^l + ... + q_0)' + (c_1 *v_1'/v_i + ... + c_m *v_m'/v_m)
     # (q_i*T^i)' = q_i'*T^i + q_i*i*T'*T^(i-1)
@@ -103,7 +98,7 @@ def IntegratePolynomialPartLogExt(poly, fieldTower):
         # q_(i+1) = d_(i+1) + b_(i+1)
         # integral(p_i-(i+1)*d_(i+1)*T') = l*b_(i+1)*T' + q_i
         #i = Rational.fromFloat(i)
-        integrand = p[i]+(-one)*(i+1)*d[i+1]*log_diff_u
+        integrand = p[i]+(-ONE)*(i+1)*d[i+1]*log_diff_u
         int_reduced = integrand.reduceToLowestPossibleFieldTower()
         if int_reduced!=None:
             integrand = int_reduced
@@ -118,7 +113,7 @@ def IntegratePolynomialPartLogExt(poly, fieldTower):
         #logs = P_i.getNewLogExpressionsInFieldTower(prev,fieldTower)
         logTerm = P_i.getLogExpression(u)
         otherLogs = [log for log in P_i.logExpressions if not log==logTerm]#in logs]
-        ci = zero if logTerm==None else logTerm.factor # integral = P_i = c_i*T+d_i, d_i = P_i\logs
+        ci = ZERO if logTerm==None else logTerm.factor # integral = P_i = c_i*T+d_i, d_i = P_i\logs
         d[i] = Int.Integral(poly_rationals=P_i.poly_rational_partExpressions,logs=otherLogs,rootSums=P_i.rootSums).asFunction()
         b[i+1] = ci/(i+1)
         q[i+1] = d[i+1]+b[i+1]
@@ -181,7 +176,7 @@ def IntegrateRationalPartLogExt(func, fieldTower): # Hermite Reduction
     integral = Int.Integral()
     integratedPart = 0
     toIntegratePart = 0 # squarefree part
-    #0.5/(x^2+x+0.25) *(1/log(x+0.5)) + -x/(x^2+x+0.25) * 1/(log(x+0.5)^2)
+    #1/(x+1)^2 *(1/log(x+1)) + -x/(x+1)^2 * 1/(log(x+1)^2)
     for frac in partialFractions:
         j = frac[2]
         q_i = frac[1]

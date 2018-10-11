@@ -19,6 +19,7 @@ from itertools import product
 
 def getLinearLogCombination(logs, log):
     """
+    IMPORTANT: this function ignores the (possible) coefficients of logs if they are of type Integral.LogFunction
     logs/log can be of type Integral.LogFunction or FieldExtension.FieldExtension
     tests whether log is a (rational) linear combination of the logs
     return False if there is no such combination and (True, [...]) if there is one and [...] are the coefficients
@@ -37,8 +38,7 @@ def getLinearLogCombination(logs, log):
     if trans==True:
         return False
     else: # step 3: 
-        factors = [l.factor if type(l)==Int.LogFunction else 1 for l in logs]
-        rationalCombo = [-trans[1][i]/trans[1][0] / factors[i-1] for i in range(1,len(logs)+1)]
+        rationalCombo = [-trans[1][i]/trans[1][0] for i in range(1,len(logs)+1)]
         return (True,rationalCombo)
 
 def logIsTranscendental(u, fieldTower):
