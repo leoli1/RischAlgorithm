@@ -10,6 +10,7 @@ import Number
 from Utils import *
 import Polynomial as Pol
 import RationalFunction as Rat
+from Tkconstants import EXTENDED
 
 
 
@@ -127,10 +128,14 @@ class ExtendedMultivariatePolynomial(object):
     def fromNormalPolynomial(polynomial):
         if isNumber(polynomial):
             return ExtendedMultivariateMonomial(coefficient=polynomial,multiIndex=MultiIndex()).asPolynomial()
+        elif polynomial.isConstant():
+            return ExtendedMultivariateMonomial(coefficient=polynomial.getConstant(),multiIndex=MultiIndex()).asPolynomial()
         if type(polynomial) == Rat.RationalFunction:
             num = ExtendedMultivariatePolynomial.fromNormalPolynomial(polynomial.numerator)
             denom = ExtendedMultivariatePolynomial.fromNormalPolynomial(polynomial.denominator)
             if len(denom.terms)!=1:
+                return None
+            if id(num)==None:
                 return None
             return num*denom.asMonomial().Inverse()
         

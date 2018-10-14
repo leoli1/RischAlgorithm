@@ -51,6 +51,10 @@ class Integral(object):
         s = 0
         for r in self.poly_rational_partExpressions:
             s += r
+            
+        if id(s)!=id(0):
+            s = s.simplified()
+            
         if len(self.poly_rational_partExpressions)!=0:
             if s==0:
                 self.poly_rational_partExpressions = []

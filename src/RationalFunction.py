@@ -7,6 +7,7 @@ from __future__ import division
 import FieldExtension as FE
 import Polynomial as Pol
 from Utils import *
+import Number
 
 class RationalFunction(object):
     def __init__(self, numerator, denominator):
@@ -39,9 +40,9 @@ class RationalFunction(object):
         denomFieldTower = self.denominator.getFieldTower()    
         if numFieldTower!=denomFieldTower:
             if numFieldTower.isExtendedTowerOf(denomFieldTower):
-                self.denominator = Pol.Polynomial([self.denominator],variable=self.denominator.variable)#fieldTower=numFieldTower)
+                self.denominator = Pol.Polynomial([self.denominator],variable=self.numerator.variable)#fieldTower=numFieldTower)
             elif denomFieldTower.isExtendedTowerOf(numFieldTower):
-                self.numerator = Pol.Polynomial([self.numerator],variable=self.numerator.variable)#fieldTower=denomFieldTower)
+                self.numerator = Pol.Polynomial([self.numerator],variable=self.denominator.variable)#fieldTower=denomFieldTower)
             else:
                 raise Exception()
         
@@ -53,8 +54,11 @@ class RationalFunction(object):
         if self.denominator.isConstant():
             self.numerator = self.numerator/self.denominator.getConstant()
             self.denominator = Pol.Polynomial([1],variable=self.variable)
-            
-        #self.makeDenominatorMonicInPlace()
+        elif self.denominator.deg0():
+            self.numerator = self.numerator/self.denominator
+            self.denominator = Pol.Polynomial([Number.ONE],variable=self.variable)
+
+        self.makeDenominatorMonicInPlace()
         
     @property
     def fieldTower(self):
@@ -106,11 +110,11 @@ class RationalFunction(object):
             
     def reduceToFieldTower(self, targetFieldTower):
         if isNumber(self.numerator):
-            newNum = Pol.Polynomial([self.numerator],fieldTower=targetFieldTower)
+            newNum = Pol.Polynomial([self.numerator],variable=targetFieldTower.getLastVariable())
         else:
             newNum = self.numerator.reduceToFieldTower(targetFieldTower)
         if isNumber(self.denominator):
-            newDenom = Pol.Polynomial([self.denominator],fieldTower=targetFieldTower)
+            newDenom = Pol.Polynomial([self.denominator],variable=targetFieldTower.getLastVariable())
         else:
             newDenom = self.denominator.reduceToFieldTower(targetFieldTower)
         if newNum==None or newDenom==None:
@@ -144,7 +148,9 @@ class RationalFunction(object):
         else:
             dq = q.differentiate()
             
-        self.__derivative = RationalFunction(dp*q+(-1)*p*dq,q*q)
+        num = dp*q+(-1)*p*dq
+        denom = q*q
+        self.__derivative = RationalFunction(num,denom)
             
         return self.__derivative# (p/q)' = (p'q-pq')/(q^2)
     def logDifferentiate(self):
@@ -164,9 +170,9 @@ class RationalFunction(object):
         if isNumber(self.denominator):
             return
         lcoeff = self.denominator.getLeadingCoefficient()
-        lcoeff_poly = Pol.Polynomial(coefficients=[lcoeff],fieldTower=self.getFieldTower())
+        lcoeff_poly = Pol.Polynomial(coefficients=[lcoeff],variable=self.variable)
         if isNumber(self.numerator):
-            newNumerator = Pol.Polynomial([self.numerator],fieldTower=self.getFieldTower())/lcoeff_poly
+            newNumerator = Pol.Polynomial([self.numerator],variable=self.variable)/lcoeff_poly
         else:
             newNumerator = self.numerator/lcoeff_poly
         newDenominator = self.denominator/lcoeff_poly
@@ -177,7 +183,7 @@ class RationalFunction(object):
         lcoeff = self.denominator.getLeadingCoefficient()
         lcoeff_poly = Pol.Polynomial(coefficients=[lcoeff],variable=self.variable)
         if isNumber(self.numerator):
-            self.numerator = Pol.Polynomial([self.numerator],fieldTower=self.getFieldTower())/lcoeff_poly
+            self.numerator = Pol.Polynomial([self.numerator],variable=self.variable)/lcoeff_poly
         else:
             self.numerator = self.numerator/lcoeff_poly
         self.denominator = self.denominator/lcoeff_poly
@@ -195,6 +201,12 @@ class RationalFunction(object):
                 return q
             return None
         return self.numerator*(1/c)
+    
+    def simplified(self):
+        num = self.numerator.simplified()
+        denom = self.denominator.simplified()
+        return RationalFunction(num,denom)
+        
     def BasicPartialFraction(self, denomFactorization):
         return Pol.PartialFractionWithPowerFactorization(self.numerator, denomFactorization)
     

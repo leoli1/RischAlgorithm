@@ -59,15 +59,19 @@ def logIsTranscendental(u, fieldTower):
             return True
             
     
-    vs = [u.differentiate()*reduce(lambda x,y:x*y, [logs[j] for j in range(N)])]+  [logs[i].differentiate()*u*reduce(lambda x,y:x*y, [1]+[logs[j] for j in range(N) if j!=i]) for i in range(N)]
+    vs = [u.differentiate().reduceToLowestPossibleFieldTower()*reduce(lambda x,y:x*y, [logs[j] for j in range(N)])]+  [logs[i].differentiate().reduceToLowestPossibleFieldTower()*u*reduce(lambda x,y:x*y, [1]+[logs[j] for j in range(N) if j!=i]) for i in range(N)]
     
-    p = 1
+    p = ONE
     for v in vs:
         if type(v)==Rat.RationalFunction:
             p *= v.denominator
-    
-    vs = [v*p for v in vs]
-
+            for c in v.numerator._coefficients: #### TODO!
+                if type(c)==Rat.RationalFunction:
+                    p *= c.denominator
+                    
+    p = p.reduceToLowestPossibleFieldTower()
+    vs = [v.reduceToLowestPossibleFieldTower()*p for v in vs]
+    #vs = 
 
     vs_emp = [MultivariatePolynomial.ExtendedMultivariatePolynomial.fromNormalPolynomial(v) for v in vs] # convert the vs to ExtendedMultivariatePolynomials which will make combining alike terms easier
     multiIndices = []

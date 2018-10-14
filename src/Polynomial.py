@@ -44,7 +44,13 @@ class Polynomial(object):
         
         if coefficients!=None:
             self.updateCoefficientsAll()
-        
+            
+        for c in self._coefficients:
+            if not isNumber(c):
+                if c.variable==self.variable:
+                    raise TypeError()
+                
+        # self.replaceNumbersWithRationals()
     # ========================================== Coefficients stuff =========================================
     def getCoefficient(self, power):
         if power>self.degree:
@@ -83,12 +89,23 @@ class Polynomial(object):
     def simplifyCoefficients(self):
         pass#TODO #raise NotImplementedError()
     
+    def simplified(self):
+        p = self.reduceToLowestPossibleFieldTower()
+        for i in range(self.degree+1):
+            c = self.getCoefficient(i)
+            if not isNumber(c):
+                self._coefficients[i] = c.simplified()
+                
+        return p
+    
     def isConstant(self):
         if self.deg0():
             if isNumber(self.getCoefficient(0)):
                 return True
             else:
                 return self.getCoefficient(0).isConstant()
+        else:
+            return False
             
     def getConstant(self):
         if self.deg0():
@@ -243,6 +260,8 @@ class Polynomial(object):
         r = self.reduceToFieldTower(self.fieldTower.prevTower())
         if r==None:
             return self
+        elif isNumber(r):
+            return self
         else:
             return r.reduceToLowestPossibleFieldTower()
     def isLowestFieldTower(self):
@@ -325,15 +344,18 @@ class Polynomial(object):
                 
 
         dPoly.updateCoefficientsAll()
-        """if not isPoly(dPoly):
-            if dPoly.fieldTower.isExtendedTowerOf(fieldTower):
-                self.__derivative = Polynomial([dPoly],fieldTower=fieldTower)
-                return self.__derivative
+        if type(dPoly)==Rat.RationalFunction:
+            red = dPoly.reduceToLowestPossibleFieldTower()
+            if red.fieldTower.towerHeight<self.fieldTower.towerHeight:
+                self.__derivative = Polynomial([red],variable=self.variable)
             else:
-                self.__derivative = dPoly.numerator/dPoly.denominator
-                return self.__derivative"""
-        self.__derivative = dPoly
-        return dPoly
+                if dPoly.denominator.getConstant()==1:
+                    self.__derivative = dPoly.numerator
+                else:
+                    self.__derivative = dPoly.numerator/dPoly.denominator
+        else:
+            self.__derivative = dPoly
+        return self.__derivative
     
     def differentiateWRTtoPolyVar(self):
         """
@@ -442,7 +464,7 @@ class Polynomial(object):
             return self.__mul__(1/other)
         if type(other) is Rat.RationalFunction:
             if other.fieldTower.towerHeight<self.fieldTower.towerHeight:
-                return self.__mul__(Polynomial([other.Inverse()],self.fieldTower))
+                return self.__mul__(Polynomial([other.Inverse()],variable=self.variable))
             else:
                 return self.__mul__(other.Inverse())
         (quot,rem)= PolyDiv(self, other)
@@ -508,7 +530,7 @@ class Polynomial(object):
                 #    coeff = "({})".format(str(coeff_v))
                 else:
                     c = str(coeff_v)
-                    if coeff_v.isConstant() and c.startswith("(") and c.endswith(")"):
+                    if (coeff_v.isConstant() and c.startswith("(") and c.endswith(")")) or i==0:
                         coeff = "{}".format(c)
                     else:
                         coeff = "({})".format(c)
@@ -544,7 +566,7 @@ class Polynomial(object):
                         coeff = str(coeff_v.getConstant())
                 else:
                     c = coeff_v.printFull()
-                    if coeff_v.isConstant() and c.startswith("(") and c.endswith(")"):
+                    if (coeff_v.isConstant() and c.startswith("(") and c.endswith(")")) or i==0:
                         coeff = "{}".format(c)
                     else:
                         coeff = "({})".format(c)
@@ -710,6 +732,9 @@ def _PolyGCD(coeffsA, coeffsB):
     (A,B) = (coeffsA,coeffsB) if degA>=degB else (coeffsB,coeffsA)
     (s,r) = _PolyDiv(A, B)
     r = 0 if r==0 else listStripZeros(r)
+    if id(r)!=id(0):
+        lc = r[-1]
+        r = mulObjectToListElements(1/lc, r)
     if r==0 or listIsZero(r):
         return B
     gcd = _PolyGCD(B,r)
@@ -724,7 +749,7 @@ def __extendedEuclid(p,q):
     (s,r) = PolyDiv(P,Q)
     rm = 0 if r==0 else r.makeMonic()
     if polyEqual(PolyGCD(p,q),rm):
-        if r.getFieldTower().towerHeight==0:
+        if r.getFieldTower().towerHeight==0:#####update !!!!!!!!!!!! TODO
             r_inv_poly = Polynomial([1/r.getLeadingCoefficient()])
             return (r_inv_poly,r_inv_poly*(-1)*s)
         else:
@@ -1070,7 +1095,6 @@ if __name__ == '__main__': #tests
     print(polytest("(T1+((-1.0)x))*(T1+([x+1.0]/[x+2.0]))**2",printFactorization(fact)))
     #print("{} = {}".format(polB,printFactorization(fact)))
     assert polB.isSquareFree()==False
-    
     
     # http://www.wolframalpha.com/input/?i=expand+(T-x)(T%2B(x%2B1)%2F(x%2B2))%5E2+at+T%3D0
     ratA = parseExpressionFromStr("(x+2*x**2+x**3)/(4+4*x+x**2)")

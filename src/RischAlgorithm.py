@@ -167,9 +167,9 @@ def IntegratePolynomialPartLogExtCheckIntegralConditions(integral,fieldTower):
 def IntegrateRationalPartLogExt(func, fieldTower): # Hermite Reduction
     if func.numerator==0 or func.numerator.isZero():
         return Int.Integral()
-    red = func.reduceToLowestPossibleFieldTower()
-    if red.fieldTower.towerHeight<fieldTower.towerHeight:
-        return Integrate(red)
+    func = func.reduceToLowestPossibleFieldTower()
+    if func.fieldTower.towerHeight<fieldTower.towerHeight:
+        return Integrate(func)
     func = func.makeDenominatorMonic()
     sqrFreeFactorization = func.denominator.factorSquareFree()
     partialFractions = func.BasicPartialFraction(sqrFreeFactorization)
@@ -177,6 +177,7 @@ def IntegrateRationalPartLogExt(func, fieldTower): # Hermite Reduction
     integratedPart = 0
     toIntegratePart = 0 # squarefree part
     #1/(x+1)^2 *(1/log(x+1)) + -x/(x+1)^2 * 1/(log(x+1)^2)
+    Log("Integrate Rational part {}".format(func))
     for frac in partialFractions:
         j = frac[2]
         q_i = frac[1]
@@ -202,6 +203,8 @@ def IntegrateRationalPartLogExt(func, fieldTower): # Hermite Reduction
     if r.fieldTower!=toIntegratePart.fieldTower:
         integral += Integrate(r)
     else:   
+        if not toIntegratePart.denominator.isSquareFree():
+            raise Exception() # tests
         a = toIntegratePart.numerator
         b = toIntegratePart.denominator
         bp = b.differentiate()
@@ -214,13 +217,15 @@ def IntegrateRationalPartLogExt(func, fieldTower): # Hermite Reduction
         coeffsA = []
         Adeg = max(a.degree,bp.degree)   
         for i in range(Adeg+1):
-            polZ = Pol.Polynomial([a.getCoefficient(i),bp.getCoefficient(i)*(-1)],fieldTower=newFieldTower)
+            ai = a.getCoefficient(i)
+            mbi = bp.getCoefficient(i)*(-1)
+            polZ = Pol.Polynomial([ai,mbi],variable=zvar)
             coeffsA.append(polZ)
             
         b_coeffs = b.getCoefficients()
         coeffsB = []
         for bc in b_coeffs:
-            coeffsB.append(Pol.Polynomial([bc],fieldTower=newFieldTower))
+            coeffsB.append(Pol.Polynomial([bc],variable=zvar))
         res = Resultant(coeffsA, coeffsB) # res_T (a-z*b',b)
         if res!=0:
             primitivePart = res.makeMonic()
@@ -229,6 +234,7 @@ def IntegrateRationalPartLogExt(func, fieldTower): # Hermite Reduction
             constantRoots = False
             primitivePart = 0
                 
+        Log("Resultant: {}, {}".format(res,primitivePart))
         #print("Only constant coefficients in primitive part {}: {}".format(primitivePart,constantRoots))
         
         if not constantRoots:

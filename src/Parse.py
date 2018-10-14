@@ -10,6 +10,7 @@ import RationalFunction as Rat
 import FieldExtension as FE
 from Utils import *
 import Number
+import time
 
 
 def parseField0PolyFromStr(poly_raw,var="x"):
@@ -40,6 +41,7 @@ def parseField0RatFromStr(rat_raw,var="x"):
     return Rat.RationalFunction(parseField0PolyFromStr(parts[0], var), parseField0PolyFromStr(parts[1], var))
 
 def parseExpressionFromStr(expr_str,fieldTower=None):
+    a = time.time()
     if fieldTower==None:
         fieldTower = FE.BASEFIELD
     variables = [fieldTower.getFieldExtension(i).variable for i in range(fieldTower.towerHeight)]#[(fieldTower.getFieldExtension(i).variable, fieldTower.getStrippedTower(i+1)) for i in range(fieldTower.towerHeight)]
@@ -56,6 +58,8 @@ def parseExpressionFromStr(expr_str,fieldTower=None):
        #     expr = Pol.Polynomial([expr],fieldTower=fieldTower)
             
         expr.replaceNumbersWithRationals()
+        b = time.time()
+        print("parsing expression took: {}s".format(b-a))
         return expr
     except (SyntaxError,NameError,ZeroDivisionError,TypeError) as e:
         print(type(e),e)

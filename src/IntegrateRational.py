@@ -180,6 +180,7 @@ def HermiteReduction(rational):
     """
     hermite reduction for rational el C(x), with rational=p/q, dep(p)<deg(q)
     """
+    rational.makeDenominatorMonicInPlace()
     sqrFreeFactorization = rational.denominator.factorSquareFree()
     partialFractions = rational.BasicPartialFraction(sqrFreeFactorization)
     integral = Int.Integral()
