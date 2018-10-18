@@ -146,22 +146,24 @@ def IntegratePolynomialPartLogExtCheckIntegralConditions(integral,fieldTower):
         raise Int.IntegralNotElementaryError()
     logs = integral.getNewLogExpressionsInFieldTower(fieldTower.prevTower(),fieldTower)
     if len(logs)>=1: # at most one log extension of C(x,T_1,...,T_(N-1))
-        lcombo = FTS.getLinearLogCombination(logs, fieldTower.getLastExtension())
+        for ls in [logs, integral.logExpressions]:
+            lcombo = FTS.getLinearLogCombination(ls, fieldTower.getLastExtension())
+            if lcombo==False:
+                continue
+            else:
+                lcombo = lcombo[1]
+                j = min(i for i in range(len(lcombo)) if lcombo[i]!=0)
+                factor = lcombo[j]/ls[j].factor
+                for i in range(len(logs)):
+                    f = lcombo[i]/ls[i].factor
+                    if f!=factor:
+                        raise Int.IntegralNotElementaryError()
+                ls = [Int.LogFunction(fieldTower.getLastExtension().argFunction, 1/factor)]
+                integral.logExpressions = ls
         if lcombo==False:
             raise Int.IntegralNotElementaryError()
-        else:
-            lcombo = lcombo[1]
-            j = min(i for i in range(len(lcombo)) if lcombo[i]!=0)
-            factor = lcombo[j]/logs[j].factor
-            for i in range(len(logs)):
-                f = lcombo[i]/logs[i].factor
-                if f!=factor:
-                    raise Int.IntegralNotElementaryError()
-            logs = [Int.LogFunction(fieldTower.getLastExtension().argFunction, 1/factor)]
-            integral.logExpressions = logs
 
-    if len(logs)!=0: # if a log extension appears, it must be T_N
-        if logs[0].argFunction != fieldTower.getLastExtension().argFunction:
+        if ls[0].argFunction != fieldTower.getLastExtension().argFunction:
             raise Int.IntegralNotElementaryError()
         
 def IntegrateRationalPartLogExt(func, fieldTower): # Hermite Reduction
