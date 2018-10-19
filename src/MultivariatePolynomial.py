@@ -10,8 +10,6 @@ import Number
 from Utils import *
 import Polynomial as Pol
 import RationalFunction as Rat
-from Tkconstants import EXTENDED
-
 
 
 class MultiIndex(object):
