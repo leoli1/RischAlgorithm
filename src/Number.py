@@ -143,6 +143,8 @@ class Rational(AlgebraicNumber):
         while not Utils.isInt(p):
             p = p*10
             n+=1
+        if n>5:
+            raise Exception()
         return Rational(int(p),10**n)
             
     def removeCommonFactors(self):

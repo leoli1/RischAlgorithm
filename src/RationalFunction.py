@@ -135,7 +135,8 @@ class RationalFunction(object):
         return r==None
     
     # ========================================== Differentiate stuff =========================================
-    def differentiate(self):
+    def differentiate(self): 
+        print(self)
         p = self.numerator
         q = self.denominator
         if isNumber(p):
@@ -150,6 +151,7 @@ class RationalFunction(object):
             
         num = dp*q+(-1)*p*dq
         denom = q*q
+        print(num,denom)
         self.__derivative = RationalFunction(num,denom)
             
         return self.__derivative# (p/q)' = (p'q-pq')/(q^2)

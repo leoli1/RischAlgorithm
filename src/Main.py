@@ -30,7 +30,8 @@ def getInput(msg, outputs):
             e = False
     return o
     
-#-((1+7*x**2*T_1+T_1+T_1**2+3*x**2+6*x**2*T_1**2+T_1**3+2*x**4)/(4*x**4*T_1+x**2*T_1**2+4*x**6)) <- TODO, not correct result
+#-((1+7*x**2*T_1+T_1+T_1**2+3*x**2+6*x**2*T_1**2+T_1**3+2*x**4)/(4*x**4*T_1+x**2*T_1**2+4*x**6)) ,T_1=log(x)<- TODO, not correct result
+#((T_2+T_1*x)/(T_2**3-T_2*x+1)).differentiate()
 def fieldTowerInput():
     height = int(input("Number of field extensions? "))
         
