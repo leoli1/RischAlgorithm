@@ -4,7 +4,7 @@ Created on 23.10.2018
 @author: Leonard
 '''
 from __future__ import division
-from Number import Rational
+from Number import Rational,SqrRootPolynomial
 from PrettyPrintingHelper import *
 from Utils import *
 import FieldExtension as FE
@@ -30,6 +30,8 @@ class StringMatrix(object):
             sm._data[0][i] = s[i]
         return sm
     
+    def setChar(self, row,column, char):
+        self._data[row][column] = char
     def setRowAtCenter(self, row, data):
         data = list(data)
         d = len(data)
@@ -99,8 +101,10 @@ class StringMatrix(object):
 def pp(obj):
     if obj==None:
         return StringMatrix()
-    if isNumber(obj) and type(obj)!=Rational:
+    if isNumber(obj) and type(obj)!=Rational and type(obj)!=SqrRootPolynomial:
         obj = Rational.fromFloat(obj)
+    if type(obj)==SqrRootPolynomial:
+        return ppSqrRootPolynomial(obj)
     if type(obj)==Rational:
         return ppRational(obj)
     
@@ -126,7 +130,10 @@ def ppRational(rational):
     p = rational._p
     q = rational._q
     if q==1:
-        return StringMatrix.fromString(str(p))
+        sm = StringMatrix.fromString(str(p))
+        if p<0:
+            sm.surroundWithBrackets()
+        return sm
     ps = str(p)
     qs = str(q)
     width = max(len(ps),len(qs))
@@ -135,6 +142,8 @@ def ppRational(rational):
     sm.setRowAtCenter(1,FRACTION_MID*width)
     sm.setRowAtCenter(2,qs)
     sm.mainRow = 1
+    if rational<0:
+        sm.surroundWithBrackets()
     return sm
 
 def ppRationalFunction(rational):
@@ -156,6 +165,8 @@ def ppPolynomial(polynomial):
     
     p = StringMatrix(width=1,height=1)
     p._data[0][0] = "+"
+    m = StringMatrix(width=1,height=1)
+    m._data[0][0] = "-"
             
     for i in range(polynomial.degree+1):
         if polynomial.coeffIsZero(i):
@@ -165,6 +176,44 @@ def ppPolynomial(polynomial):
         if i!=polynomial.degree:
             sm += p
     return sm
+
+def ppSqrRootPolynomial(rootPol):
+    a = rootPol.a
+    b = rootPol.b
+    aSM = pp(a)
+    bSM = pp(b)
+    rootSM = ppSquareRoot(rootPol.radicand)
+    p = StringMatrix(width=1,height=1)
+    p._data[0][0] = "+"
+    m = StringMatrix(width=1,height=1)
+    m._data[0][0] = "-"
+    if a==0:
+        if b==1:
+            return rootSM
+        if b==-1:
+            return m+rootSM
+        return bSM+rootSM
+    if b==1:
+        return aSM+p+rootSM
+    if b==-1:
+        return aSM+m+rootSM
+    return aSM+p+bSM+rootSM
+def ppSquareRoot(rad):
+    radSM = pp(rad)
+    linedSM = StringMatrix(width=radSM.width,height=radSM.height+1)
+    linedSM.setSubMatrix(radSM, 1,0)
+    for x in range(radSM.width):
+        linedSM.setChar(0, x, LOW_LINE)
+    linedSM.mainRow = radSM.mainRow+1
+    diag = UpDiag(radSM.height)
+    diag.mainRow=linedSM.mainRow-1
+    sm = diag+linedSM
+    col = StringMatrix(width=1,height=sm.height)
+    col.mainRow = sm.mainRow
+    col.setChar(sm.height-1, 0, DIAG_DOWN)
+    
+    return col+sm
+
 
 def ppMonomial(coeff, base, power):
     coeffSM = pp(coeff)
@@ -422,3 +471,6 @@ if __name__ == "__main__":
     rat = parseExpressionFromStr("(x+1)/(x**2+1)*T_1/T_2+T_1*x**2", fieldTower=FE.fieldTower)
     sm = pp(rat)
     sm.pprint()
+    
+    ppSquareRoot(-5).pprint()
+    ppSquareRoot(rat).pprint()

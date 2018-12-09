@@ -3,6 +3,7 @@ Created on 23.10.2018
 
 @author: Leonard
 '''
+import PrettyPrinting as PP
 
 R_UP = u"\N{RIGHT PARENTHESIS UPPER HOOK}"
 R_LO = u"\N{RIGHT PARENTHESIS LOWER HOOK}"
@@ -14,6 +15,9 @@ T_INT = u"\N{TOP HALF INTEGRAL}"
 B_INT = u"\N{BOTTOM HALF INTEGRAL}"
 VERT_INT = u"\N{INTEGRAL EXTENSION}"
 INT = u"\N{INTEGRAL}"
+DIAG_DOWN = u"\N{BOX DRAWINGS LIGHT DIAGONAL UPPER LEFT TO LOWER RIGHT}"
+DIAG_UP = u"\N{BOX DRAWINGS LIGHT DIAGONAL UPPER RIGHT TO LOWER LEFT}"
+LOW_LINE = u"\N{LOW LINE}"
 
 FRACTION_MID = u"\N{BOX DRAWINGS LIGHT HORIZONTAL}"
 
@@ -40,6 +44,11 @@ def IntegralSymbol(height):
         t.append(VERT_INT)
     return t+[B_INT]
 
+def UpDiag(height):
+    sm = PP.StringMatrix(width=height,height=height)
+    for i in range(height):
+        sm.setChar(i, height-1-i, DIAG_UP)
+    return sm
 
 if __name__=="__main__":
     for (l,r,i) in zip(LeftBracket1(4),RightBracket1(4),IntegralSymbol(4)):
