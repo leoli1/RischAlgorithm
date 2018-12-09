@@ -21,7 +21,7 @@ def call_counter(func):
     helper.calls = 0
     helper.__name__= func.__name__
     return helper
-
+'''
 class Polynomial(object):
     def __init__(self, coefficients=None,variable=None):
         self.__derivative = None
@@ -330,9 +330,9 @@ class Polynomial(object):
             if fieldExtension.extensionType==FE.TRANSCENDENTAL_SYMBOL:
                 dPoly.setCoefficient(i-1, p*i, callUpdates=False)
             elif fieldExtension.extensionType==FE.TRANS_EXP: # (p*T^i)'=p'T^i+p*i*T'*T^(i-1) = p'T^i+i*p*u'*T^i since T'=u'T
-                dPoly += (Monomial(i,p.differentiate(),variable=self.variable))+i*Monomial(i-1,p*log_diff_u,variable=self.variable))
+                dPoly += Monomial(i,p.differentiate(),variable=self.variable)+i*Monomial(i-1,p*log_diff_u,variable=self.variable)
             elif fieldExtension.extensionType==FE.TRANS_LOG:
-                dPoly += (Monomial(i,p.differentiate(),variable=self.variable)+i*Monomial(i-1,p*log_diff_u,variable=self.variable))
+                dPoly += Monomial(i,p.differentiate(),variable=self.variable)+i*Monomial(i-1,p*log_diff_u,variable=self.variable)
                 
         dPoly.updateCoefficientsAll()
         if type(dPoly)==Rat.RationalFunction:
@@ -366,8 +366,8 @@ class Polynomial(object):
         if id(self.__logDerivative)!=id(None):
             return self.__logDerivative
         self.__logDerivative = self.differentiate()/self
-        return self.__logDerivative
-'''class Polynomial(object):
+        return self.__logDerivative'''
+class Polynomial(object):
     def __init__(self, coefficients=None,variable=None):
         
         self.__derivative = None
@@ -932,7 +932,6 @@ class Polynomial(object):
         if len(out)==0:
             return "0"
         return out.strip("+")
- '''   
     
 
 def polyEqual(A,B):

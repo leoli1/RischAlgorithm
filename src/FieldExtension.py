@@ -16,6 +16,9 @@ fieldTower = None
 if not "variables" in dir():
     variables = []
 
+if not "tempVariableNum" in dir():
+    tempVariableNum = 0
+
 def hasFieldExtension(type,u,tower):
     for i in range(tower.towerHeight):
         ext = tower.getFieldExtension(i)
@@ -29,6 +32,8 @@ class Variable(object):
         self.stringRepr = stringRepr
         self.fieldExtension = None
         variables.append(self)
+        global tempVariableNum
+        tempVariableNum += 1
         
     def __eq__(self, other):
         if type(other)!=Variable:

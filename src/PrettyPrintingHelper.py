@@ -10,6 +10,10 @@ L_UP = u"\N{LEFT PARENTHESIS UPPER HOOK}"
 L_LO = u"\N{LEFT PARENTHESIS LOWER HOOK}"
 R_VERT = u"\N{RIGHT PARENTHESIS EXTENSION}"
 L_VERT = u"\N{LEFT PARENTHESIS EXTENSION}"
+T_INT = u"\N{TOP HALF INTEGRAL}"
+B_INT = u"\N{BOTTOM HALF INTEGRAL}"
+VERT_INT = u"\N{INTEGRAL EXTENSION}"
+INT = u"\N{INTEGRAL}"
 
 FRACTION_MID = u"\N{BOX DRAWINGS LIGHT HORIZONTAL}"
 
@@ -17,18 +21,26 @@ def LeftBracket1(height):
     if height==1:
         return ["("]
     t = [L_UP]
-    for i in range(1,height-1):
+    for _ in range(1,height-1):
         t.append(L_VERT)
     return t+[L_LO]
 def RightBracket1(height):
     if height==1:
         return [")"]
     t = [R_UP]
-    for i in range(1,height-1):
+    for _ in range(1,height-1):
         t.append(R_VERT)
     return t+[R_LO]
 
+def IntegralSymbol(height):
+    if height==1:
+        return [INT]
+    t = [T_INT]
+    for _ in range(1,height-1):
+        t.append(VERT_INT)
+    return t+[B_INT]
+
 
 if __name__=="__main__":
-    for c in (LeftBracket1(4)):
-        print c
+    for (l,r,i) in zip(LeftBracket1(4),RightBracket1(4),IntegralSymbol(4)):
+        print l,r,i

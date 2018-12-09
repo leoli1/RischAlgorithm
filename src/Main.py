@@ -10,6 +10,7 @@ from RationalFunction import RationalFunction
 from RischAlgorithm import *
 import time
 from Parse import parseField0PolyFromStr,parseExpressionFromStr
+import PrettyPrinting as PP
 
 PYTHON3 = False
 
@@ -73,7 +74,21 @@ def Main():
             f = parseExpressionFromStr(f_str, FE.fieldTower)
             
         a = time.time()
-        print("Integral({}) = {}".format(f.printFull(),printIntegral(f, FE.fieldTower)))
+        #print("Integral({}) = {}".format(f.printFull(),printIntegral(f, FE.fieldTower)))
+        integral = Integrate(f)#, fieldTower)
+        print("finished integrating")
+        if integral!=None:
+            integral.simplify()
+            integ = integral.asFunction()
+            print("create string matrix")
+            integralSM = PP.pp(integ)+PP.StringMatrix.fromString(" + C")
+        else:
+            integralSM = PP.StringMatrix.fromString("Integral is not elementary")
+        try:
+            (PP.ppEquation(PP.ppIntegralExpression(f, FE.BASEVARIABLE), integralSM)).pprint()
+        except:
+            print("Integral({}) = {}".format(f.printFull(),printIntegral(f, FE.fieldTower)))
+            
         b = time.time()
         print("calculating and printing time: {}s".format(b-a))#0.00032901763916s
         #print(Pol.Polynomial.updateCoefficients.calls)

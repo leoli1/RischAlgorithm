@@ -59,7 +59,7 @@ def parseExpressionFromStr(expr_str,fieldTower=None):
             
         expr.replaceNumbersWithRationals()
         b = time.time()
-        print("parsing expression took: {}s".format(b-a))
+        #print("parsing expression took: {}s".format(b-a))
         return expr
     except (SyntaxError,NameError,ZeroDivisionError,TypeError) as e:
         print(type(e),e)
