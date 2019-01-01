@@ -244,10 +244,14 @@ def IntegrateRationalPartLogExt(func, fieldTower): # Hermite Reduction
         
         roots = primitivePart.getRoots()
         vfunc = []
+        rootsDone = []
         for c in roots:
+            if c in rootsDone:
+                continue
+            rootsDone.append(c) # only want distinct roots
             vfunc.append(Pol.PolyGCD(a+bp*(-c), b))
         intPart = Int.Integral()
-        for (c,v) in zip(roots,vfunc):
+        for (c,v) in zip(rootsDone,vfunc):
             logExpr = Int.LogFunction(v,c)
             intPart += Int.Integral(logs=[logExpr])
         integral += intPart
@@ -377,11 +381,16 @@ def IntegrateRationalPartExpExt(func, fieldTower):
         
         roots = primitivePart.getRoots()
         vfunc = []
+        rootsDone = []
         for c in roots:
+            if c in rootsDone:
+                continue
+            rootsDone.append(c) # only consider distinct roots
             x = a+bp*(-c)
             vfunc.append(Pol.PolyGCD(x, b))
         intPart = Int.Integral()
-        for (c,v) in zip(roots,vfunc):
+        rootsDone = []
+        for (c,v) in zip(rootsDone,vfunc):
             logExpr = Int.LogFunction(v,c)
             intPart += Int.Integral(logs=[logExpr])
             vd = v.degree

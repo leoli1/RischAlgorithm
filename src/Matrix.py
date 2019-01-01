@@ -302,6 +302,7 @@ def Resultant(coeffsA,coeffsB):
     if len(coeffsA)==0 or len(coeffsB)==0:
         raise Exception()
     sylv = SylvesterMatrix(coeffsA,coeffsB)
+    Log("Sylvestermatrix({},{})=\n{}".format(coeffsA,coeffsB,sylv))
     res = timeMethod(sylv.determinant)
     if type(res) is Rat.RationalFunction:
         r = res.asPolynomial()

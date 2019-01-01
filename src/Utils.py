@@ -9,7 +9,7 @@ import time
 
 
 global log_algorithm
-log_algorithm = False
+log_algorithm = True
 
 numbers = [int,float,complex,Number.Rational,Number.SqrRootPolynomial]
 

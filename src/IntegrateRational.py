@@ -110,6 +110,8 @@ def IntegrateRationalFunction(func): # field=0, func element C(x)
         #v = Pol._PolyGCD(coeffsA, coeffsB)
         
         LOOK_FOR_RATIONAL_ROOTS = True
+        
+        #only consider distinct roots: all roots that have same multiplicity are n are in a factor of form f^n, it will only calculate the roots of f, so only the distinct
         for fac in sqrfreeFact:
             if fac[0]==1:
                 continue
