@@ -307,7 +307,7 @@ def IntegrateRationalPartExpExt(func, fieldTower):
     l = func.denominator.lowestDegree
     if l!=0:
         powerPol = Pol.Polynomial([0,Number.Rational(1,1)],variable=fieldTower.getLastVariable())**l # T^l
-        qs = func.denominator/powerPol
+        qs = func.denominator/powerPol #q=T^l*qs
         (rs,w) = Pol.extendedEuclidGenF(powerPol, qs, func.numerator)
         w_ext = ExtPol.extPolyFromPol_power(w, l) # w/T^l
         #rat = rs/qs
@@ -366,6 +366,7 @@ def IntegrateRationalPartExpExt(func, fieldTower):
         for bc in b_coeffs:
             coeffsB.append(Pol.Polynomial([bc],variable=zvar))
         res = Resultant(coeffsA, coeffsB) # res_T (a-z*b',b)
+        
         if res!=0:
             primitivePart = res.makeMonic().reduceToLowestPossibleFieldTower()
             constantRoots = primitivePart.hasOnlyConstantCoefficients()
@@ -373,6 +374,7 @@ def IntegrateRationalPartExpExt(func, fieldTower):
             constantRoots = False # TODO
             primitivePart = 0
                 
+        Log("Resultant: {}, {}".format(res,primitivePart))
         #print("Only constant coefficients in primitive part {}: {}".format(primitivePart,constantRoots))
         
         if not constantRoots:
