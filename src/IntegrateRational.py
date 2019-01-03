@@ -190,6 +190,8 @@ def HermiteReduction(rational):
         j = frac[2]
         q_i = frac[1]
         r_ij = frac[0] # rational = sum(i=1...n, j=1...i : r_ij/q_i^j
+        if r_ij==0:
+            continue
         if j>1: # denominator = q_i^j not square free -> reduce power j -> make it squarefree
             j = Rational.fromFloat(j)
             (s,t) = Pol.extendedEuclidGenF(q_i, q_i.differentiate(), r_ij) # finds s,t with s*q_i+t*q_i'=r_ij

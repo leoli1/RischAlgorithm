@@ -1,0 +1,700 @@
+\documentclass[fontsize=12pt, paper=a4, headinclude, twoside=false, parskip=half+, pagesize=auto, numbers=noenddot, open=right, toc=listof, toc=bibliography]{scrreprt}
+%\usepackage{mathptmx}
+
+\usepackage[ngerman]{babel}
+
+\usepackage[ansinew]{inputenc}
+
+\usepackage{amsmath}
+\usepackage{mathtools}
+\usepackage{amssymb}
+
+\usepackage{subcaption}
+
+\usepackage{amsthm}
+
+%\usepackage[onehalfspacing]{setspace}
+
+\allowdisplaybreaks
+
+\usepackage{etoolbox}
+\makeatletter
+\patchcmd{\chapter}{\if@openright\cleardoublepage\else\clearpage\fi}{}{}{}
+\makeatother
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\sloppy
+
+\usepackage{scrpage2} 
+\clearscrheadfoot 
+
+\usepackage{geometry}
+\geometry{
+  left=2.5cm,
+  right=3.5cm,
+  top=2cm,
+  bottom=2cm,
+}
+\captionsetup[subfigure]{labelformat=empty}
+
+
+\DeclarePairedDelimiter\abso{\lvert}{\rvert}%
+\newcommand*\eval[3]{\left.#1\right\rvert_{#2}^{#3}}
+\def\abs{\abso*}
+\DeclareMathOperator{\sinc}{sinc}
+\DeclareMathOperator{\Li}{Li}
+\DeclareMathOperator{\ggT}{ggT}
+\DeclareMathOperator{\res}{res}
+
+\newcommand{\einschraenkung}{\,\rule[-5pt]{0.4pt}{12pt}\,{}}
+
+\let\oldref\ref
+\renewcommand{\ref}[1]{(\oldref{#1})}
+
+\theoremstyle{plain}
+\newtheorem*{theorem}{Satz}
+\newtheorem*{definition}{Definition}
+\newtheorem{lemma}{Lemma}
+
+
+%\begin{luacode*}
+%function gcd(a,b)
+  % return (b ~= 0) and gcd(b,a%b) or a
+%end
+%\end{luacode*}i
+%\newcommand\gcdLua[2]{\directlua{gcd(#1,#2)}}
+
+\renewcaptionname{ngerman}{\figurename}{Abb.}
+
+\begin{document}
+%\listoffigures
+\setlength{\abovedisplayskip}{0pt}
+\setlength{\belowdisplayskip}{0pt}
+\setlength{\abovedisplayshortskip}{0pt}
+\setlength{\belowdisplayshortskip}{0pt}
+
+%\pagenumbering{Roman}
+\pagestyle{empty}
+
+\vspace{6cm}
+%\small{Herbartgymnasium Oldenburg \hfill Schuljahr 2017/2018}\\\\
+%Kursthema: Der blaue Planet\\
+\begin{center}
+\vspace*{\fill}
+\begin{huge}
+\textbf{Differentielle Algebra und der Risch-Algorithmus}\\
+\end{huge}
+Leonard Tomczak\\
+\vspace*{\fill}
+
+\vspace{3cm}
+\end{center}
+
+\newpage
+\pagestyle{empty} 
+  \addtocontents{toc}{\protect\thispagestyle{empty}} 
+\tableofcontents
+\cleardoublepage 
+\newpage
+
+\pagenumbering{arabic}
+\pagestyle{scrheadings} 
+\chead[\pagemark]{ \pagemark} 
+\chapter{Einleitung}
+\newpage
+\chapter{Einige algebraische Begriffe}
+todo: polynome, körpererweiterungen, transzendent/algebraisch, quadratfrei (faktorisieren), partialbruchzerlegung
+\chapter{Grundlegende Begriffe der differentiellen Algebra}
+Im Folgenden sei $F$ stets ein Körper.\\
+Zunächst benötigen wir eine rein algebraische Definition der Ableitung.
+\begin{definition}
+Eine Abbildung $D:F\to F$ heißt \textup{Ableitung} auf $F$, falls für alle $x,y\in F$ gilt:
+\begin{enumerate}
+\item $D(x+y) = D(x)+D(y)$
+\item $D(xy)=xD(y)+D(x)y$
+\end{enumerate}
+\end{definition}
+Wir erkennen, dass es sich bei diesen Bedingungen lediglich um die Summen- und Produktregel handelt.\\
+Betrachten wir zum Beispiel $F=\mathbb{C}(x)$, also der Körper der rationalen Funktionen mit komplexen Koeffizienten\footnote{Streng genommen handelt es sich hierbei nicht um Funktionen, sondern um rein formale Ausdrücke der Form $\frac{a_nX^n+\cdots+a_1X+a_0}{b_mX^m+\cdots+b_1X+b_0}$, für den Grundkörper $\mathbb{C}$ ist diese Unterscheidung in dieser Anwendung nicht allzu wichtig. Würden wir über endlichen Körpern arbeiten, ist dies anders, z.B. sind die Polynome $X$ und $X^2$ aus $\mathbb{Z}_2[X]$ verschieden, ihre zugehörigen Abbildungen sind aber identisch.}, so ist der aus der Analysis bekannte Ableitungsoperator $\frac{d}{dx}$ offensichtlich eine Ableitung auf $F$, die Bezeichnung \textit{Ableitung} ist also gerechtfertigt.\\
+Ein Körper $F$ zusammen mit einer Ableitung $D$ auf diesem wird \textit{Differentieller Körper} genannt.\\
+Aus der Definition können wir weitere uns bekannte Regeln herleiten:
+\begin{lemma}
+Für $n\in\mathbb{N}, x,y \in F$, wobei $F$ ein differentieller Körper mit Ableitung $D$ ist, gilt:
+\begin{enumerate}
+\item $D(\frac{x}{y})=\frac{yD(x)-xD(y)}{D(y)^2}$ (Quotientenregel)
+\item $D(x^n)=nD(x)x^{n-1}$ (Potenzregel)
+\end{enumerate}
+\end{lemma}
+\begin{proof} Beispielsweise für die Potenzregel:\\
+Für $n=1$ ist: $D(x^n)=D(x)=1\cdot D(x)\cdot x^0$\\
+Über Induktion folgt: 
+\begin{align*}D(x^{n+1})&=D(x^n\cdot x)=x^nD(x)+D(x^n)\cdot x\\&=x^nD(x)+nD(x)x^{n-1}\cdot x=(n+1)D(x)x^n\end{align*}
+\end{proof}
+Wir wissen aus der Analysis, dass Stammfunktionen bis auf additive Konstanten eindeutig sind, d.h. sind $F,G$ Stammfunktionen einer Funktion $f$, so gibt es eine Konstante $C\in\mathbb{C}$, sodass $F=G+C$. Konstante Funktionen haben die Eigenschaft, dass ihre Ableitung 0 ist. Auf diese Weise definieren wir auch Konstanten in der differentiellen Algebra:
+\begin{definition}
+Für einen differentiellen Körper $(F,D)$ definieren wir:
+\begin{align*}
+K := \{x\in F~\vert~ D(x)=0\}
+\end{align*}
+als den \textup{Konstantenkörper} von $F$.
+\end{definition}
+Im Folgenden schreiben wir $x'$ statt $D(x)$.\\
+Um alle elementaren Funktionen zu erhalten genügt nicht $\mathbb{C}(x)$, wir benötigen auch noch Exponential-, Logarithmus- und Wurzelfunktionen. Dafür benötigen wir den Begriff der differentiellen Körpererweiterung:
+\begin{definition}
+Seien $(F,D_F),(G,D_G)$ jeweils differentielle Körper, wobei gilt:
+\begin{enumerate}
+\item $G$ ist ein Teilkörper von $F$
+\item ${D_F}\einschraenkung_G = D_G$ (\glqq $D_F$ eingeschränkt auf $G$\grqq)
+\item Die Konstantenkörper von $F$ und $G$ sind identisch\footnote{In der Literatur wird meist die dritte Bedingung bei dieser Definition weggelassen, allerdings wird diese dann häufig in den darauffolgenden Sätzen vorausgesetzt.}
+\end{enumerate}
+Dann ist $F$ eine \textup{differentielle Körpererweiterung} von $G$. 
+\end{definition}
+Da wir nur eine bestimmte Art von Funktionen, nämlich elementare, betrachten wollen, müssen wir die differentiellen Körpererweiterungen einschränken, und zwar auf exponentielle, logarithmische und algebraische:
+Aus der Analysis wissen wir, dass für eine differenzierbare Funktion $u$, die Funktion $f=\exp(u)$ folgende Differentialgleichung erfüllt:
+\begin{align*}
+\frac{f'}{f}=u'
+\end{align*}
+Die Logarithmusfunktion $g=\log(u)$ erfüllt analog:
+\begin{align*}
+g'=\frac{u'}{u}
+\end{align*}
+%In der Analysis wird die Exponentialfunktion $\exp(x)$ häufig als unendliche Summe definiert:
+%\begin{align*}
+%\exp(x):=\sum_{n=0}^{\infty} \frac{x^n}{n!}
+%\end{align*}
+%Eine Alternative wäre, $\exp$ als die stetige Fortsetzung von $e^{\frac{a}{b}}$ für $a,b\in \mathbb{Z},b\neq0$ zu definieren.\\
+%In der Algebra fehlen uns allerdings Begriffe wie Grenzwert und Stetigkeit. Wir wissen, dass für differenzierbare Funktionen $u$, die Funktionen $\exp(u), ~\log(u)$ folgende Differentialgleichungen erfüllen:
+%\begin{align*}
+%\frac{\left(\exp(u)\right)'}{\exp(u)} &= u'\\
+%\log(u)' &= \frac{u'}{u}
+%\end{align*}
+%Da wir bereits eine Definition der Ableitung haben, können wir damit Exponential- und Logarithmusfunktionen algebraisch erfassen:
+Auf diese Weise können wir exponentielle und logarithmische Körpererweiterungen auch in der Sprache der differenziellen Algebra erkennen:
+\begin{definition}
+Sei $G$ eine differentielle Körpererweiterung von $F$ und $\theta\in G$.
+%, so dass $\theta$ transzendent über $F$ ist.
+\begin{enumerate}
+\item Gibt es ein $u\in F$ mit $\frac{\theta'}{\theta}=u$, so nennt man $\theta$ \textup{exponentiell} über $F$ und schreibt $\theta = \exp(u)$.
+\item Gibt es ein $u\in F$ mit $\frac{u'}{u}=\theta'$, so nennt man $\theta$ \textup{logarithmisch} über $F$ und schreibt $\theta =\log(u)$.
+\end{enumerate}
+\end{definition}
+%Die Forderung, dass $\theta$ transzendent über $F$ sein soll, ist dazu da, um z.B. Folgendes zu verhindern:\\
+%$F = \mathbb{C}(x), G=F, \theta=x$. Für $u=\frac{1}{x}$ gilt $\frac{\theta'}{\theta}=u$.Aus Sicht der Analysis ist $x$ aber 
+Nun benötigen wir noch wurzelartige Funktionen, diese können wir als algebraische Ausdrücke auffassen:
+\begin{definition}
+Sei $G$ eine differentielle Körpererweiterung von $F$ und $\theta\in G$.\\
+$\theta$ heißt \textup{algebraisch} über $F$, falls $\theta$ Lösung einer Polynomgleichung über $F$ ist, d.h. es gibt ein $f\in F[z]$ mit $f(\theta)=0$.
+\end{definition}
+Beispiele:\\
+Sei $F=\mathbb{C}(x)$ und $D$ die Standardableitung.
+\begin{itemize}
+\item $\theta=\sqrt[\uproot{3}n]{x}$, $G=F(\theta)$. $\theta$ ist algebraisch über $F$, z.B. erfüllt $\theta$ die Polynomgleichung $z^n-x=0$.
+\item $\theta = \log(x^2+1), G=F(\theta)$. Für $u=x^2+1$ gilt: $\theta'=\frac{u'}{u}$, $\theta$ ist also ein Logarithmus über $F$.
+\end{itemize}
+Wir können nun definieren, was genau elementare Funktionen sind:
+\begin{definition}
+Sei $F$ ein differentieller Körper und $G$ eine differentielle Körpererweiterung von diesem. Falls $\theta_1,\dots,\theta_n$ existieren, sodass gilt:
+\begin{itemize}
+\item $G=F(\theta_1,\dots,\theta_n)$
+\item Für $i=1,\dots,n$ ist die Funktion $\theta_i$ exponentiell, logarithmisch oder algebraisch über $F(\theta_1,\dots,\theta_{i-1})$
+ \end{itemize} 
+ so ist $G$ eine \textup{elementare} Körpererweiterung von $F$.\\
+Für den Spezialfall $F=\mathbb{C}(x)$ nennt man die Elemente $f\in G$ einer elementaren Körpererweiterung $G$ von $F$ \textup{elementare} Funktionen.
+%$ Eine Funktion $f$ heißt \textup{elementar}, falls $\theta_1,\dots,\theta_n$ existieren, sodass $f\in \mathbb{C}(x,\theta_1,\dots,\theta_n)$ und für $i=1,\dots,n$ $\theta_i$ exponentiell, logarithmisch oder algebraisch über $\mathbb{C}(x,\theta_1,\dots,\theta_i)$ ist.
+\end{definition}
+Beispiele:
+\begin{itemize}
+\item $f=\frac{\exp(\sqrt{x})+x}{\sqrt{x}+x^2+1}$. Seien $\theta_1=\sqrt{x}$ und $\theta_2=\exp(\theta_1)$. $\theta_1$ erfüllt die Polynomgleichung $z^2-x=0$ und ist somit algebraisch über $\mathbb{C}(x)$. Für $u=\sqrt{x}=\theta_1$ ist $\frac{\theta_2'}{\theta_2}=u$ und somit exponentiell über $\mathbb{C}(x,\theta_1)$ ist. Da $f=\frac{\theta_2+x}{\theta_1+x^2+1} \in \mathbb{C}(x,\theta_1,\theta_2)$, ist $f$ elementar.
+\item $f=\sin(x)$. Wähle $\theta_1=\exp(ix)$. Wegen $\sin(x)=\frac{\exp(ix)-\exp(-ix)}{2i}$ ist $f=\frac{\theta_1-\frac{1}{\theta_1}}{2i}\in\mathbb{C}(x,\theta_1)$, somit ist $\sin(x)$ elementar.
+\item $f=\exp(x)^2$. Sei $\theta_1 = \exp(x)$. Dann ist $f=\theta_1^2\in\mathbb{C}(x,\theta_1)$. Allerdings gilt auch: $f=\exp(x)^2=\exp(2x)=:\theta_2\in\mathbb{C}(x,\theta_2)$.
+\end{itemize}
+Das letzte Beispiel zeigt, dass ein zu einer elementaren Funktion gehörender differentieller Körper nicht eindeutig ist.\\
+Nach dieser Definition sind allerdings auch einige Funktionen elementar, die man intuitiv vielleicht eher nicht als elementar bezeichnen würde. Betrachte z.B. die Polynomgleichung $z^5-z+x=0$ über $\mathbb{C}(x)[z]$. Die Lösungsfunktionen sind nach Definition elementar, sie lassen sich aber nicht wie die Lösungen von $z^5-x=0$ geschlossen mithilfe von Wurzelausdrücken hinschreiben (Siehe \textit{Satz von Abel-Ruffini}).\\
+\begin{definition}
+Eine Funktion $f\in F$ heißt \textup{elementar integrierbar}, falls eine elementare Körpererweiterung $G$ von $F$ und ein $g\in G$ existiert mit $g'=f$. $g$ ist dann eine \textup{Stammfunktion} von $f$.% Wir schreiben dann 
+\end{definition}
+\chapter{Der Satz von Liouville}
+Ein wichtiges Resultat der differentiellen Algebra ist der folgende Satz, der grob formuliert besagt, dass, falls eine Funktion elementar integrierbar ist, in einer Stammfunktion bis vielleicht auf Logarithmen keine neuen Ausdrücke auftauchen, die nicht in der gegebenen Funktion enthalten ist.
+\begin{theorem}
+(Liouville)\\
+Sei $f\in F$ mit Konstantenkörper $K$. Falls $f$ elementar integrierbar ist mit einer Stammfunktion $g$, dann gibt es Konstanten $c_1,\dots,c_m\in K$ und $v_0,\dots,v_m\in F$, sodass:
+\begin{align*}
+%f=v_0+\sum_{i=1}^{m}c_i\frac{v_i'}{v_i}
+g = v_0 + \sum_{i=1}^{m}c_i \log(v_i)
+\end{align*}
+\end{theorem}
+Beweisskizze:\\
+Sei $f\in F$ elementar integrierbar und $g\in G$ eine Stammfunktion, wobei $G$ eine elementare Körpererweiterung von $F$ ist:
+\begin{align*}
+G=F(\theta_1,\dots,\theta_n)
+\end{align*}
+Dabei können wir annehmen, dass es sich um \glqq echte\grqq  Körpererweiterungen handelt, also für $i=1,\dots,n$ gilt: $\theta_i\notin F(\theta_1,\dots,\theta_{i-1})$\\
+Der Beweis erfolgt dann mit Induktion über die Anzahl an benötigten Erweiterungen $n$.\\
+Der Induktionsanfang $n=0$ ist klar, denn dann ist $G=F$ und daher bereits $g\in F$.\\
+Die Idee für den Induktionsschritt ist folgende:\\
+Angenommen $g$ würde von $\theta_n$ abhängen. Dann kann man zeigen, dass, sofern $\theta_n$ nicht logarithmisch ist, $\theta_n$ auch in der Ableitung $v_0'+\sum_{i=1}^m c_i\frac{v_i'}{v_i} = g'=f$ auftauchen muss. Wegen $f\in F$ und $\theta_n \notin F$ kann dies nicht sein. Da dies nicht für Logarithmen gilt, können aber trotzdem logarithmische Ausdrücke auftauchen.
+\chapter{Der Risch-Algorithmus für transzendente Körpererweiterungen}
+Sei eine elementare Funktion $f$ gegeben.\\
+ Der erste Schritt besteht darin, geeignete $\theta_1,\dots,\theta_n$ zu finden, sodass $f\in\mathbb{C}(x,\theta_1,\dots,\theta_n)$. Ich beschränke mich hier und in der Implementierung auf rein transzendente Körpererweiterungen, d.h. z.B. Wurzelfunktionen lassen sich hiermit nicht integrieren.\\
+Der allgemeine Aufbau des Algorithmus ist rekursiv, d.h. man reduziert das Problem auf $\mathbb{C}(x,\theta_1,\dots,\theta_{n-1})$, $\mathbb{C}(x,\theta_1,\dots,\theta_{n-2})$, $\dots$ und schließlich auf $\mathbb{C}(x)$, also auf rationale Funktionen.%, was ich hier als vorausgesetzt betrachte.
+Die letzte Körpererweiterung mit $\theta_n$ ist entweder exponentiell oder logarithmisch, das Verfahren bei den beiden Fällen ist ähnlich. Wir betrachten zunächst den logarithmischen Fall.
+
+\section{Logarithmische Körpererweiterungen}
+
+Sei $\theta:=\theta_n$ logarithmisch über $F:=\mathbb{C}(x,\theta_1,\dots,\theta_{n-1})$, mit $u\in F$, sodass $\frac{u'}{u}=\theta'$.\\
+Nach Definition ist $f$ von der Form $f=\frac{a(\theta)}{b(\theta)}$, wobei $a,b\in F[\theta]$ sind.\\
+Zunächst führen wir eine Polynomdivision durch, wodurch wir $p,r,q\in F[\theta]$ mit $\deg(r)<\deg(q)$ erhalten, sodass $f=s+\frac{r}{q}$. Das Integral können wir dann aufteilen:
+\begin{align*}
+\int f = \int s + \int\frac{r}{q}
+\end{align*}
+Diese beiden Teile werden wir separat betrachten, zunächst den polynomiellen Teil.
+
+\subsection{Der Polynomielle Teil}
+
+Mit $l:=\deg(p)$ ist $p$ von der Form:
+\begin{align*}
+p(\theta)=p_l\theta^l+\cdots + p_1\theta+p_0
+\end{align*}
+Hierbei sind die Koeffizienten $p_i$ Funktionen aus $F$.
+Wir nehmen nun an, dass $p$ elementar integrierbar ist.\\
+Nach dem Satz von Liouville gibt es $c_1,\dots,c_m\in\mathbb{C}$ und $v_0,\dots,v_m\in F(\theta)$ mit
+\begin{align*}
+p(\theta)=v_0(\theta)' + \sum_{i=1}^m c_i\frac{v_i(\theta)'}{v_i(\theta)}
+\end{align*}
+Man kann sich nun überlegen, dass die $v_i$ für $i=1,\dots,m$ nicht von $\theta$ abhängen können, da sonst auf der rechten Seite im Nenner irgendwo $\theta$ auftauchen müsste, was nicht möglich ist, da $p$ ein Polynom in $\theta$ ist und $\theta$ daher nur im Zähler auftauchen kann. Ebenso kann $\theta$ auch nicht im Nenner von $v_0$ auftauchen. Folglich sind $v_i\in F$ für $i=1,\dots,m$ und $v_0\in F[\theta]$.\\
+Wir versuchen nun die Koeffizienten von $v_0$ herauszufinden. Wir bemerken zunächst, dass, wenn wir einen Ausdruck der Form $p\log(f)^n$ ableiten, wir $p'\log(f)^n + n \frac{f'}{f} \log(f)^{n-1}$ erhalten. Die Potenz des Logarithmus verringert sich beim Ableiten also höchstens um 1. Da auf der rechten Seite der obigen Gleichung nur $v_0$ von $\theta$ abhängt, gilt $\deg(v_0)\leq l+1$. Sei also $v_0(\theta)=q_{l+1}\theta^{l+1}+q_l\theta^l+\cdots+q_0$, mit $q_i\in F$. Setzen wir das ein, erhalten wir:
+\begin{align*}
+p(\theta) &= (q_{l+1}\theta^{l+1}+q_l\theta^l+\cdots+q_0)'+ \sum_{i=1}^m c_i\frac{v_i'}{v_i}\\
+&=q_{l+1}\theta^{l+1}+((l+1)q_{l+1}\theta'+q_l')\theta^l+(l q_l\theta'+q_{l-1}')\theta^{l-1}+\cdots\\&~~~+(2q_2\theta'+q_1')\theta+\left(q_1\theta'+q_0+\sum_{i=1}^m c_i\frac{v_i'}{v_i}\right)
+\end{align*}
+Ein Koeffizientenvergleich ergibt dann:
+\begin{align*}
+0 &= q_{l+1}'\\
+p_l &= (l+1)q_{l+1}\theta'+q_l'\\
+p_{l-1} &= lq_l\theta'+q_{l-1}'\\
+&~\vdots\\
+p_0 &= q_1\theta'+q_0'+\sum_{i=1}^m c_i\frac{v_i'}{v_i}
+\end{align*}
+Aus der ersten Gleichung folgt, dass $q_{l+1}$ eine Konstante ist, welche wir im Folgenden $b_{l+1}\in\mathbb{C}$ nennen.\\
+Wir können nun die zweite Gleichung integrieren:
+\begin{align*}
+\int p_l = (l+1)b_{l+1}\theta+q_l
+\end{align*}
+Die linke Seite können wir über Rekursion wegen $p_l\in F$ berechnen. Falls $\int p_l$ nicht elementar ist, können wir folgern, dass $p$ auch nicht elementar integrierbar ist.\\
+Haben wir aber aber eine Stammfunktion von $p_l$, müssen wir überprüfen, ob diese eine neue logarithmische Erweiterung über $F$ enthält. Falls dies der Fall ist, müsste sie auch auf der rechten Seite der Gleichung auftauchen. Falls also in $\int p_l$ ein neuer Logarithmus auftaucht, muss es $\theta$ sein, andernfalls kann keine Gleichheit bestehen und $\int p$ ist nicht elementar.\\
+Ist also $\int p_l = c_l\theta+d_l$ mit $c_i\in\mathbb{C}, d_I\in F$, so erhalten wir über einen Koeffizientenvergleich: $b_{l+1}=\frac{c_l}{l+1}$ und $q_l=d_l+b_l$. Dabei ist $b_i\in\mathbb{C}$ einfach eine Integrationskonstante.\\
+Dies können wir dann in die dritte Gleichung einsetzen, umformen und integrieren:
+\begin{align*}
+p_{l-1}&=l(d_l+b_l)\theta'+q_{l-1}'\\
+p_{l-1}-ld_i\theta' &= lb_i\theta'+q_{l-1}\\
+\int p_{l-1}-ld_i\theta' &= lb_i\theta + q_{l-1}
+\end{align*}
+Die linke Seite können wir wegen $p_{l-1}-ld_i\theta' \in F$ berechnen und dann wie eben verfahren, bis wir an der letzten Gleichung ankommen. Wir erhalten dann:
+\begin{align*}
+\int p_0-d_1\theta' = b_1\theta+q_0 + \sum_{i=1}^{m}c_i \log(v_i)
+\end{align*}
+Die erste Bedingung, nämlich dass das Integral auf der linken Seite elementar sein muss, gilt immernoch, allerdings können dort auch nun neue Logarithmen auftauchen, da auf der rechten Seite auch neue Logarithmen auftauchen können (Die $c_i,v_i,m$ sind Unbekannte). Wir können dann $\int p_0-d_1\theta' = c_0\theta+d_0$ schreiben, wobei diesmal $d_0$ nicht notwendigerweise in $F$ liegt. Dann ist $b_1 = c_0$ und:
+\begin{align*}
+q_0 + \sum_{i=1}^{m}c_i \log(v_i)= d_0
+\end{align*}
+Dann haben wir alle Unbekannten gefunden und es gilt:
+\begin{align*}
+\int p(\theta) = b_{l+1}\theta^{l+1}+q_l\theta^l+\cdots+q_1\theta+q_0+\sum_{i=1}^{m}c_i \log(v_i)
+\end{align*}
+Beispiele:
+\begin{itemize}
+\item $\theta = \log(x), p(\theta) = x\theta^2-\theta, l=2,p_2=x,p_1=-1,p_0=0$. \\Über den Ansatz $\int p(\theta) = b_{3}\theta^3+q_2\theta^2+q_1\theta+q_0+\sum_{i=1}^{m}c_i \log(v_i)$, erhalten wir die Gleichungen:
+\begin{align*}
+0 &= b_3'\\
+x &= 3b_3\theta'+q_2'\\
+-1 &= 2q_2\theta'+q_1'\\
+0 &= q_1\theta'+q_0'+\sum_{i=1}^{m}c_i\frac{v_i'}{v_i}
+\end{align*}
+Integrieren wir die zweite Gleichung erhalten wir:
+\begin{align*}\frac{x^2}{2}+b_2 = 3b_3\theta+q_2\end{align*}
+Also: $b_3=0, q_2=\frac{x^2}{2}+b_2,$. Einsetzen in die dritte Gleichung liefert:
+\begin{align*}
+-1 &= 2\left(\frac{x^2}{2}+b_2\right)\theta'+q_1'\\
+-1-x^2\theta' &= 2b_2\theta'+q_1'\\
+\int -1-x^2\frac{1}{x}&= 2b_2\theta+q_1\\
+-x-\frac{x^2}{2}+b_1 &= 2b_2\theta+q_1
+\end{align*}
+Also: $b_2=0, q_1 = -x-\frac{x^2}{2}+b_1$. Setzen wir dies in die letzte Gleichung ein, erhalten wir:
+\begin{align*}
+0 &= (-x-\frac{x^2}{2}+b_1)\theta'+q_0'+\sum_{i=1}^{m}c_i\frac{v_i'}{v_i}\\
+(x+\frac{x^2}{2})\theta' &= b_1\theta' + q_0'+\sum_{i=1}^{m}c_i\frac{v_i'}{v_i}\\
+\int (x+\frac{x^2}{2})\frac{1}{x} &= b_1\theta + q_0+\sum_{i=1}^{m}c_i\log(v_i)\\
+x+\frac{x^2}{4} +b_0&= b_1\theta+q_0+\sum_{i=1}^{m}c_i\log(v_i)
+\end{align*}
+Also $b_1=0, q_0+\sum_{i=1}^{m}c_i\log(v_i)=x+\frac{x^2}{4} +b_0$.\\
+Setzen wir alles zusammen, erhalten wir:
+\begin{align*}
+\int p(\theta) = \frac{x^2}{2}\theta^2+\left(-x-\frac{x^2}{2}\right)\theta + x+\frac{x^2}{4}+b_0.
+\end{align*}
+bzw.
+\begin{align*}
+\int x\log(x)^2-\log(x) = \frac{x^2}{2}\log(x)^2+\left(-x-\frac{x^2}{2}\right)\log(x) + x+\frac{x^2}{4}+b_0.
+\end{align*}
+Eine Probe bestätigt, dass es sich hierbei tatsächlich um eine Stammfunktion handelt!
+\item $\theta=\log(x),p(\theta) = \frac{\theta}{x+1}, l=1,p_1=\frac{1}{x+1},p_0=0$. Angenommen, $p$ wäre elementare integrierbar, dann ist $\int p(\theta) = b_2\theta^2+q_1\theta+q_0+\sum_{i=1}^{m}c_i \log(v_i)$ und wir erhalten:
+\begin{align*}
+0&=b_2'\\
+\frac{1}{x+1} &= 2b_2\theta'+q_1'\\
+0 &= q_1\theta'+q_0'+\sum_{i=1}^{m}c_i\frac{v_i'}{v_i}
+\end{align*}
+Integrieren wir die zweite Gleichung, erhalten wir:
+\begin{align*}
+\log(x+1) +b_1 =2b_2\log(x)+q_1
+\end{align*}
+$\log(x+1)$ ist allerdings ein neuer Logarithmus und nicht $\theta$, die Gleichung kann also für keine $b_1,b_2\in\mathbb{C}, q_1\in\mathbb{C}(x)$ erfüllt sein. Folglich ist $\frac{\log(x)}{x+1}$ nicht elementar integrierbar!
+\item Folgendes Beispiel zeigt, dass man vorsichtig sein muss, wenn es darum geht, zu überprüfen, ob es sich einen neuen Logarithmus handelt oder nicht:\\$\theta=\log(\frac{x}{x+1}), p(\theta) = \frac{1}{x^2+x}\log(\frac{x}{x+1}), p_1=\frac{1}{x^2+x},p_0=0$. Wir stellen wieder die üblichen Gleichungen auf: $\int p(\theta) = b_2\theta^2+q_1\theta+q_0+\sum_{i=1}^{m}c_i\log(v_i)$ und 
+\begin{align*}
+0 &= b_{2}'\\
+\frac{1}{x^2+x} &= 2b_2\theta' + q_1'\\
+0 &= q_1\theta'+q_0'+\sum_{i=1}^{m}c_i\frac{v_i'}{v_i}
+\end{align*}
+Integrieren wir die zweite Gleichung, erhalten wir:
+\begin{align*}
+\log(x)-\log(x+1) +b_1 = 2b_2\theta+q_1
+\end{align*}
+$\log(x)$ und $\log(x+1)$ einzeln betrachtet sind allerdings neue Logarithmen und nicht in $\mathbb{C}(x,\theta)$! Allerdings gilt für ihre Differenz: $\log(x)-\log(x+1)=\log(\frac{x}{x+1})=\theta$. Die Bedingungen sind hier also doch erfüllt. Rechnen wir weiter, erhalten wir:
+\begin{align*}
+\int p(\theta) = \frac{1}{2}\log\left(\frac{x}{x+1}\right)^2
+\end{align*}
+\end{itemize}
+
+\subsection{Der Rationale Teil}
+
+Zu berechnen: $\int \frac{r}{q}$ mit $\deg(r)<\deg(q)$. Weiter können wir annehmen, dass $\ggT(r,q)=1$ und $q$ monisch ist, d.h. der Leitkoeffizient von $q$ ist 1.\\
+Das Berechnen des Integrals gliedert sich in zwei Teile:
+\begin{enumerate}
+\item \textit{Hermite-Reduktion}: Das Integral so lange aufteilen, bis der Nenner Quadratfrei ist.
+\item \textit{Rothstein/Trager Methode}: Den Rest integrieren, wobei der Nenner nun quadratfrei ist. 
+\end{enumerate}
+1. Hermite-Reduktion:\\
+Zunächst berechnen wir die quadratfreie Faktorisierung des Nenners,
+\begin{align*}
+q(\theta) = \prod_{i=1}^k q_i(\theta)^i
+\end{align*}
+wobei die $q_i$ quadratfrei und paarweise teilerfremd sind. Daraufhin können wir eine Partialbruchzerlegung von $\frac{r}{q}$ durchführen:
+\begin{align*}
+\frac{r}{q} = \sum_{i=1}^{k} \sum_{j=1}^{i} \frac{r_{ij}}{q_i^j}
+\end{align*}
+Hierbei gilt: $\deg(r_{ij})<\deg(q_i)$. Wir können nun die $\frac{r_{ij}}{q_i^j}$ einzeln integrieren. Dazu betrachten wir einen solchen Term mit $j>1$.\\
+Da die $q_i$ quadratfrei sind, gilt: $\ggT(q_i(\theta),\frac{\textrm{d}}{\textrm{d}\theta}q_i(\theta))=1$. Man kann zeigen, dass daraus auch $\ggT(q_i(\theta),q_i(\theta)')=1$ folgt ($q_i(\theta)'$ ist die Ableitung nach $x$).\\Daher können wir nun mithilfe des euklidischen Algorithmus $s,t\in F[\theta]$ mit $\deg(s)<\deg(q_i'), \deg(t)<\deg(q_i)$, sodass:
+\begin{align*}
+sq_i+tq_i'=r_{ij}
+\end{align*}
+Und somit:
+\begin{align*}
+\int \frac{r_{ij}}{q_i^j} = \int \frac{sq_i+tq_i'}{q_i^j} = \int \frac{s}{q_i^{j-1}}+\int \frac{tq_i'}{q_i^j}
+\end{align*}
+Das zweite Integral können wir partiell integrieren:
+\begin{align*}
+\int \frac{tq_i'}{q_i^j} = \frac{t}{(1-j)q_i^{j-1}} - \int \frac{t'}{(1-j)q_i^{j-1}}
+\end{align*}
+Also:
+\begin{align*}
+\int \frac{r_{ij}}{q_i^j}= \frac{t}{(1-j)q_i^{j-1}} + \int \frac{s-\frac{t'}{1-j}}{q_i^{j-1}}
+\end{align*}
+Wir haben nun die Potenz von $q_i$ im Nenner um eins verringert, insbesondere gilt noch $\deg(s-\frac{t'}{1-j})<\deg(q_i)$. Dies können wie so lange weitermachen, bis wir folgendes erreicht haben:
+\begin{align*}
+\int \frac{r}{q} = \frac{c}{d}+\int \frac{a}{b}
+\end{align*}
+Mit $a,b,c,d\in F[\theta], \deg(a)<\deg(b)$, insbesondere ist der Nenner $b$ jetzt quadratfrei. Nun können wir mit dem zweiten Teil fortfahren.\\ Wir betrachten der Einfachheit halber zunächst nur Rationale Funktionen aus $\mathbb{C}(x)$, also ohne Logarithmen etc.\\
+Also seien $f,g\in\mathbb{C}[x], \ggT(f,g)=1,\deg(f)<\deg(g)$, $g$ quadratfrei und monisch. Zu berechnen: $\int \frac{f}{g}$. Sind $x_1,\dots,x_n$ die verschiedenen Nullstellen von $g$, so gilt $g(x)=\prod_{i=1}^n (x-x_i)$, wir können also eine Partialbruchzerlegung durchführen:
+\begin{align*}
+\frac{f(x)}{g(x)} = \sum_{j=1}^n \frac{c_j}{x-x_j}
+\end{align*}
+Hierfür war es wichtig, dass $g$ quadratfrei ist, denn sonst hätte $g$ eine mehrfache Nullstelle und die Partialbruchzerlegung würde wesentlich komplizierter werden. Die Koeffizienten $c_j$ können wir mit Mitteln aus der Analysis herausfinden. Fixieren wir $i$ und multiplizieren die Gleichung mit $x-x_i$, können wir den Grenzwert $x\to x_i$ betrachten:
+\begin{align*}
+\frac{f(x)}{g(x)}(x-x_i) &= c_i + \sum_{\substack{j=1\\j\neq i}}^n c_j\frac{x-x_i}{x-x_j}\\
+\lim_{x\to x_i}\frac{f(x)}{g(x)}(x-x_i)&= \lim_{x\to x_i} c_i + \sum_{\substack{j=1\\j\neq i}}^n c_j\frac{x-x_i}{x-x_j}\\
+\end{align*}
+Alle Terme auf der rechten Seite bis auf $c_i$ haben einen $x-x_i$ Faktor und fallen daher bei der Grenzwertbildung weg. Bei der linken Seite gilt wegen $g(x_i)=0$:
+ \begin{align*}
+\lim_{x\to x_i}\frac{f(x)}{g(x)}(x-x_i) = \frac{ f(x_i)}{\lim_{x\to x_i} \frac{g(x)-g(x_i)}{x-x_i}} = \frac{f(x_i)}{g'(x_i)}
+\end{align*}
+Also:
+\begin{align*}
+c_i = \frac{f(x_i)}{g'(x_i)}
+\end{align*}
+Damit lässt sich das Integral einfach berechnen:
+\begin{align*}
+\int \frac{f(x)}{g(x)} = \int \sum_{i=1}^n \frac{f(x_i)}{g'(x_i)}\frac{1}{x-x_i} = \sum_{i=1}^n \frac{f(x_i)}{g'(x_i)}\log(x-x_i) +C
+\end{align*}
+Die Bedeutung von $c_i = \frac{f(x_i)}{g'(x_i)}$ wird später noch einmal relevant.\\
+Zurück zu dem eigentlichen Problem: Wir wollen $\int \frac{a}{b}$ berechnen, das Problem hierbei ist, dass $a,b$ Polynome in $\theta$ über $F$ und nicht in $x$ über $\mathbb{C}$ sind. Wir können aber ähnlich vorgehen: Man kann mithilfe des Satzes von Liouville zeigen, dass, wenn $\frac{a}{b}$ elementar integrierbar ist, sich das Integral wie folgt schreiben lässt:
+\begin{align*}
+\int \frac{a(\theta)}{b(\theta)} = \sum_{i=1}^n c_i\log(\theta-b_i)
+\end{align*}
+Wobei $\prod_{i=1}^n (\theta-b_i) = b$ die Faktorisierung von $b$ ist.
+Dazu können wir direkt zwei klassische Beispiele betrachten, mit $\theta=\log(x)$:
+\begin{itemize}
+\item $f = \frac{1}{\theta}$. Der Nenner ist bereits quadratfrei und faktorisiert. Angenommen, $\int f$ wäre elementar. Dann gilt:
+\begin{align*}
+\int f(\theta) = c\log(\theta)
+\end{align*}
+Ableiten ergibt:
+\begin{align*}
+\frac{1}{\theta} = c\frac{\theta'}{\theta}=\frac{c}{x\theta}
+\end{align*}
+Dies kann aber für keine Konstante $c$ gelten. Folglich ist der Integrallogarithmus:
+\begin{align*}
+\Li(t) = \int_2^t \frac{1}{\log(x)} \textrm{d}x
+\end{align*}
+nicht elementar.
+\item $f = \frac{1}{x\theta}$. Damit der Nenner monisch ist, schreiben wir $f=\frac{\frac{1}{x}}{\theta}$. Angenommen, $f$ wäre elementar integrierbar, so wäre wieder:
+\begin{align*}
+\int \frac{\frac{1}{x}}{\theta} = c\log(\theta)
+\end{align*}
+Also:
+\begin{align*}
+\frac{\frac{1}{x}}{\theta} = \frac{c}{x\theta}
+\end{align*}
+Diese Gleichung ist für $c=1$ erfüllt, also ist:
+\begin{align*}
+\int \frac{1}{x\log(x)} = \log(\log(x))
+\end{align*}
+\end{itemize}
+Folgendes Beispiel zeigt, dass dieses Vorgehen nicht immer so einfach ist:
+\begin{itemize}
+\item Wir betrachten wieder $\theta=\log(x)$.
+\begin{align*}
+f = \frac{2\frac{\theta}{x}-1}{\theta^2-x}
+\end{align*}
+$f$ erfüllt die Vorraussetzungen, denn der Nenner ist quadratfrei, monisch und hat einen größeren Grad als der Zähler. Faktorisieren wir den Nenner, erhalten wir: $\theta^2-x = (\theta+\sqrt{x})(\theta-\sqrt{x})$. Falls $f$ elementar integrierbar ist, können wir $\int f$ also in folgender Form schreiben:
+\begin{align*}
+\int \frac{2\frac{\theta}{x}-1}{\theta^2-x} = c_1\log(\theta+\sqrt{x})+c_2\log(\theta-\sqrt{x})
+\end{align*}
+Indem wir ableiten und einen Koeffizientenvergleich durchführen, sehen wir, dass mit $c_1=c_2=1$ die Gleichung tatsächlich erfüllt ist. Allerdings tritt hier der Ausdruck $\sqrt{x}$ auf, der nicht in $\mathbb{C}(x,\theta)$ ist. Nach dem Satz von Lioville wissen wir aber, dass sich $\int f$ ohne solche Ausdrücke schreiben lässt, und tatsächlich gilt:
+\begin{align*}
+\log(\theta+\sqrt{x})+\log(\theta-\sqrt{x}) = \log((\theta+\sqrt{x})(\theta+\sqrt{x})) = \log(\theta^2-x)
+\end{align*}
+Und somit:
+\begin{align*}
+\int \frac{2\frac{\theta}{x}-1}{\theta^2-x} = \log(\theta^2-x)
+\end{align*}
+\end{itemize}
+Solche neuen Ausdrücke lassen sich vermeiden, indem wir die \textit{Rothstein/Trager-Methode} anwenden:
+Unsere Vorraussetzungen sind wie folgt:\\ Wir haben $\frac{a}{b}$ gegeben, wobei $a,b\in F[\theta], \deg(b)<\deg(a),\ggT(a,b)=1$ und $b$ quadratfrei und monisch ist. Sei $R(z):= \res_\theta(a(\theta)-zb'(\theta),b(\theta))$.\\
+Dann gilt:\\
+$\frac{a}{b}$ ist genau dann elementar integrierbar, wenn alle Nullstellen von $R$ Konstanten sind. Falls dies der Fall ist, gilt:
+\begin{align*}
+\int \frac{a(\theta)}{b(\theta)} = \sum_{i=1}^m c_i\log(v_i(\theta))
+\end{align*}
+wobei die $c_1,\dots,c_m$ die \textit{verschiedenen} Nullstellen von $R$ sind und die $v_i$ wie folgt definiert sind:
+\begin{align*}
+v_i(\theta) = \ggT(a(\theta)-c_ib'(\theta),b(\theta))
+\end{align*}
+Dies können wir auf unser letztes Beispiel anwenden:\\
+Es gilt: $a(\theta) = 2\frac{\theta}{x}-1,b(\theta)=\theta^2-x$.
+\begin{align*}
+a(\theta)-zb'(\theta) = 2\frac{\theta}{x}-1-z\left(2\frac{\theta}{x}-1\right) = \frac{2}{x}(1-z)\theta+(z-1)
+\end{align*}
+Also:
+\begin{align*}
+R(z)=\res_\theta(a(\theta)-zb'(\theta),b(\theta)) &= \begin{vmatrix} \frac{2}{x}(1-z)&(z-1)&0\\0&\frac{2}{x}(1-z)&(z-1)\\1&0&-x\end{vmatrix}\\
+&=\frac{x-4}{x}z^2+\frac{-2x+8}{x}z+\frac{x-4}{x}\\
+& =\frac{x-4}{x}\left(z^2-2z+1\right)\\
+&= \frac{x-4}{x}(z-1)^2
+\end{align*}
+Wir sehen, dass $R$ (als Funktion von $z$) nur die konstante (doppelte) Nullstelle $c_1=1$ hat. Damit ist
+\begin{align*}
+v_1 = \ggT(a(\theta)-b'(\theta),b(\theta)) = \ggT(0,\theta^2-x) = \theta^2-x
+\end{align*}
+und wir erhalten wieder:
+\begin{align*}
+\int \frac{2\frac{\theta}{x}-1}{\theta^2-x} = \log(\theta^2-x)
+\end{align*}
+Um eine Idee davon zu bekommen, wieso hier die Resultante auftaucht, betrachten wir dieses Beispiel noch einmal. Zunächst brauchten wir neue Ausdrücke ($\sqrt{x}$), um $f$ vollständig zu faktorisieren. 
+Diese konnten wir aber hinterher zusammenfassen: $\log((\theta+\sqrt{x})(\theta+\sqrt{x})) = \log(\theta^2-x)$. Das lag daran, dass die Koeffizienten $c_1,c_2$ der Logarithmen beide gleich waren. 
+Allgemein für $\int f=\int\frac{a}{b} = \sum_{i=1}^m v_i log(v_i)$ genügt es also vielleicht, wenn wir nur die \textit{verschiedenen} Werte der $c_i$ herausfinden. Dies ist wie folgt möglich: Wir erinnern uns, dass wir für den Fall, dass $a,b\in\mathbb{C}[x]$ ist, die $c_i$ einfach durch $c_i=\frac{a(x_i)}{b'(x_i)}$ berechnen konnten, wobei die $x_1,\dots,x_m$ die Nullstellen von $b$ waren. Das heißt wir suchen die verschiedenen Lösungen, der Gleichungen:
+\begin{align*}
+a(x_i)-c_ib'(x_i) = 0
+\end{align*}
+für $i=1,\dots,m$. Dies können wir auch wie folgt zusammenfassen: Die verschiedenen $c_i$ sind genau die verschiedenen Nullstellen von
+\begin{align*}
+\tilde{R}(z):=\prod_{i=1}^m (a(x_i)-zb'(x_i))
+\end{align*}
+Es stellt sich heraus, dass dies, bis auf einen Faktor, der vom Leitkoeffizienten von $(a(x)-zb'(x))$ abhängt und insbesondere nicht 0 ist, genau die Resultante $R(z):=\res_x(a(x)-zb'(x),b(x))$ ist. Man kann dann weiter zeigen, dass dies auch hier für Logarithmen anwendbar ist und auch, dass sich die zugehörigen $v_i$ einfach durch $v_i=\ggT(a(\theta)-c_ib'(\theta),b(\theta))$ berechnen lassen.
+
+\section{Exponentielle Körpererweiterungen}
+Sei nun $\theta:=\theta_n$ exponentiell über $F:=\mathbb{C}(x,\theta_1,\dots,\theta_{n-1})$, mit $u\in F$, sodass $\frac{\theta'}{\theta} = u, f(\theta)=\frac{a(\theta)}{b(\theta)}$\\
+Im Allgemeinen ist das Verfahren bei exponentiellen Körpererweiterungen recht ähnlich zu den logarithmischen, allerdings ist der polynomielle Teil, etwas komplizierter. Durch eine Polynomdivision $f = s+\frac{r}{q}$, teilen wir das Integral wieder auf:
+\begin{align*}
+\int f = \int s + \int \frac{r}{q}
+\end{align*}
+Diesmal wenden wir uns zuerst dem rationalen Teil zu.
+
+\subsection{Der Rationale Teil}
+
+Im Prinzip verwenden wir wieder die \textit{Hermite-Reduktion}, um den Nenner quadratfrei zu machen, hierbei gibt es aber ein Problem. Wir beginnen wieder mit der quadratfreien Faktorisierung des Nenners:
+\begin{align*}
+q(\theta) = \prod_{i=1}^k q_i(\theta)^i
+\end{align*}
+Die $q_i$ sind jeweils quadratfrei, d.h. $\ggT(q_i(\theta),\frac{d}{d\theta} q_i(\theta))=1$. Bei dem Fall der logarithmischen Körpererweiterung, konnten wir jetzt folgern, dass auch $\ggT(q_i(\theta),q_i(\theta)')=1$ gilt, das ist hier nicht der Fall, wie das Beispiel $q_i=\theta=\exp(x)$ zeigt: Es gilt $\ggT(\theta,\frac{d}{d\theta}\theta) = \ggT(\theta,1)=1$, aber $\ggT(\theta,\theta')=\ggT(\theta,\theta)=\theta\neq1$. Allerdings lässt sich zeigen, dass es genügt, zusätzlich $\theta\nmid q_i$ zu fordern, damit $\ggT(q_,q_i')=1$ gilt. Daher klammern wir zunächst die größtmöglich Potenz von $\theta$ in $q$ aus, d.h. $q(\theta)=\theta^l \tilde{q}(\theta)$, mit $\theta\nmid \tilde{q}$. Dann gilt insbesondere $\ggT(\theta^l,\tilde{q}(\theta))=1$.
+Daher können wir Polynome $\tilde(r),w\in F[\theta]$ mit $\deg(\tilde(r))<\deg(\tilde{q}),\deg(w)<\deg(\theta^l)=l$ finden, sodass:
+\begin{align*}
+\tilde{r}\theta^l+w\tilde{q} &= r\\
+\Rightarrow\tilde{r}\frac{\theta^l}{q}+w\frac{\tilde{q}}{q} &= \frac{r}{q} = f-s\\
+\Rightarrow f= s+\frac{w}{\theta^l}+\frac{\tilde{r}}{\tilde{q}}
+\end{align*}
+Setzen wir $\tilde{s}=s+\theta^{-l}w$, erhalten wir:
+\begin{align*}
+\int f = \int \tilde{s}+\int \frac{\tilde{r}}{\tilde{q}}
+\end{align*}
+Der polynomielle Teil $\tilde{s}$ ist nun ein erweitertes Polynom, da auch negative Potenzen von $\theta$ auftreten können. Da $\theta$ exponentiell ist, ist dies aber nicht so schlimm, denn $\exp(u)^{-1}=\exp(-u)$. Auf den rationalen Teil können wir jetzt die \textit{Hermite-Reduktion} anwenden, und daraufhin wieder die \textit{Rothstein/Trager-Methode}, wobei es hier dann wieder eine kleine Variation gibt. Haben wir nach der \textit{Hermite-Reduktion} das Integral $\int \frac{a}{b}$, wobei $b$ quadratfrei ist und einen größeren Grad als $a$ hat, übrig, bestimmen wir wieder die Resultante:
+\begin{align*}
+R(z)=\res_{\theta}(a(\theta)-zb'(\theta),b(\theta)) 
+\end{align*}
+und die verschiedenen Nullstellen $c_1,\dots,c_m$ von $R$. Wieder gilt, dass die Nullstellen Konstanten sein müssen, damit das Integral elementar ist und zudem berechnen wir die $v_i$ durch $v_i=\ggT(a(\theta)-c_ib'(\theta),b(\theta))$ wie bei den Logarithmen. Allerdings gilt jetzt:
+\begin{align*}
+\int \frac{a(\theta)}{b(\theta)} = -u\sum_{i=1}^m c_i\deg(v_i) + \sum_{i=1}^m c_i \log(v_i(\theta))
+\end{align*}
+Der Grund für das Auftauchen des $u$-Ausdruckes ist hier, dass bei der Ableitung der $\log$-Terme stets der Grad des Nenners gleich dem Grad des Zählers ist, aber $\deg(a)<\deg(b)$ ist, was durch das $u$ behoben wird.\\
+Beispiel:
+\begin{itemize}
+\item $f = \frac{2x}{1+\theta}$ mit $\theta=\exp(x^2)$. Also $a(\theta)=2x, b(\theta)=1+\theta$. Der Nenner ist bereits quadratfrei, $\theta \nmid b$, $\deg(b)>\deg(a)$, wir können also die \textit{Rothstein/Trager-Methode} anwenden:
+\begin{align*}
+R(z) &= \res_\theta(a(\theta)-zb'(\theta),b(\theta)) = \res_\theta(2x-2xz\theta, 1+\theta)\\
+&= \begin{vmatrix} -2xz&2x\\1&1\end{vmatrix}\\
+&= -2xz-2x = -2x(z+1)
+\end{align*}
+Wir sehen, dass $R$ (als Funktion von $z$) nur die konstante Nullstelle $c_1=-1$ hat. Damit ist 
+\begin{align*}
+v_1 = \ggT(a(\theta)+b'(\theta),b(\theta)) = \ggT(2x+2x\theta,1+\theta) = 1+\theta
+\end{align*}
+Also:
+\begin{align*}
+\int \frac{2x}{1+\theta} = u-\log(1+\theta) = x^2-\log(1+\theta)
+\end{align*}
+\item $f = \frac{1}{1+\theta}, \theta=\exp(x^2), a=1,b=1+\theta$. Es gilt:
+\begin{align*}
+R(z)&=\res_{\theta}(a(\theta)-zb'(\theta),b(\theta)) = \res_{\theta}(1-2xz\theta,1+\theta)\\
+&=\begin{vmatrix} -2xz&1\\1&1\end{vmatrix}\\
+&= -2xz-1
+\end{align*}
+Hier hat $R$ allerdings eine nicht konstante Nullstelle, und zwar $z=-\frac{1}{2x}$, daher ist $f$ nicht elementar integrierbar.
+\end{itemize}
+
+\subsection{Der Polynomielle Teil}
+Angenommen, $\int \tilde{s}$ wäre elementar,dann gibt es nach dem Satz von Liouville $c_1,\dots,c_m\in\mathbb{C}$ und $v_0,\dots,v_m\in F(\theta)$ mit
+\begin{align*}
+\tilde{s}(\theta)=v_0(\theta)' + \sum_{i=1}^m c_i\frac{v_i(\theta)'}{v_i(\theta)}
+\end{align*}
+Da $\tilde{s}$ ein erweitertes Polynom ist, können wir es wie folgt schreiben:
+\begin{align*}
+\tilde{s} = \sum_{j=-k}^l p_j\theta^j
+\end{align*}
+Wobei die $p_j$ Funktionen aus $F$ sind.
+Bei dem Logarithmischen Fall konnten wir folgern, dass die $v_1,\dots,v_m$ nicht von $\theta$ abhängen konnten. Dies ist hier nicht der Fall. Allerdings kann man zeigen, dass, wenn $v_i$ von $\theta$ abhängt, $v_i=\theta$ gelten muss\footnote{Um das zu zeigen, benötigt man allerdings noch weitere Annahmen, und zwar, dass die $v_i$ monisch und irreduzibel (über $F[\theta]$) sind. Diese können wir aber o.B.d.A. annehmen, denn wäre z.B. $v_i=a b$ mit $a,b\in F[\theta]$, so gilt: $\log(v_i)=\log(ab)=\log(a)+\log(b)$ bzw. $\frac{v_i'}{v_i} = \frac{a'}{a}+\frac{b'}{b}$, wir können also dann $v_i$ in seine irreduziblen Faktoren aufteilen und in der Summe dadurch ersetzen}. Dann gilt für $v_i(\theta)=\theta$: $\frac{v_i'}{v_i}=u'$, was wir dann einfach in den $v_0$-Term hereinziehen können. Zudem können wir folgern, dass $v_0$ im Nenner nur einen Term der Form $\theta^n$ haben kann. Eine wichtige Eigenschaft bei exponentiellen $\theta$ ist, dass die Potenz beim Ableiten gleich bleibt, d.h. $\left(f\theta^n\right)'=f'\theta^n+nf\theta'\theta^{n-1}=(f'+nfu')\theta^n$. Zusammenfassend gilt daher:
+\begin{align*}
+\tilde{s}(\theta) = \left(\sum_{j=-k}^l q_j \theta^j\right)' + \sum_{i=1}^m c_i \frac{v_i'}{v_i} 
+\end{align*}
+Wobei $q_j,v_i\in F, c_i \in \mathbb{C}$. Wir können nun einen Koeffizientenvergleich durchführen, um die $q_j,c_i,v_i$ herauszufinden: Für $-k\leq j\leq -1$ und $1\leq j\leq l$ gilt:
+\begin{align*}
+p_j = q_j' + ju'q_j
+\end{align*}
+Und für $j=0$:
+\begin{align*}
+p_0 = q_0' + \sum_{i=1}^m c_i \frac{v_i'}{v_i} 
+\end{align*}
+Wegen $p_0\in F$ können wir diese Gleichung durch Rekursion lösen, indem wir integrieren:
+\begin{align*}
+\int p_0 = q_0+\sum_{i=1}^m c_i\log(v_i)
+\end{align*}
+Die anderen Gleichungen beinhalten alle sowohl ein $q_j$ als auch ein $q_j'$, wir haben also eine Differentialgleichung, die sogenannte \textit{Risch-Differentialgleichung} die wir in $F$ lösen müssen. Ich habe diese nur für den Spezialfall, dass die Koeffizienten in der Gleichung Polynome über $\mathbb{C}$ sind, umgesetzt, also falls $q_j'+aq_j=b$, wobei $a,b\in\mathbb{C}[x]$. Diese kann man dann einfach lösen, indem man als Ansatz für $q_j$ ein Polynom wählt und mit dem Leitkoeffizienten beginnend über Koeffizientenvergleiche alle Koeffizienten bestimmt. Ist eine der Differentialgleichung nicht über $F$ lösbar bzw. ist eines der $q_j$ nicht elementar, so ist $\int \tilde{s}$ auch nicht elementar.\\
+Beispiele:
+\begin{itemize}
+\item $F=\mathbb{C}(x)$, $f = \theta := \exp(x^2),u=x^2, p_1 = 1,p_0=0$. Falls $f$ elementar integrierbar wäre, gelte dann
+\begin{align*}
+\int \theta = q_1\theta + q_0 + \sum_{i=1}^m c_i\log(v_i)
+\end{align*}
+Und wir erhalten die Gleichungen:
+\begin{align*}
+1 &= q_1'+2xq_1\\
+0 &= q_0' + \sum_{i=1}^m c_i \frac{v_i'}{v_i} 
+\end{align*}
+Wir müssen also überprüfen, ob $1 =y'+2xy$ eine Lösung $y\in\mathbb{C}(x)$ hat. Angenommen, es gäbe eine Lösung $y=\frac{a}{b}$ mit $a,b\in\mathbb{C}[x],\ggT(a,b)=1$. Dann gilt:
+\begin{align*}
+1=\frac{a'b-ab'}{b^2}+2x\frac{a}{b} = \frac{a'b-ab'+2bxa}{b^2}
+\end{align*}
+Also: $b^2 = a'b-ab'+2bxa$. Da $b$ die linke Seite teilt, muss $b$ auch die rechte Seite teilen. Da $b\mid a'b,2bxa$, muss auch $b\mid ab'$ und wegen $\ggT(a,b)=1$ folgt $b\mid b'$. Da aber $\deg(b')<\deg(b)$ ist, kann das nur der Fall sein, wenn $b'=0$. Dann ist $y\in\mathbb{C}[x]$ ein Polynom vom Grad $n:=\deg(y)>0$, denn eine Konstante kann diese Differentialgleichung nicht lösen. Dann ist der Ausdruck $y'+2xy$ aber ein Polynom vom Grad $n+1>0=\deg(1)$, $y$ kann also doch keine Lösung dieser Risch-Differentialgleichung sein. Folglich ist diese nicht lösbar und somit ist auch die Verteilungsfunktion der Standardnormalverteilung, die man durch eine kleine Substitution und Multiplikation mit einer Konstanten aus $f$ erhält:
+\begin{align*}
+\Phi(t) = \frac{1}{\sqrt{2\pi}} \int_{-\infty}^t \exp\left(-\frac{1}{2}x^2\right) dx
+\end{align*}
+nicht elementar.
+\item Betrachten wir hingegen $f=x\theta$ mit $\theta=\exp(x^2)$ erhalten wir die Gleichungen:
+\begin{align*}
+x &= q_1'+2xq_1\\
+0 &= q_0' + \sum_{i=1}^m c_i \frac{v_i'}{v_i} 
+\end{align*}
+Die erste Gleichung wird nun durch $q_1=\frac{1}{2}$ gelöst, die Lösung der zweiten Gleichung ist eine beliebige Konstante $C$, also:
+\begin{align*}
+\int x\exp(x^2) = \frac{1}{2}\exp(x^2)+C
+\end{align*}
+\end{itemize}
+\chapter{Implementierung}
+Bevor ich den Risch-Algorithmus implementieren kann, brauche ich eine Umgebung, in der ich folgende Dinge zur Verfügung habe:
+\begin{itemize}
+\item Datenstruktur für Polynome, nicht nur über $\mathbb{C}$, sondern auch über $\mathbb{C}(x,\theta_1,\dots,\theta_n)$, Rationale Funktionen
+\item Datenstruktur für \glqq Körpertürme\grqq, d.h. $\mathbb{C}(x,\theta_1,...\theta_n)$
+\item Verschiedene Polynommanipulationsmethoden:
+\begin{itemize}
+\item Addition, Multiplikation
+\item Polynomdivision
+\item ggT-Berechnung, lösen von Gleichungen der Art $a(x)p(x)+q(x)=r(x)$, wobei $a,b\in K[x]$ gesucht sind
+\item Quadratfreie Faktorisierung
+\item Partialbruchzerlegung
+\item Ableiten
+\item Resultanten (also im Wesentlichen Determinantenberechnung)
+\end{itemize}
+\end{itemize}
+Ein Polynom $p(t) = p_nt^n+p_{n-1}t^{n-1}+\cdots +p_0$ wird über die Klasse \textit{Polynomial} aus $Polynomial.py$ abgespeichert. Die wichtigen Attribute und Methoden dieser Klasse seien im Folgenden erklärt:
+
+\begin{itemize}
+\item Attribute:
+\begin{itemize}
+\item \textit{coefficients}: Hier werden die $p_0,\dots,p_n$ in Form einer Liste der Länge $n+1$ abgespeichert. Der Einfachheit halber verwende ich die \textit{dense representation}, d.h. alle Koeffizienten, auch die, die 0 sind, werden abgespeichert. %Es gibt z.B. auch die \textit{sparse representation}, bei der die Koeffizienten in Form von Tupeln $(i,p_i)$ abgespeichert werden und solche Koeffizienten, die 0 sind werden nicht mit 
+\item \textit{variable}: Das ist die Variable in der das Polynom steht, z.B. $x,\theta_1,\dots,\theta_n,z,\dots$. Nähere Informationen zu dieser, z.B. die zu einem $\theta_i$ gehörenden Körpererweiterung, sind in der \textit{Variable}-Klasse in $FieldExtension.py$.
+\end{itemize}
+\item Methoden:
+\begin{itemize}
+\item \textit{factorSquareFree}: führt eine quadratfreie Faktorisierung von $p$ durch, sodass:
+\begin{align*}
+p(t) = \prod_{i=1}^m a_i^i
+\end{align*}
+wobei die $a_i$ quadratfrei paarweise teilerfremd sind. Die Methode gibt dann die $a_i$ in Form einer Liste $[(a_1,1),(a_2,2),\dots,(a_m,m)]$ zurück
+\item \textit{differentiate}: Leitet das Polynom nach $x$ ab, z.B. $\textit{differentiate}(\theta+x)=(\theta+x)'=\theta+1$ mit $\theta=\exp(x)$
+\item \textit{differentiateWRTtoPolyVar}: Leitet das Polynom nach seiner Variable ab, z.B. $\textit{differentiateWRTtoPolyVar}(\theta^2+x)=\frac{d}{d\theta}(\theta^2+x)=2\theta$ mit $\theta=\exp(x)$
+\item \textit{\_\_add\_\_,\_\_mul\_\_}: Methoden für das Addieren bzw. Multiplizieren zweier Polynome.
+\end{itemize}
+\end{itemize}
+Dann gibt es bzgl. der Polynome noch einige Funktionen, die nicht in der Klasse enthalten sind:
+\begin{itemize}
+\item \textit{PolyDiv}: Führt eine Polynomdivision zu zwei gegebenen Polynomen aus.
+\item \textit{PolyGCD}: Berechnet mithilfe des euklidischen Algorithmus den ggT zweier Polynome.
+\item \textit{extendedEuclidGenF}: Input: Polynome $p,q,f$ mit $\ggT(p,q)\mid f$. Diese Funktion findet dann Polynome $x,y$ mit $xp+yq=f$, sodass zusätzlich eine Grad-Bedingungen erfüllt sind, z.B. $\deg(x)<\deg(q)-\deg(\ggT(p,q))$
+\item \textit{PartialFractionWithPowerFactorization}: Führt eine Partialbruchzerlegung von $\frac{a}{b}$ durch, für $b$ die quadratfreie Faktorisierung übergeben wird: $b=\prod_{i=1}^m b_i^i$. Die Funktion berechnet dann $r_{11},r_{21},r_{22},\dots,r_{mm}$ mit:
+\begin{align*}
+\frac{a}{b} = \sum_{i=1}^m \sum_{j=1}^i \frac{r_{ij}}{b_i}
+\end{align*}
+wobei zusätzlich gilt $\deg(r_ij)<\deg(b_i)$. Es wird dann die Liste $[(r_{11},b_1,1),(r_{21},b_2,1),(r_{22},b_2,2),\dots,(r_{mm},b_m,m)]$ zurückgegeben.
+\end{itemize}
+Zusätzlich gibt es noch die Klasse \textit{RationalFunction}, welche allerdings nicht besonders spannend ist. Im Wesentlich hat sie die zwei Attribute \textit{numerator} und \textit{denominator}, also Zähler- und Nennerpolynome und einige Methoden wie die \textit{Polynomial}-Klasse.\\
+Eine weitere wichtige Klasse ist \textit{FieldExtension}. Hier werden die Informationen über ein $\theta$ zur Körpererweiterung $F(\theta)$ gespeichert. Hier wieder einige Attribute:
+\begin{itemize}
+\item \textit{extensionType}: Die Art der Körpererweiterung. Kann die Werte $0,1,2,3$ annehmen, die für \textit{TRANS\_LOG, TRANS\_EXP, ALGEBRAIC, TRANSCENDENTAL\_SYMBOL} stehen. Der letzte Typ ist dafür da, falls zwischendurch neue Variablen benötigt werden, die aber nicht z.B. für eine Exponentialfunktion stehen. Dies wird beispielweise benötigt, wenn die Resultante $\res_{\theta}(a(\theta)-zb'(\theta),b(\theta))\in F[z]$ berechnet wird.
+\item \textit{argFunction}: Falls es sich um ein logarithmisches oder exponentielles $\theta$ handelt, wird zu diesem ein $u$ benötigt mit $\log(u)=\theta$ bzw. $\exp(u)=\theta$, dies wird hier abgespeichert.
+\end{itemize}
+Dazu gibt es noch die Klasse \textit{FieldTower}, in der eine Folge von solchen $\theta_1,\dots,\theta_n$ abgespeichert werden.
+%Das sind eigentlich schon die wesentlichen Bausteine, allerdings werden an verschiedenen Stellen 
+
+\begin{thebibliography}{99}
+\bibitem{geddes} \textsc{Geddes, Keith O. / Czapor, Stephen R. / Labahn, George}: \textit{Algorithms for Computer Algebra}. Kluwer Academic Publishers, 1993, S.473-569
+\end{thebibliography}
+
+\end{document}

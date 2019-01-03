@@ -187,6 +187,8 @@ class Rational(AlgebraicNumber):
             return self.__mul__(Rational.fromFloat(other))
         if type(other)!=Rational:
             return other.__mul__(self)
+        if self==0 or other==0:
+            return ZERO
         return Rational(self._p*other._p,self._q*other._q)
     def __rtruediv__(self, other):# other/self
         return other*self.Inverse()
@@ -208,7 +210,7 @@ class Rational(AlgebraicNumber):
         if other==0:
             return Rational(1,1)
         if self==0:
-            return 0
+            return ZERO
         if other>0:
             return self*(self**(other-1))
         else:

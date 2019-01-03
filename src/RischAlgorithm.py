@@ -99,6 +99,8 @@ def IntegratePolynomialPartLogExt(poly, fieldTower):
         # integral(p_i-(i+1)*d_(i+1)*T') = l*b_(i+1)*T' + q_i
         #i = Rational.fromFloat(i)
         integrand = p[i]+(-ONE)*(i+1)*d[i+1]*log_diff_u
+        if type(integrand)==float or type(integrand)==int:
+            integrand = Rational.fromFloat(integrand)
         int_reduced = integrand.reduceToLowestPossibleFieldTower()
         if int_reduced!=None:
             integrand = int_reduced
@@ -144,7 +146,8 @@ def IntegratePolynomialPartLogExt(poly, fieldTower):
 def IntegratePolynomialPartLogExtCheckIntegralConditions(integral,fieldTower):
     if integral==None: # integral of pl is elementary
         raise Int.IntegralNotElementaryError()
-    logs = integral.getNewLogExpressionsInFieldTower(fieldTower.prevTower(),fieldTower)
+    #logs = integral.getNewLogExpressionsInFieldTower(fieldTower.prevTower(),fieldTower)
+    logs = integral.getNewLogExpressionsInFieldTower(fieldTower,fieldTower)
     if len(logs)>=1: # at most one log extension of C(x,T_1,...,T_(N-1))
         for ls in [logs, integral.logExpressions]:
             lcombo = FTS.getLinearLogCombination(ls, fieldTower.getLastExtension())
@@ -212,7 +215,7 @@ def IntegrateRationalPartLogExt(func, fieldTower): # Hermite Reduction
         bp = b.differentiate()
         
         zvar = FE.Variable('z')
-        zExtension = FE.FieldExtension(FE.TRANSCENDENTAL_SYMBOL,1,zvar)
+        zExtension = FE.FieldExtension(FE.TRANSCENDENTAL_SYMBOL,None,zvar)
         newFieldTower = fieldTower.getStrippedTower(fieldTower.towerHeight-1).addFieldExtension(zExtension)
         
         

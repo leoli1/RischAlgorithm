@@ -61,6 +61,8 @@ def logIsTranscendental(u, fieldTower):
     
     vs = [u.differentiate().reduceToLowestPossibleFieldTower()*reduce(lambda x,y:x*y, [logs[j] for j in range(N)])]+  [logs[i].differentiate().reduceToLowestPossibleFieldTower()*u*reduce(lambda x,y:x*y, [1]+[logs[j] for j in range(N) if j!=i]) for i in range(N)]
     
+    
+    # make everything polynomialic
     p = ONE
     for v in vs:
         if type(v)==Rat.RationalFunction:
@@ -86,7 +88,7 @@ def logIsTranscendental(u, fieldTower):
                 multiIndices.append(term.multiIndex)
                 k_coeffs.append([0]*i + [term.coefficient]+[0]*(N-i))
     
-    #M = Matrix.QuadMatrix(N+1)
+
     M = Matrix.Matrix(data=k_coeffs)
                 
     s = Matrix.solveLinearSystem(M, [0]*(len(k_coeffs)))
@@ -100,7 +102,7 @@ def logIsTranscendental(u, fieldTower):
             return (False, s[0])
         else:
             f = s[2]
-            for i in product(range(1,4),repeat=s[3]):
+            for i in product(range(1,4),repeat=s[3]): # todooo
                 if f(i)[0]!=0:
                     return (False,f(i))
             return True
