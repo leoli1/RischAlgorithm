@@ -7,6 +7,7 @@ from Utils import isNumber,objEqualsNumber
 import FieldExtension as FE
 import Polynomial as Pol
 import FieldTowerStructure as FTS
+import Number
 
 class Integral(object):
 
@@ -98,6 +99,12 @@ class Integral(object):
             raise NotImplementedError()
         
         return func
+    def asFunctionWithRootSums(self):
+        rs = self.rootSums
+        self.rootSums=[]
+        f = self.asFunction()
+        self.rootSums=rs
+        return [f]+rs
     
     def __add__(self, other):
         newLogs = self.logExpressions + other.logExpressions
@@ -151,7 +158,9 @@ class LogFunction(object):
             return ""
         if isNumber(self.factor):
             if not objEqualsNumber(self.factor, 1):
-                if self.factor>=0:
+                if type(self.factor)==Number.SqrRootPolynomial and self.factor.b!=0:
+                    factor = "({})*".format(self.factor)
+                elif self.factor>=0:
                     factor = str(self.factor)+"*"
                 else:
                     factor = "({})*".format(self.factor)

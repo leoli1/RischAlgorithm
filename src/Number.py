@@ -159,6 +159,11 @@ class Rational(AlgebraicNumber):
         return ZERO
     def reduceToLowestPossibleFieldTower(self):
         return self
+    def isConstant(self):
+        return True
+    def isZero(self):
+        return self==0
+    
     def __radd__(self, other):
         return self.__add__(other)
     def __add__(self, other):

@@ -32,7 +32,7 @@
 
 \usepackage{geometry}
 \geometry{
-  left=2.5cm,
+  left=3.5cm,
   right=3.5cm,
   top=2cm,
   bottom=2cm,
@@ -56,7 +56,7 @@
 \theoremstyle{plain}
 \newtheorem*{theorem}{Satz}
 \newtheorem*{definition}{Definition}
-\newtheorem{lemma}{Lemma}
+\newtheorem*{lemma}{Lemma}
 
 
 %\begin{luacode*}
@@ -103,10 +103,42 @@ Leonard Tomczak\\
 \pagestyle{scrheadings} 
 \chead[\pagemark]{ \pagemark} 
 \chapter{Einleitung}
+Seit Newton und Leibniz die Grundsteine für die Differential- und Integralrechnung legten, spielt der Begriff der Stammfunktion ein wichtige Rolle in der Analysis. Mithilfe dieser lassen sich Integrale, also z.B. Flächen unter komplizierten Kurven, einfach berechnen. Eine wichtige Frage dabei ist, ob es stets eine Stammfunktion gibt. Diese Frage wird durch den Fundamentalsatz der Analysis, zumindest für stetige Funktionen, mit Ja beantwortet. Häufig reicht es einem allerdings nicht, nur zu wissen, dass es eine Stammfunktion gibt, man will lieber einen expliziten bzw. elementaren Ausdruck für eine Stammfunktion haben, etwa $F(x)=\frac{x^3}{3}$ als Stammfunktion von $f(x)=x^2$ anstelle von $F(x)=\int_{0}^x t^2 dt$. Mit dem Begriff \textit{elementarer Ausdruck}  bzw. \textit{elementare Funktion} ist gemeint, dass, dass sich ein Funktion grob gesagt nur aus
+\begin{itemize}
+\item der Variablen $x$
+\item Konstanten
+\item den Grundrechenarten Addition, Subtraktion, Multiplikation, Division
+\item Wurzelfunktionen
+\item Exponential- und Logarithmusfunktion
+\item Trigonometrische Funktionen und ihre Umkerfunktionen
+\end{itemize}
+zusammensetzt.\\
+Dabei stellen sich sofort folgende Fragen:
+\begin{itemize}
+\item Gibt es zu einer elementaren Funktion auch immer eine elementare Stammfunktion?
+\item Gibt es ein allgemeines Verfahren/einen Algorithmus zur Bestimmung einer elementaren Stammfunktion, falls es eine gibt?
+\end{itemize}
+Es stellt sich heraus, dass die Antwort auf die erste Frage Nein ist. Klassische Gegenbeispiele sind:
+\begin{align*}
+\int e^{(x^2)} dx\hspace{1.5cm} \int \frac{dx}{\log(x)}
+\end{align*}
+oder elliptische Integrale wie:
+\begin{align*}
+\int \frac{dx}{\sqrt{1-3\sin^2(x)}}
+\end{align*}
+Die Antwort auf die zweite Frage ist tatsächlich Ja, es gibt einen solchen Algorithmus, den \textit{Risch-Algorithmus}. Er überprüft, ob eine gegebene Funktion elementar integrierbar ist und gibt ggf. eine Stammfunktion aus. In dieser Arbeit werde ich in den Kapiteln 3 und 4 einige Grundlagen hinter der zugrundeliegenden Theorie, der differentiellen Algebra (ja, das Problem wird aus der Analysis in die Algebra geholt), erklären sowie im Kapitel 5 den Risch-Algorithmus, zumindest in Teilen, vorstellen. Ich habe mich hier in der Vorstellung der Theorie stark an \cite{geddes} orientiert, dabei aber viele Details ausgelassen, die dort nachzulesen sind.%Weiter habe ich den Risch-Algorithmus in Teilen auch in \textit{Python} implementiert, 
 \newpage
+
+\newgeometry{
+  left=2.5cm,
+  right=3.5cm,
+  top=2cm,
+  bottom=2cm,
+}
+
 \chapter{Einige algebraische Begriffe}
 todo: polynome, körpererweiterungen, transzendent/algebraisch, quadratfrei (faktorisieren), partialbruchzerlegung
-\chapter{Grundlegende Begriffe der differentiellen Algebra}
+\chapter{Grundlagen der differentiellen Algebra}
 Im Folgenden sei $F$ stets ein Körper.\\
 Zunächst benötigen wir eine rein algebraische Definition der Ableitung.
 \begin{definition}
@@ -117,7 +149,7 @@ Eine Abbildung $D:F\to F$ heißt \textup{Ableitung} auf $F$, falls für alle $x,y\
 \end{enumerate}
 \end{definition}
 Wir erkennen, dass es sich bei diesen Bedingungen lediglich um die Summen- und Produktregel handelt.\\
-Betrachten wir zum Beispiel $F=\mathbb{C}(x)$, also der Körper der rationalen Funktionen mit komplexen Koeffizienten\footnote{Streng genommen handelt es sich hierbei nicht um Funktionen, sondern um rein formale Ausdrücke der Form $\frac{a_nX^n+\cdots+a_1X+a_0}{b_mX^m+\cdots+b_1X+b_0}$, für den Grundkörper $\mathbb{C}$ ist diese Unterscheidung in dieser Anwendung nicht allzu wichtig. Würden wir über endlichen Körpern arbeiten, ist dies anders, z.B. sind die Polynome $X$ und $X^2$ aus $\mathbb{Z}_2[X]$ verschieden, ihre zugehörigen Abbildungen sind aber identisch.}, so ist der aus der Analysis bekannte Ableitungsoperator $\frac{d}{dx}$ offensichtlich eine Ableitung auf $F$, die Bezeichnung \textit{Ableitung} ist also gerechtfertigt.\\
+Betrachten wir zum Beispiel $F=\mathbb{C}(x)$, also den Körper der rationalen Funktionen mit komplexen Koeffizienten\footnote{Streng genommen handelt es sich hierbei nicht um Funktionen, sondern um rein formale Ausdrücke der Form $\frac{a_nX^n+\cdots+a_1X+a_0}{b_mX^m+\cdots+b_1X+b_0}$, für den Grundkörper $\mathbb{C}$ ist diese Unterscheidung in dieser Anwendung nicht allzu wichtig. Würden wir über endlichen Körpern arbeiten, ist dies anders, z.B. sind die Polynome $X$ und $X^2$ aus $\mathbb{Z}_2[X]$ verschieden, ihre zugehörigen Abbildungen sind aber identisch.}, so ist der aus der Analysis bekannte Ableitungsoperator $\frac{d}{dx}$ offensichtlich eine Ableitung auf $F$, die Bezeichnung \textit{Ableitung} ist also gerechtfertigt.\\
 Ein Körper $F$ zusammen mit einer Ableitung $D$ auf diesem wird \textit{Differentieller Körper} genannt.\\
 Aus der Definition können wir weitere uns bekannte Regeln herleiten:
 \begin{lemma}
@@ -211,10 +243,11 @@ Beispiele:
 \item $f=\exp(x)^2$. Sei $\theta_1 = \exp(x)$. Dann ist $f=\theta_1^2\in\mathbb{C}(x,\theta_1)$. Allerdings gilt auch: $f=\exp(x)^2=\exp(2x)=:\theta_2\in\mathbb{C}(x,\theta_2)$.
 \end{itemize}
 Das letzte Beispiel zeigt, dass ein zu einer elementaren Funktion gehörender differentieller Körper nicht eindeutig ist.\\
-Nach dieser Definition sind allerdings auch einige Funktionen elementar, die man intuitiv vielleicht eher nicht als elementar bezeichnen würde. Betrachte z.B. die Polynomgleichung $z^5-z+x=0$ über $\mathbb{C}(x)[z]$. Die Lösungsfunktionen sind nach Definition elementar, sie lassen sich aber nicht wie die Lösungen von $z^5-x=0$ geschlossen mithilfe von Wurzelausdrücken hinschreiben (Siehe \textit{Satz von Abel-Ruffini}).\\
+Nach dieser Definition sind allerdings auch einige Funktionen elementar, die man intuitiv vielleicht eher nicht als elementar bezeichnen würde. Betrachte z.B. die Polynomgleichung $z^5-3z+x=0$ über $\mathbb{C}(x)[z]$. Die Lösungsfunktionen sind nach Definition elementar, sie lassen sich aber nicht wie die Lösungen von $z^5-x=0$ geschlossen mithilfe von Wurzelausdrücken hinschreiben (Siehe \textit{Satz von Abel-Ruffini}).\\
 \begin{definition}
-Eine Funktion $f\in F$ heißt \textup{elementar integrierbar}, falls eine elementare Körpererweiterung $G$ von $F$ und ein $g\in G$ existiert mit $g'=f$. $g$ ist dann eine \textup{Stammfunktion} von $f$.% Wir schreiben dann 
+Eine Funktion $f\in F$ heißt \textup{elementar integrierbar}, falls eine elementare Körpererweiterung $G$ von $F$ und ein $g\in G$ existiert mit $g'=f$. $g$ ist dann eine \textup{Stammfunktion} von $f$. Wir schreiben dann $\int f = g$.
 \end{definition}
+Mit dem Gleichheitszeichen in $\int f = g$ muss man etwas aufpassen, da ein solches $g$ nicht unbedingt eindeutig ist, z.B. ist $\int x = \frac{x^2}{2}$ und $\int x = \frac{x^2}{2}+1$, aber $\frac{x^2}{2}\ne\frac{x^2}{2}+1$. (Vergleichbar mit der Landau $\mathcal{O}$-Notation: $x=\mathcal{O}(x), \frac{x}{2} = \mathcal{O}(x)$, aber $x\ne\frac{x}{2}$.)
 \chapter{Der Satz von Liouville}
 Ein wichtiges Resultat der differentiellen Algebra ist der folgende Satz, der grob formuliert besagt, dass, falls eine Funktion elementar integrierbar ist, in einer Stammfunktion bis vielleicht auf Logarithmen keine neuen Ausdrücke auftauchen, die nicht in der gegebenen Funktion enthalten ist.
 \begin{theorem}
@@ -225,19 +258,43 @@ Sei $f\in F$ mit Konstantenkörper $K$. Falls $f$ elementar integrierbar ist mit 
 g = v_0 + \sum_{i=1}^{m}c_i \log(v_i)
 \end{align*}
 \end{theorem}
-Beweisskizze:\\
+
+Beweisidee:\\
 Sei $f\in F$ elementar integrierbar und $g\in G$ eine Stammfunktion, wobei $G$ eine elementare Körpererweiterung von $F$ ist:
 \begin{align*}
 G=F(\theta_1,\dots,\theta_n)
 \end{align*}
-Dabei können wir annehmen, dass es sich um \glqq echte\grqq  Körpererweiterungen handelt, also für $i=1,\dots,n$ gilt: $\theta_i\notin F(\theta_1,\dots,\theta_{i-1})$\\
-Der Beweis erfolgt dann mit Induktion über die Anzahl an benötigten Erweiterungen $n$.\\
-Der Induktionsanfang $n=0$ ist klar, denn dann ist $G=F$ und daher bereits $g\in F$.\\
-Die Idee für den Induktionsschritt ist folgende:\\
-Angenommen $g$ würde von $\theta_n$ abhängen. Dann kann man zeigen, dass, sofern $\theta_n$ nicht logarithmisch ist, $\theta_n$ auch in der Ableitung $v_0'+\sum_{i=1}^m c_i\frac{v_i'}{v_i} = g'=f$ auftauchen muss. Wegen $f\in F$ und $\theta_n \notin F$ kann dies nicht sein. Da dies nicht für Logarithmen gilt, können aber trotzdem logarithmische Ausdrücke auftauchen.
+Dabei können wir annehmen, dass, wenn ein $\theta_i$ exponentiell oder logarithmisch ist, es transzendent über $F(\theta_1,\dots,\theta_{i-1})$ ist. Ich stelle hier nur den Fall vor, dass $n=1$ und $\theta:=\theta_1$ logarithmisch über $F$ ist, wobei $\theta'=\frac{u'}{u}$. Der exponentielle Fall ist ähnlich.\\
+Zum Beweis benötigt man folgenden Hilfssatz über die Ableitung eines Polynom in $F[\theta]$:\\
+Sei $p\in F[\theta]$, wobei $\theta$ logarithmisch und transzendent über $F$ ist, und $m=\deg(p)>0$. Falls der Leitkoeffizient von $p$ eine Konstante ist, gilt $\deg(p')=m-1$, andernfalls $\deg(p')=m$. Dies lässt sich leicht durch Nachrechnen bestätigen.\\\\ Da $g\in G=F(\theta)$, können wir $g(\theta)=\frac{a(\theta)}{b(\theta)}$ schreiben, wobei $a,b\in F[\theta], \ggT(a,b)=1$ und $b$ monisch ist. Dann gilt:
+\begin{align*}
+\int f &= \frac{a}{b}\\
+\Rightarrow f &= \frac{a'b-ab'}{b^2}\\
+\Rightarrow b^2f &= a'b-ab'
+\end{align*}
+$b$ teilt die linke Seite und muss daher auch die rechte Seite teilen. Da $b$ auch $a'b$ teilt, muss insbesondere $b\mid ab'$ gelten. Da aber $\ggT(a,b)=1$ ist, folgt: $b\mid b'$. Angenommen $m:=\deg(b)>0$. %Dann ist $b(\theta) = \theta^m+q_{m-1}\theta^{m-1}+\cdots+q_1\theta+q_0$ und es gilt:
+%\begin{align*}
+%b'(\theta) &= \theta'\theta^{m-1}+q_{m-1}'\theta^{m-1}+q_{m-1}(m-1)\theta^{m-2}+\cdots + q_1'\theta+q_1\theta'+q_0'\\
+%&= \frac{u'}{u}\theta^{m-1}+\tilde{q}_{m-1}\theta^{m-1}+\cdots+\tilde{q_1}\theta+\tilde{q_0}
+%\end{align*}
+Nach dem Hilfssatz folgt dann $\deg(b')=m-1<\deg(b)$. Dann kann aber $b$ kein Teiler von $b'$ sein. Es gilt also $\deg(b)=0$. Da $b$ monisch ist, folgt $g(\theta)=a(\theta)\in F[\theta]$. Dann gilt aber auch:
+\begin{align*}
+f = a'(\theta)
+\end{align*}
+Die linke Seite hängt aber nicht von $\theta$ ab! Wir können daher $f$ als Polynom in $F[\theta]$ mit Grad 0 auffassen. Nach dem Hilfssatz folgt dann, dass $a$ entweder auch Grad 0 oder vom Grad 1 mit konstantem Leitkoeffizienten ist. In jedem Fall ist $a(\theta)$ von der Form:
+\begin{align*}
+a(\theta) = v_0+c\theta = v_0 +c \log(u)
+\end{align*}
+mit $v_0\in F, c\in K$.
+Dies ist genau die Form von $\int f = a(\theta)$, die wir für den Satz beweisen wollten! Der allgemeine Fall für $n\geq1$ wird dann mit Induktion über die Anzahl an benötigten Erweiterungen $n$ erledigt, wobei der Induktionsschritt für den logarithmischen/exponentiellen Fall ähnlich zu diesem Beispiel $n=1$ ist. Der algebraische Fall ist noch einmal etwas anders, werden wir hier aber nicht behandeln, er kann z.B. in \cite{terelius} nachgelesen werden.
+ %Dabei können wir annehmen, dass es sich um \glqq echte\grqq  Körpererweiterungen handelt, also für $i=1,\dots,n$ gilt: $%\theta_i\notin F(\theta_1,\dots,\theta_{i-1})$\\
+%Der Beweis erfolgt dann mit Induktion über die Anzahl an benötigten Erweiterungen $n$.\\
+%Der Induktionsanfang $n=0$ ist klar, denn dann ist $G=F$ und daher bereits $g\in F$.\\
+%Die Idee für den Induktionsschritt ist folgende:\\
+%Angenommen $g$ würde von $\theta_n$ abhängen. Dann kann man zeigen, dass, sofern $\theta_n$ nicht logarithmisch ist, $\theta_n$ auch in der Ableitung $v_0'+\sum_{i=1}^m c_i\frac{v_i'}{v_i} = g'=f$ auftauchen muss. Wegen $f\in F$ und $\theta_n \notin F$ kann dies nicht sein. Da dies nicht für Logarithmen gilt, können aber trotzdem logarithmische Ausdrücke auftauchen.
 \chapter{Der Risch-Algorithmus für transzendente Körpererweiterungen}
 Sei eine elementare Funktion $f$ gegeben.\\
- Der erste Schritt besteht darin, geeignete $\theta_1,\dots,\theta_n$ zu finden, sodass $f\in\mathbb{C}(x,\theta_1,\dots,\theta_n)$. Ich beschränke mich hier und in der Implementierung auf rein transzendente Körpererweiterungen, d.h. z.B. Wurzelfunktionen lassen sich hiermit nicht integrieren.\\
+ Der erste Schritt besteht darin, geeignete $\theta_1,\dots,\theta_n$ zu finden, sodass $f\in\mathbb{C}(x,\theta_1,\dots,\theta_n)$. Diesen Schritt werde ich hier überspringen und bei meinem Programm dem Benutzer überlassen. Vielleicht werde ich später eine automatische Funktion hierfür entwickeln, die dann auf \textit{Github} zu finden ist. Außerdem beschränke ich mich hier und in der Implementierung auf rein transzendente Körpererweiterungen, d.h. z.B. Wurzelfunktionen lassen sich hiermit nicht integrieren.\\
 Der allgemeine Aufbau des Algorithmus ist rekursiv, d.h. man reduziert das Problem auf $\mathbb{C}(x,\theta_1,\dots,\theta_{n-1})$, $\mathbb{C}(x,\theta_1,\dots,\theta_{n-2})$, $\dots$ und schließlich auf $\mathbb{C}(x)$, also auf rationale Funktionen.%, was ich hier als vorausgesetzt betrachte.
 Die letzte Körpererweiterung mit $\theta_n$ ist entweder exponentiell oder logarithmisch, das Verfahren bei den beiden Fällen ist ähnlich. Wir betrachten zunächst den logarithmischen Fall.
 
@@ -338,7 +395,7 @@ bzw.
 \int x\log(x)^2-\log(x) = \frac{x^2}{2}\log(x)^2+\left(-x-\frac{x^2}{2}\right)\log(x) + x+\frac{x^2}{4}+b_0.
 \end{align*}
 Eine Probe bestätigt, dass es sich hierbei tatsächlich um eine Stammfunktion handelt!
-\item $\theta=\log(x),p(\theta) = \frac{\theta}{x+1}, l=1,p_1=\frac{1}{x+1},p_0=0$. Angenommen, $p$ wäre elementare integrierbar, dann ist $\int p(\theta) = b_2\theta^2+q_1\theta+q_0+\sum_{i=1}^{m}c_i \log(v_i)$ und wir erhalten:
+\item $\theta=\log(x),p(\theta) = \frac{\theta}{x+1}, l=1,p_1=\frac{1}{x+1},p_0=0$. Angenommen, $p$ wäre elementar integrierbar, dann ist $\int p(\theta) = b_2\theta^2+q_1\theta+q_0+\sum_{i=1}^{m}c_i \log(v_i)$ und wir erhalten:
 \begin{align*}
 0&=b_2'\\
 \frac{1}{x+1} &= 2b_2\theta'+q_1'\\
@@ -403,7 +460,7 @@ Wir haben nun die Potenz von $q_i$ im Nenner um eins verringert, insbesondere gi
 \begin{align*}
 \int \frac{r}{q} = \frac{c}{d}+\int \frac{a}{b}
 \end{align*}
-Mit $a,b,c,d\in F[\theta], \deg(a)<\deg(b)$, insbesondere ist der Nenner $b$ jetzt quadratfrei. Nun können wir mit dem zweiten Teil fortfahren.\\ Wir betrachten der Einfachheit halber zunächst nur Rationale Funktionen aus $\mathbb{C}(x)$, also ohne Logarithmen etc.\\
+Mit $a,b,c,d\in F[\theta], \deg(a)<\deg(b)$, insbesondere ist der Nenner $b$ jetzt quadratfrei. Nun können wir mit dem zweiten Teil fortfahren.\\ Wir betrachten als Einschub bzw. zur Motivation Rationale Funktionen aus $\mathbb{C}(x)$, also ohne Logarithmen etc.\\
 Also seien $f,g\in\mathbb{C}[x], \ggT(f,g)=1,\deg(f)<\deg(g)$, $g$ quadratfrei und monisch. Zu berechnen: $\int \frac{f}{g}$. Sind $x_1,\dots,x_n$ die verschiedenen Nullstellen von $g$, so gilt $g(x)=\prod_{i=1}^n (x-x_i)$, wir können also eine Partialbruchzerlegung durchführen:
 \begin{align*}
 \frac{f(x)}{g(x)} = \sum_{j=1}^n \frac{c_j}{x-x_j}
@@ -411,7 +468,7 @@ Also seien $f,g\in\mathbb{C}[x], \ggT(f,g)=1,\deg(f)<\deg(g)$, $g$ quadratfrei u
 Hierfür war es wichtig, dass $g$ quadratfrei ist, denn sonst hätte $g$ eine mehrfache Nullstelle und die Partialbruchzerlegung würde wesentlich komplizierter werden. Die Koeffizienten $c_j$ können wir mit Mitteln aus der Analysis herausfinden. Fixieren wir $i$ und multiplizieren die Gleichung mit $x-x_i$, können wir den Grenzwert $x\to x_i$ betrachten:
 \begin{align*}
 \frac{f(x)}{g(x)}(x-x_i) &= c_i + \sum_{\substack{j=1\\j\neq i}}^n c_j\frac{x-x_i}{x-x_j}\\
-\lim_{x\to x_i}\frac{f(x)}{g(x)}(x-x_i)&= \lim_{x\to x_i} c_i + \sum_{\substack{j=1\\j\neq i}}^n c_j\frac{x-x_i}{x-x_j}\\
+\lim_{x\to x_i}\frac{f(x)}{g(x)}(x-x_i)&= \lim_{x\to x_i} \biggl(c_i + \sum_{\substack{j=1\\j\neq i}}^n c_j\frac{x-x_i}{x-x_j}\biggr)\\
 \end{align*}
 Alle Terme auf der rechten Seite bis auf $c_i$ haben einen $x-x_i$ Faktor und fallen daher bei der Grenzwertbildung weg. Bei der linken Seite gilt wegen $g(x_i)=0$:
  \begin{align*}
@@ -423,7 +480,7 @@ c_i = \frac{f(x_i)}{g'(x_i)}
 \end{align*}
 Damit lässt sich das Integral einfach berechnen:
 \begin{align*}
-\int \frac{f(x)}{g(x)} = \int \sum_{i=1}^n \frac{f(x_i)}{g'(x_i)}\frac{1}{x-x_i} = \sum_{i=1}^n \frac{f(x_i)}{g'(x_i)}\log(x-x_i) +C
+\int \frac{f(x)}{g(x)} = \int \sum_{i=1}^n \frac{f(x_i)}{g'(x_i)}\frac{1}{x-x_i} = \sum_{i=1}^n \frac{f(x_i)}{g'(x_i)}\log(x-x_i) 
 \end{align*}
 Die Bedeutung von $c_i = \frac{f(x_i)}{g'(x_i)}$ wird später noch einmal relevant.\\
 Zurück zu dem eigentlichen Problem: Wir wollen $\int \frac{a}{b}$ berechnen, das Problem hierbei ist, dass $a,b$ Polynome in $\theta$ über $F$ und nicht in $x$ über $\mathbb{C}$ sind. Wir können aber ähnlich vorgehen: Man kann mithilfe des Satzes von Liouville zeigen, dass, wenn $\frac{a}{b}$ elementar integrierbar ist, sich das Integral wie folgt schreiben lässt:
@@ -606,10 +663,10 @@ Wegen $p_0\in F$ können wir diese Gleichung durch Rekursion lösen, indem wir int
 \begin{align*}
 \int p_0 = q_0+\sum_{i=1}^m c_i\log(v_i)
 \end{align*}
-Die anderen Gleichungen beinhalten alle sowohl ein $q_j$ als auch ein $q_j'$, wir haben also eine Differentialgleichung, die sogenannte \textit{Risch-Differentialgleichung} die wir in $F$ lösen müssen. Ich habe diese nur für den Spezialfall, dass die Koeffizienten in der Gleichung Polynome über $\mathbb{C}$ sind, umgesetzt, also falls $q_j'+aq_j=b$, wobei $a,b\in\mathbb{C}[x]$. Diese kann man dann einfach lösen, indem man als Ansatz für $q_j$ ein Polynom wählt und mit dem Leitkoeffizienten beginnend über Koeffizientenvergleiche alle Koeffizienten bestimmt. Ist eine der Differentialgleichung nicht über $F$ lösbar bzw. ist eines der $q_j$ nicht elementar, so ist $\int \tilde{s}$ auch nicht elementar.\\
+Die anderen Gleichungen beinhalten alle sowohl ein $q_j$ als auch ein $q_j'$, wir haben also eine Differentialgleichung, die sogenannte \textit{Risch-Differentialgleichung} die wir in $F$ lösen müssen. Ich habe diese nur für den Spezialfall, dass die Koeffizienten in der Gleichung Polynome über $\mathbb{C}$ sind, umgesetzt, also falls $q_j'+aq_j=b$, wobei $a,b\in\mathbb{C}[x]$. Diese kann man dann einfach lösen, indem man als Ansatz für $q_j$ ein Polynom wählt und mit dem Leitkoeffizienten beginnend über Koeffizientenvergleiche alle Koeffizienten bestimmt. In \cite{terelius} wird eine komplette Lösung dieser Differentialgleichung vorgestellt. Ist eine der Differentialgleichung nicht über $F$ lösbar bzw. ist eines der $q_j$ nicht elementar, so ist $\int \tilde{s}$ auch nicht elementar.\\
 Beispiele:
 \begin{itemize}
-\item $F=\mathbb{C}(x)$, $f = \theta := \exp(x^2),u=x^2, p_1 = 1,p_0=0$. Falls $f$ elementar integrierbar wäre, gelte dann
+\item $F=\mathbb{C}(x)$, $f = \theta := \exp(x^2),u=x^2, p_1 = 1,p_0=0$. Falls $f$ elementar integrierbar wäre, gilt
 \begin{align*}
 \int \theta = q_1\theta + q_0 + \sum_{i=1}^m c_i\log(v_i)
 \end{align*}
@@ -691,10 +748,13 @@ Eine weitere wichtige Klasse ist \textit{FieldExtension}. Hier werden die Inform
 \item \textit{argFunction}: Falls es sich um ein logarithmisches oder exponentielles $\theta$ handelt, wird zu diesem ein $u$ benötigt mit $\log(u)=\theta$ bzw. $\exp(u)=\theta$, dies wird hier abgespeichert.
 \end{itemize}
 Dazu gibt es noch die Klasse \textit{FieldTower}, in der eine Folge von solchen $\theta_1,\dots,\theta_n$ abgespeichert werden.
-%Das sind eigentlich schon die wesentlichen Bausteine, allerdings werden an verschiedenen Stellen 
+\chapter{Benutzung des Programms}
+
+
 
 \begin{thebibliography}{99}
 \bibitem{geddes} \textsc{Geddes, Keith O. / Czapor, Stephen R. / Labahn, George}: \textit{Algorithms for Computer Algebra}. Kluwer Academic Publishers, 1993, S.473-569
+\bibitem{terelius} \textsc{Terelius, Björn}: \textit{Symbolic Integration}, https://www.nada.kth.se/utbild\-ning/grukth/exjobb/rapportlistor/2009/rapporter09/terelius\_bjorn\_09095.pdf, (Stand 20.9.2018)
 \end{thebibliography}
 
 \end{document}

@@ -82,12 +82,13 @@ def IntegrateRationalFunction(func): # field=0, func element C(x)
             coeffsB.append(Pol.Polynomial([bc],variable=zvar))
         res = Resultant(coeffsA, coeffsB) # res_T (a-z*b',b)
         
-        Log("Resultant: {}".format(res))
         
         if res!=0:
             primitivePart = res.makeMonic()
         if res==0 or res.isZero():
             primitivePart = 0
+            
+        Log("Resultant: {}, {}".format(res,primitivePart))
                 
         sqrfreeFact = primitivePart.factorSquareFree()
         Log("Squarefree factorization of resultant: {}".format(Pol.printFactorization(sqrfreeFact)))
@@ -134,7 +135,10 @@ def IntegrateRationalFunction(func): # field=0, func element C(x)
                 if not LOOK_FOR_RATIONAL_ROOTS or not hasRatRoots:
                     coeff_rat = a/bp
                     coeff_str = coeff_rat.strCustomVar("y")
-                    rootSum = RS.RootSum(b,"({}){}".format(coeff_str, logExpression("x-y")),exprVar="y")
+                    yvar = FE.Variable('y')
+                    yExtension = FE.FieldExtension(FE.TRANSCENDENTAL_SYMBOL,None,yvar)
+                    logFunction = Int.LogFunction(Pol.Polynomial([Pol.Polynomial([0,1]),-1],variable=yvar), coeff_rat)
+                    rootSum = RS.RootSum(b,logFunction,exprVar="y")
                     return Int.Integral([],[],[rootSum])
                 continue
             if d<=2:

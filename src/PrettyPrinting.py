@@ -10,14 +10,20 @@ from Utils import *
 import FieldExtension as FE
 import Polynomial as Pol
 import RationalFunction as Rat
+import Integral as Int
 
 
 
 class StringMatrix(object): 
-    def __init__(self, width=1,height=1):
-        self._data = [[' ' for _ in range(width)] for _ in range(height)]
-        self.width = width
-        self.height = height
+    def __init__(self, width=1,height=1,data=None):
+        if data!=None:
+            self._data = data
+            self.width = len(self._data[0])
+            self.height = len(self._data)
+        else:
+            self._data = [[' ' for _ in range(width)] for _ in range(height)]
+            self.width = width
+            self.height = height
         self.mainRow = 0
         
         self.hasBrackets = False
@@ -57,8 +63,15 @@ class StringMatrix(object):
                 i1 = k-i
                 j1 = l-j
                 self._data[k][l] = matr._data[i1][j1]
-            
+       
+    def replace(self, old, new):
+        for x in range(self.width):
+            for y in range(self.height):
+                if self._data[y][x] == old:
+                    self._data[y][x] = new     
     def __add__(self, other):
+        if other==None:
+            return self
         if self.width==1 and self.height==1 and self._data[0][0]==" ":
             return other
         
@@ -125,6 +138,37 @@ def pp(obj):
         return ppPolynomial(obj)
     if type(obj)==Rat.RationalFunction:
         return ppRationalFunction(obj)
+    if type(obj)==str:
+        return StringMatrix.fromString(obj)
+    
+def ppRootSums(rootSums):
+    if len(rootSums)==0:
+        return None
+    sm = StringMatrix()
+    for rs in rootSums:
+        sm += ppRootSum(rs)
+    return sm
+
+def ppRootSum(rootSum):
+    polySM = ppPolynomial(rootSum.poly) + StringMatrix.fromString("=0")
+    polySM.replace("x","w")
+    w = polySM.width
+    sigma = bigSigma()
+    sm = StringMatrix(height=sigma.height+polySM.height,width=w+1)
+    sm.setSubMatrix(sigma,0,w//2-1)
+    sm.setSubMatrix(polySM,2,0)
+    sm.mainRow = sigma.height/2
+    if type(rootSum.expr)==Int.LogFunction:
+        argSM = pp(rootSum.expr.argFunction)
+        argSM.surroundWithBrackets()
+        exprSM = pp(rootSum.expr.factor) + StringMatrix.fromString("log")+argSM
+        exprSM.replace(rootSum.exprVar,"w")
+    else:
+        exprSM = pp(rootSum.expr)
+        exprSM.replace(rootSum.exprVar,"w")
+    return sm + exprSM
+    
+    
 
 def ppRational(rational):
     p = rational._p
@@ -160,7 +204,7 @@ def ppRationalFunction(rational):
     sm.setSubMatrix(denomSM,h1+1,(width-denomSM.width)//2)
     sm.mainRow = h1
     return sm
-def ppPolynomial(polynomial):
+def ppPolynomial(polynomial,customVar=None):
     sm = StringMatrix()
     
     p = StringMatrix(width=1,height=1)
@@ -171,7 +215,7 @@ def ppPolynomial(polynomial):
     for i in range(polynomial.degree+1):
         if polynomial.coeffIsZero(i):
             continue
-        mSM = ppMonomial(polynomial.getCoefficient(i), polynomial.variable, i)
+        mSM = ppMonomial(polynomial.getCoefficient(i), polynomial.variable, i,customVar=customVar)
         sm += mSM
         if i!=polynomial.degree:
             sm += p
@@ -215,7 +259,7 @@ def ppSquareRoot(rad):
     return col+sm
 
 
-def ppMonomial(coeff, base, power):
+def ppMonomial(coeff, base, power,customVar=None):
     coeffSM = pp(coeff)
     if power==0:
         return coeffSM
@@ -227,8 +271,11 @@ def ppMonomial(coeff, base, power):
         return powerSM
     return coeffSM + powerSM
 
-def ppPower(base, power):
-    baseSM = pp(base)
+def ppPower(base, power,customVar=None):
+    if customVar!=None:
+        baseSM = StringMatrix.fromString(customVar)
+    else:
+        baseSM = pp(base)
     if power==1:
         return baseSM
     if baseSM.height>1 and not baseSM.hasBrackets:

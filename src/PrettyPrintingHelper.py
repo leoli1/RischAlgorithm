@@ -21,6 +21,13 @@ LOW_LINE = u"\N{LOW LINE}"
 
 FRACTION_MID = u"\N{BOX DRAWINGS LIGHT HORIZONTAL}"
 
+SUMM_TOP = u"\N{SUMMATION TOP}"
+SUMM_BOT = u"\N{SUMMATION BOTTOM}"
+
+def bigSigma():
+    sm = PP.StringMatrix(data=[[SUMM_TOP],[SUMM_BOT]])
+    sm.mainRow = 1
+    return sm
 def LeftBracket1(height):
     if height==1:
         return ["("]
@@ -53,3 +60,4 @@ def UpDiag(height):
 if __name__=="__main__":
     for (l,r,i) in zip(LeftBracket1(4),RightBracket1(4),IntegralSymbol(4)):
         print l,r,i
+    bigSigma().pprint()

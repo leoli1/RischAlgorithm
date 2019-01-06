@@ -13,7 +13,8 @@ class RootSum(object):
         self.exprVar = exprVar
         
     def __str__(self):
-        
+        if type(self.expr)!=str:
+            return "RootSum(w | {}=0, {})".format(self.poly.strCustomVar("w"),self.expr)
         return "RootSum(w | {}=0, {})".format(self.poly.strCustomVar("w"),self.expr.replace(self.exprVar,"w"))
     def printFull(self):
         #TODO

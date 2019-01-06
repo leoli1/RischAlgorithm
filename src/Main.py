@@ -79,9 +79,12 @@ def Main():
         print("finished integrating")
         if integral!=None:
             integral.simplify()
-            integ = integral.asFunction()
+            integ = integral.asFunctionWithRootSums()
             print("create string matrix")
-            integralSM = PP.pp(integ)+PP.StringMatrix.fromString(" + C")
+            if integ[0]==0:
+                integralSM = PP.ppRootSums(integ[1:len(integ)]) + PP.StringMatrix.fromString(" + C")
+            else:
+                integralSM = PP.pp(integ[0])+PP.StringMatrix.fromString("+")+PP.ppRootSums(integ[1:len(integ)]) + PP.StringMatrix.fromString(" + C")
         else:
             integralSM = PP.StringMatrix.fromString("Integral is not elementary")
         try:
