@@ -16,6 +16,7 @@ import MultivariatePolynomial
 import Integral as Int
 from Number import Rational,ONE
 from itertools import product
+from functools import reduce
 
 def getLinearLogCombination(logs, log):
     """

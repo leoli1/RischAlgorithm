@@ -59,5 +59,5 @@ def UpDiag(height):
 
 if __name__=="__main__":
     for (l,r,i) in zip(LeftBracket1(4),RightBracket1(4),IntegralSymbol(4)):
-        print l,r,i
+        print (l,r,i)
     bigSigma().pprint()
