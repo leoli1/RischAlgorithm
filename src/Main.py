@@ -76,15 +76,18 @@ def Main():
         a = time.time()
         #print("Integral({}) = {}".format(f.printFull(),printIntegral(f, FE.fieldTower)))
         integral = Integrate(f)#, fieldTower)
-        print("finished integrating")
+        #print("finished integrating")
         if integral!=None:
             integral.simplify()
             integ = integral.asFunctionWithRootSums()
-            print("create string matrix")
+            #print("create string matrix")
             if integ[0]==0:
                 integralSM = PP.ppRootSums(integ[1:len(integ)]) + PP.StringMatrix.fromString(" + C")
             else:
-                integralSM = PP.pp(integ[0])+PP.StringMatrix.fromString("+")+PP.ppRootSums(integ[1:len(integ)]) + PP.StringMatrix.fromString(" + C")
+                if len(integ)==1:
+                    integralSM = PP.pp(integ[0])+PP.ppRootSums(integ[1:len(integ)]) + PP.StringMatrix.fromString(" + C")
+                else:
+                    integralSM = PP.pp(integ[0])+PP.StringMatrix.fromString("+")+PP.ppRootSums(integ[1:len(integ)]) + PP.StringMatrix.fromString(" + C")
         else:
             integralSM = PP.StringMatrix.fromString("Integral is not elementary")
         try:
