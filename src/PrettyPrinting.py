@@ -150,6 +150,7 @@ def ppRootSums(rootSums):
     return sm
 
 def ppRootSum(rootSum):
+    rootSum.poly.variable = FE.BASEVARIABLE
     polySM = ppPolynomial(rootSum.poly) + StringMatrix.fromString("=0")
     polySM.replace("x","w")
     w = polySM.width

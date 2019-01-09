@@ -193,7 +193,7 @@ class QuadMatrix(Matrix):
             self._data = data
            
     def determinant(self):
-        return self.determinantGauss()#self.determinantLaplace()
+        return self.determinantGauss()#self.determinantLaplace()#
     def determinantGauss(self):
         if self.size==1:
             return self.getElement(0, 0)
@@ -234,7 +234,7 @@ class QuadMatrix(Matrix):
             return self.getElement(0,0)
         s = 0
         for j in range(self.size):
-            s += (-1)**j*self.getElement(0, j)*self.getSubMatrix(0,j).determinantLaplace()
+            s += (-1)**j*self.getElement(0, j)*self.getSubMatrix(0,j).determinant()
             
         return s
     
