@@ -4,8 +4,8 @@ Created on 28.09.2018
 @author: Leonard
 '''
 
-class RootSum(object):
 
+class RootSum(object):
 
     def __init__(self, poly, expr, exprVar="x"):
         self.poly = poly
@@ -13,9 +13,10 @@ class RootSum(object):
         self.exprVar = exprVar
         
     def __str__(self):
-        if type(self.expr)!=str:
-            return "RootSum(w | {}=0, {})".format(self.poly.strCustomVar("w"),self.expr)
-        return "RootSum(w | {}=0, {})".format(self.poly.strCustomVar("w"),self.expr.replace(self.exprVar,"w"))
+        #if type(self.expr) != str:
+        return "RootSum(w | {}=0, {})".format(self.poly.strCustomVar("w"), str(self.expr).replace(self.exprVar,"w"))
+        #return "RootSum(w | {}=0, {})".format(self.poly.strCustomVar("w"), self.expr.replace(self.exprVar, "w"))
+
     def printFull(self):
-        #TODO
+        # TODO
         return str(self)

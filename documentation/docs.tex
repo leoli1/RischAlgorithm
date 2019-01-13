@@ -10,8 +10,19 @@
 \usepackage{amssymb}
 
 \usepackage{subcaption}
-
+\usepackage{setspace}
+\setstretch{1.25}
 \usepackage{amsthm}
+
+\usepackage[colorlinks,
+pdfpagelabels,
+pdfstartview = FitH,
+bookmarksopen = true,
+bookmarksnumbered = true,
+linkcolor = black,
+plainpages = false,
+hypertexnames = false,
+citecolor = black] {hyperref}
 
 %\usepackage[onehalfspacing]{setspace}
 
@@ -25,8 +36,15 @@
 \usepackage{float}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\sloppy
-
+%\sloppy
+\usepackage{xcolor}
+\newcommand\overmatL[2]{%
+  \makebox[0pt][l]{$\smash{\overbrace{\phantom{%
+    \begin{matrix}#2~~\end{matrix}}}^{\text{#1}}}$}#2}
+    \newcommand\overmatR[2]{%
+  \makebox[0pt][l]{$\smash{\overbrace{\phantom{%
+    \begin{matrix}#2~~~~~~~~\end{matrix}}}^{\text{#1}}}$}#2}
+    
 \usepackage{scrpage2} 
 \clearscrheadfoot 
 
@@ -78,7 +96,8 @@
 %\pagenumbering{Roman}
 \pagestyle{empty}
 
-\vspace{6cm}
+Herbartgymnasium Oldenburg, Klasse 12, Schuljahr 2018/2019
+%\vspace{4cm}
 %\small{Herbartgymnasium Oldenburg \hfill Schuljahr 2017/2018}\\\\
 %Kursthema: Der blaue Planet\\
 \begin{center}
@@ -110,7 +129,7 @@ Seit Newton und Leibniz die Grundsteine für die Differential- und Integralrechnu
 \item den Grundrechenarten Addition, Subtraktion, Multiplikation, Division
 \item Wurzelfunktionen
 \item Exponential- und Logarithmusfunktion
-\item Trigonometrische Funktionen und ihre Umkerfunktionen
+\item Trigonometrischen Funktionen und ihren Umkerfunktionen
 \end{itemize}
 zusammensetzt.\\
 Dabei stellen sich sofort folgende Fragen:
@@ -126,7 +145,7 @@ oder elliptische Integrale wie:
 \begin{align*}
 \int \frac{dx}{\sqrt{1-3\sin^2(x)}}
 \end{align*}
-Die Antwort auf die zweite Frage ist tatsächlich Ja, es gibt einen solchen Algorithmus, den \textit{Risch-Algorithmus}. Er überprüft, ob eine gegebene Funktion elementar integrierbar ist und gibt ggf. eine Stammfunktion aus. In dieser Arbeit werde ich in den Kapiteln 3 und 4 einige Grundlagen hinter der zugrundeliegenden Theorie, der differentiellen Algebra (das Problem wird nämlich nicht in der Analysis sondern in der Algebra gelöst!), erklären sowie im Kapitel 5 den Risch-Algorithmus, zumindest in Teilen, vorstellen. Ich habe mich hier in der Vorstellung der Theorie stark an \cite{geddes} orientiert, dabei aber viele Details ausgelassen, die dort nachzulesen sind.%Weiter habe ich den Risch-Algorithmus in Teilen auch in \textit{Python} implementiert, 
+Die Antwort auf die zweite Frage ist tatsächlich Ja, es gibt einen solchen Algorithmus, den \textit{Risch-Algorithmus}. Er überprüft, ob eine gegebene Funktion elementar integrierbar ist und gibt ggf. eine Stammfunktion aus. In dieser Arbeit werde ich in den Kapiteln 3 und 4 einige Grundlagen hinter der zugrundeliegenden Theorie, der differentiellen Algebra (das Problem wird nämlich nicht in der Analysis sondern in der Algebra gelöst!), erklären sowie im Kapitel 5 den Risch-Algorithmus, zumindest in Teilen, vorstellen. Ich habe mich hier in der Vorstellung der Theorie stark an \cite{geddes} orientiert, dabei aber viele Details ausgelassen, die dort nachzulesen sind. Weiter habe ich den Risch-Algorithmus in Teilen auch in \textit{Python} implementiert. Den Code sowie diese Dokumentation sind auf https://github.com/leoli1/RischAlgorithm zu finden.
 \newpage
 
 \newgeometry{
@@ -137,7 +156,177 @@ Die Antwort auf die zweite Frage ist tatsächlich Ja, es gibt einen solchen Algor
 }
 
 \chapter{Einige algebraische Begriffe}
-todo: polynome, körpererweiterungen, transzendent/algebraisch, quadratfrei (faktorisieren), partialbruchzerlegung
+\section{Körpererweiterungen}
+In den folgenden Kapiteln werde ich einige Begriffe wie \textit{Körpererweiterung, quadratfreies Polynom, Resultante} verwenden und als bekannt voraussetzen, werde also nicht näher auf diese eingehen. Daher stelle ich kurz einige Definitionen und Eigenschaften zu diesen Begriffen vor. Dieser Teil kann aber sonst auch ggf. übersprungen werden.\\
+\begin{definition}
+Seien $(K,+_K,\cdot_{K})$ und $(F,+_F,\cdot_{F})$ Körper. $F$ ist eine \textup{Körpererweiterung} von $K$, falls gilt:
+\begin{itemize}
+\item $K\subset F$
+\item Für alle $x,y\in K$ gilt $x+_K y = x+_F y$ und $x\cdot_K y=x\cdot_F y$.
+\end{itemize}
+\end{definition}
+Z.B. ist $\mathbb{C}$ eine Körpererweiterung von $\mathbb{R}$ oder $\mathbb{Q}$.\\
+In den folgenden Kapiteln interessiert uns eine spezielle Art von Körpererweiterungen, und zwar denen, die man durch \textit{Adjunktion} neuer Elemente erhält:
+\begin{definition}
+Sei $K$ ein Körper und $x$ zunächst nur ein Symbol. Dazu definieren wir den neuen Körper $K(x)$ \textup{(K adjungiert $x$)}:
+\begin{align*}
+K(\theta) = \left\{\frac{a_nx^n+\cdots+a_1x+a_0}{b_mx^m+\cdots+b_1x+b_0}\mid a_n,\dots,a_0,b_m,\dots,b_0\in K\right\}
+\end{align*}
+\end{definition}
+Man kann nun nachprüfen, dass es sich hierbei tatsächlich um einen Körper handelt.\\
+Beispielsweise ist $\mathbb{C}(x)$ der Körper der rationalen Funktionen in der Unbestimmten $x$.\\
+Wir können aber auch betrachten, was passiert, zu einem Körper ein algebraisches Element adjungieren. Z.B. ist $x=\sqrt{2}$ algebraisch über $\mathbb{Q}$, denn es gilt $x^2-2=0$. Nach Definition ist dann:
+\begin{align*}
+\mathbb{Q}(\sqrt{2}) = \left\{\frac{a_n{\sqrt{2}}^n+\cdots+a_1{\sqrt{2}}+a_0}{b_m{\sqrt{2}}^m+\cdots+b_1{\sqrt{2}}+b_0}\mid a_n,\dots,a_0,b_m,\dots,b_0\in \mathbb{Q}\right\}
+\end{align*}
+Unter Benutzung der Formeln $\sqrt{2}^n=2^{\frac{n}{2}}$ für gerades $n$ bzw. $\sqrt{2}^n=2^{\frac{n-1}{2}}\sqrt{2}$  für ungerades $n$ können wir die Elemente von $\mathbb{Q}(\sqrt{2})$ einfacher hinschreiben, und zwar in der Form $\frac{a_1\sqrt{2}+a_0}{b_1\sqrt{2}+b_0}$. Dies können wir aber noch weiter vereinfachen:
+\begin{align*}
+\frac{a_1\sqrt{2}+a_0}{b_1\sqrt{2}+b_0} &=  \frac{(a_0+a_1\sqrt{2})(b_0-b_1\sqrt{2})}{(b_0+b_1\sqrt{2}))(b_0-b_1\sqrt{2})}\\
+&= \frac{(a_0b_0-2a_1b_1)+(a_1b_0-a_0b_1)\sqrt{2}}{b_0^2-2b_1^2}\\
+&= \frac{(a_0b_0-2a_1b_1)}{b_0^2-2b_1^2}+\frac{(a_1b_0-a_0b_1)\sqrt{2}}{b_0^2-2b_1^2}\\
+&= A+B\sqrt{2}
+\end{align*}
+Wir können also jedes Element aus $\mathbb{Q}(\sqrt{2})$ in der einfachen Form $A+B\sqrt{2}$ schreiben, wir brauchen also keine Brüche. Daher unterscheidet man zwischen einer \textit{algebraischen} und einer \textit{transzendenten} Körpererweiterung $K(x)$. Bei letzterer ist diese Art von Vereinfachung nicht möglich.\\
+Beispiele:
+\begin{itemize}
+\item $K=\mathbb{R}$. Körpererweiterung mit $i$: $\mathbb{R}(i)$, wobei $i$ eine Lösung von $x^2+1=0$ ist. Dann gilt: $\mathbb{R}(i) = \mathbb{C}$
+\item $K=\mathbb{C}(x)$. Körpererweiterung mit $\theta=\exp(x)$. $\theta$ ist transzendent über $K$, was man sich leicht mit Mitteln aus der Analysis überlegen kann: Angenommen, $\theta$ wäre algebraisch über $K$ mit $y_n\theta^n+\cdots+y_1\theta+y_0=0$, wobei $y_0,\dots,y_n\in K=\mathbb{C}(x)$. Wir können annehmen, dass $y_0\ne0$ und dass alle $y_i$ Polynome sind (sonst multipliziere die Gleichung mit einem Hauptnenner). Betrachten wir den Grenzwert $x\to-\infty$, gilt für alle $1\leq i\leq n: y_i\theta=y_i\exp(x)^i\to 0$. Da $y_0$ ein Polynom ist, gilt aber $y_0\to\pm \infty$ und somit $\pm\infty = 0$, was offensichtlich nicht der Fall ist, $\theta$ ist also transzendent über $K$. Die Elemente von $K(\theta)$ sind dann Brüche von Polynomen in $\theta$ mit Koeffizienten in $K=\mathbb{C}(x)$, z.B. ist $\frac{\frac{x}{1+x^2}\exp(x)+2}{\frac{1}{x}\exp(x)^2+\exp(x)-1}\in K(\theta)$.\\Dieser Fall wird später wieder wichtig.
+\item $K=\mathbb{C}(x)$, Körpererweiterung mit $\theta=\sqrt{x}, ~\theta$ ist algebraisch über $K$ denn $\theta^2-x=0$. Die Elemente von $K(\theta)$ sind dann von der Form $v_0+v_1\theta=v_0+v_1\sqrt{x}$, wobei $v_0,v_1\in\mathbb{C}(x)=K$ ist.
+\end{itemize}
+Führen wir mehrere solcher Adjunktionen hintereinanderaus, wie bei den letzten beiden Beispielen, schreiben wir auch $K(\theta_1,\dots,\theta_n)$ statt $K(\theta_1)(\theta_2)\dots(\theta_n)$.
+
+\section{Polynome}
+Hier werde ich nur auf zwei Dinge eingehen:
+\begin{itemize}
+\item quadratfreie Polynome quadratfreie Faktorisierung von Polynomen
+\item Resultanten
+\end{itemize}
+\subsection{Quadratfreie Polynome}
+\begin{definition}
+Sei $F$ ein Körper. Ein Polynom $p\in F[t]$ heißt \textup{quadratfrei}, falls es nicht von einem Quadrat geteilt wird, d.h. es gibt kein $q\in F[t]$ mit $q^2\mid p$.
+\end{definition}
+Dies ist, wenn man den Zerfällungskörper\footnote{Der Zerfällungskörper eines Polynoms $p\in F[t]$, ist die kleinste Körpererweiterung $F$, sodass $p$ über diesem in Linearfaktoren zerfällt. Z.B. für $F=\mathbb{Q}: p=x^2-1 = (x-1)(x+1)$ zerfällt $p$ bereits über $F$ in Linearfaktoren, $F$ ist also bereits der Zerfällungskörper von $p$. Ist hingegen $q=x^2+1$ brauchen wir $\pm i\notin\mathbb{Q}: q=(x-i)(x+i)$, der Zerfällungskörper von $q$ ist also $\mathbb{Q}(i)$.} von $p$ über $F$ betrachtet, genau dann der Fall, wenn $p$ nur einfache Nullstellen hat. Beispiele:
+\begin{itemize}
+\item $f = (x-1)(x+1)^2\in\mathbb{C}[x]$ ist nicht quadratfrei, denn für $q=x+1$ gilt: $q^2\mid f$.
+\end{itemize}
+Mithilfe der Ableitung erhalten wir eine einfache Methode, um zu überprüfen, ob ein Polynom quadratfrei ist oder nicht. Die Ableitung ist hier die Abbildung 
+\begin{align*}
+\frac{d}{dx}:F[x]&\to F[x], \\a_n x^n+a_{n-1}x^{n-1}+\cdots+a_1x+a_0 &\mapsto na_nx^{n-1}+(n-1)a_{n-1}+\cdots+a_1
+\end{align*}
+Man kann sich nun leicht überlegen, dass sich der Grad einer Nullstelle beim Ableiten um genau eins verringert, d.h. ist $\alpha$ eine $k-$fache Nullstelle von $f\in F[x]$, also $f=(x-\alpha)^kg$, sodass $\alpha$ keine Nullstelle von $g$ ist, so ist $\frac{d}{dx}f=(x-\alpha)^{k-1}\tilde{g}$, wobei wieder $\alpha$ keine Nullstelle von $\tilde{g}$ ist.\\ Betrachten wir nun ein $f\in F[x]$ mit der Faktorisierung:
+\begin{align*}
+f = A\prod_{i=1}^n (x-\alpha_i)^{k_i}
+\end{align*}
+so gilt:
+\begin{align*}
+\frac{d}{dx}f= g\prod_{i=1}^n (x-\alpha_i)^{k_i-1}
+\end{align*}
+wobei die $\alpha_i$ keine Nullstellen von $g$ sind, womit insbesondere $\ggT(f,g)=1$ ist. Damit folgt:
+\begin{align*}
+\ggT(f,\frac{d}{dx}f) = \prod_{i=1}^n (x-\alpha_i)^{k_i-1}\label{eq:sqrfreeFormula} \tag{$*$} 
+\end{align*}
+Wir wollten ja eigentlich überprüfen, ob $f$ quadratfrei ist. Dies ist aber genau dann der Fall, wenn $f$ nur einfache Nullstellen hat, d.h. für alle $i=1,\dots,n$ gilt: $k_i=1$, was nach der eben hergeleiteten Formel äquivalent dazu ist, dass $\ggT(f,\frac{d}{dx}f)= \prod_{i=1}^n (x-\alpha_i)^{1-1}=1$ ist. Also:
+\begin{align*}
+f\textrm{ ist quadratfrei}\quad \Longleftrightarrow\quad \ggT(f,\frac{d}{dx})=1
+\end{align*}
+Quadratfreie Polynome werden in den folgenden Kapiteln wichtig werden, da man bei ihnen recht einfach eine Partialbruchzerlegung durchführen kann (sofern sie im Nenner sind), bei nicht-quadratfreien kann man das zwar prinzipiell auch, wird aber komplizierter. Um dies machen zu können, muss man zunächst ein gegebenes Polynom quadratfrei \glqq machen\grqq. Dazu bedient man sich der \textit{Quadratfreien Faktorisierung}:
+\begin{definition}
+Die \textup{quadratfreie Faktorisierung} eines Polynoms $f\in F[x]$ ist folgende Darstellung:
+\begin{align*}
+f = \prod_{i=1}^n a_i^i
+\end{align*}
+Dabei sind die $a_i$ jeweils quadratfrei und paarweise teilerfremd.
+\end{definition}
+Insbesondere gibt es stets eine solche Darstellung und sie ist bis auf eine multiplikative Konstante in den $a_i$ eindeutig. Im Prinzip erhält man diese Darstellung, indem man alle Nullstellen gleicher Ordnung gruppiert, Beispiel:
+\begin{itemize}
+\item $f = x^5+11x^4+34x^3+14x^2-35x-25\in\mathbb{C}[x]$. $f$ hat die einfache Nullstelle 1 und zwei doppelte, nämlich -1 und -5. Damit gilt:
+\begin{align*}
+f &= (x-1)(x+1)^2(x+5)^2\\ &= (x-1)[(x+1)(x+5)]^2 \\&= (x-1)(x^2+6x+5)^2\\ &= a_1a_2^2
+\end{align*}
+mit $a_1=x-1,a_2=x^2+6x+5$. Insbesondere sind die $a_1,a_2$ quadratfrei und teilerfremd, was direkt aus der Herleitung folgt. Somit ist $a_1a_2^2$ die quadratfreie Faktorisierung von $f$.
+\end{itemize}
+Im Allgemeinen ist es allerdings nicht möglich bzw. schwierig, alle Nullstellen eines Polynoms $f$ zu bestimmen, es gibt aber dafür bessere Methoden, um die quadratfreie Faktorisierung zu bestimmen. Wenden wir nämlich \ref{eq:sqrfreeFormula} auf die quadratfreie Faktorisierung von $f = \prod_{i=1}^n a_i^i=a_1a_2^2\cdots a_n^n$ an, erhalten wir:
+\begin{align*}
+c:=\ggT(f,\frac{d}{dx}f) = \prod_{i=1}^n a_i^{i-1} = a_2a_3^2a_4^3\cdots a_n^{n-1}
+\end{align*}
+Teilen wir nun $f$ durch $c$, erhalten wir:
+\begin{align*}
+w:=\frac{f}{c} = \frac{a_1a_2^2a_3^3\cdots a_n^n}{a_2a_3^2a_4^3\cdots a_n^{n-1}}  = a_1a_2\cdots a_n
+\end{align*}
+Nun gilt $y:= \ggT(c,w) = a_2a_3\cdots a_n$. Damit können wir nun $a_1$ bestimmen:
+\begin{align*}
+\frac{w}{y} = \frac{a_1a_2\cdots a_n}{a_2a_3\cdots a_n} = a_1.
+\end{align*}
+Indem wir dasselbe Verfahren mit $c$ durchführen, können wir nun $a_2$ berechnen und dann analog rekursiv die anderen $a_i$. Für diesen Algorithmus benötigten wir lediglich eine $\ggT$-Berechnungen und Polynomdivisionen, also z.B. keine Faktorisierungen bzw. Nullstellenberechnungen.
+
+\subsection{Resultanten}
+Resultanten bieten eine interessante Alternative zum euklidischen Algorithmus, um zu überprüfen, ob zwei Polynome teilerfremd sind. Dazu überlegen wir uns zunächst Folgendes:
+\begin{lemma}
+Sei $F$ ein Körper und $0\neq f,g\in F[x]$. Dann sind $f$ und $g$ genau dann teilerfremd, falls die Gleichung
+\begin{align*}
+fa+gb = 0
+\end{align*}
+in $a,b\in F[x]$ mit der Bedingung $\deg(a)<\deg(g),\deg(b)<\deg(f)$ nur die triviale Lösung $a=0,b=0$ hat.
+\end{lemma}
+Dies lässt sich recht einfach zeigen:\\
+$(\Rightarrow)$. Seien $f,g$ teilerfremd. Betrachte die Gleichung $fa=gb$ in $a,b$ mit $\deg(a)<\deg(g),\deg(b)<\deg(f)$. Dann gilt $fa=-gb$. Da $f$ die linke Seite teilt, muss $f$ auch die rechte Seite teilen, ferner gilt $f\mid b$, da $f$ und $g$ teilerfremd sind. Da aber $\deg(f)>\deg(b)$ ist, muss $b=0$ folgen. Analog folgt $a=0$.\\
+$(\Leftarrow)$. Seien $f,g$ nicht teilerfremd. Dann gibt es ein $h$ mit $h\mid f,g$ und $\deg(h)>0$. Setzen wir $a=\frac{g}{h},b=-\frac{f}{h}$, so gilt:
+\begin{align*}
+fa+gb = f\frac{g}{h}-g\frac{f}{h} = 0
+\end{align*}
+Und es gilt insbesondere $\deg(a)<\deg(g),\deg(b)<\deg(f)$.\\
+Die Frage ist nun: Wie können wir überprüfen, ob es eine nicht-triviale Lösung der Gleichung $fa+gb=0$ gibt, ohne über andere Methoden den $\ggT$ von $f$ und $g$ zu bestimmen? Dies geht mit etwas linearer Algebra. \\Dazu schreiben wir  $f=a_nx^n+\cdots+a_1x+a_0, g = b_mx^m+\cdots+b_1x+b_0$. Da wir $a,b\in F[x]$ mit $\deg(a)<\deg(g),\deg(b)<\deg(f)$ suchen, können wir zunächst $a=p_{m-1}x^{m-1}+\cdots+p_1x+p_0$ und $b=q_{n-1}x^{n-1}+\cdots+q_1x+q_0$ schreiben. Wir müssen dann die Gleichung $fa+gb=0$ in den Koeffizienten von $a,b$ lösen:
+\begin{align*}
+fa+gb&=0\\
+\Leftrightarrow\quad (a_nx^n+\cdots+a_1x+a_0)(p_{m-1}x^{m-1}+\cdots+p_1x+p_0) +&\\( b_mx^m+\cdots+b_1x+b_0)(q_{n-1}x^{n-1}+\cdots+q_1x+q_0) &= 0\\
+\Leftrightarrow \quad(a_np_{m-1}+b_mq_{n-1})x^{n+m-1}+\\(a_np_{m-2}+a_{n-1}p_{n-1}+b_mq_{n-2}+b_{m-1}q_{n-1})x^{m+n-2}+&\\\cdots+(a_1p_0+a_0p_1+b_1q_0+b_0q_1)x+(a_0p_0+b_0q_0)&=0\\
+\Leftrightarrow\quad \begin{cases} a_0p_0+b_0q_0&=0\\a_1p_0+a_0p_1+b_1q_0+b_0q_1&=0\\\cdots \\a_np_{m-2}+a_{n-1}p_{m-1}+b_mq_{n-2}+b_{m-1}q_{n-1}&=0\\a_np_{m-1}+b_mq_{n-1}&=0 \end{cases}
+\end{align*}
+Wir erhalten also ein lineares Gleichungssystem in den Unbekannten $p_i,q_j$, den Koeffizienten von $a,b$, wobei die Koeffizienten gerade die $a_j,b_i$, die Koeffizienten von $f,g$, sind. In Matrixschreibweise sieht dies dann wie folgt aus:
+\begin{align*}
+n+m\begin{cases}\begin{pmatrix}\overmatL{$n$}{a_0&\cdots&0&0&}\overmatR{$m$}{b_0&0&\cdots&0&0}\\ a_1&a_0&\cdots&0&b_1&b_0&0&\cdots&0\\\vdots&&&&\ddots&&&&\vdots\\ 0&\cdots&a_{n}&a_{n-1}&0&\cdots&0&b_m&b_{m-1}\\0&\cdots&0&a_n&0&\cdots&0&0&b_m&\end{pmatrix}\end{cases}
+\begin{pmatrix}p_0\\p_1\\\vdots\\ p_{m-1}\\q_0\\q_1\\\vdots\\ q_{n-1}\end{pmatrix} = 0
+\end{align*}
+Aus der linearen Algebra wissen wir, dass dieses lineare Gleichungssystem genau dann eine nicht-triviale Lösung hat, wenn $\det(\tilde{S}_{f,g})=0$, wobei $\tilde{S}_{f,g}$ die eben definierte Koeffizientenmatrix ist. Dies ist nun fast die Resultante, aber aus anderen Gründen definiert man die Resultante $\res(f,g)$ von $f,g$ als die Determinante der \textsc{Sylvester}-Matrix $S_{f,g}$, die wir erhalten, indem wir in $\tilde{S}_{f,g}$ einige Zeilen und Spalten vertauschen und transponieren:
+\begin{align*}
+S_{f,g} = \begin{pmatrix}a_n&a_{n-1}&\cdots&a_1&a_0&0&\cdots&0&0\\ 0&a_n&a_{n-1}&\cdots&a_1&a_0&0&\cdots&0\\\vdots&&&&\ddots&&&&\vdots\\ 0&\cdots&0&a_n&a_{n-1}&\cdots&\cdots&a_1&a_0\\b_m&b_{m-1}&&\cdots&&b_0&0&\cdots&0\\0&b_m&b_{m-1}&\cdots&b_1&b_0&0&\cdots&0\\\vdots&&&&\ddots&&&&\vdots\\0&0&\cdots &0&b_m&b_{m-1}&\cdots&b_1&b_0\end{pmatrix}
+\end{align*}
+Und:
+\begin{align*}
+\res(f,g) := \det(S_{f,g})
+\end{align*}
+Die Resultante $\res(f,g)$ unterscheidet sich insbesondere höchstens um einen Faktor der Form $(-1)^k$ von $\det(\tilde{S}_{f,g})$. Damit gilt:
+\begin{align*}
+f,g\textrm{ haben einen nicht-trivialen Teiler bzw. sind nicht teilerfremd} \quad \Longleftrightarrow \quad \res(f,g)=0
+\end{align*}
+Falls in den Polynomen $f,g$ mehrere Variablen auftauchen sollten, z.B. $z$ und $\theta$ (was später der Fall sein wird), und wir die Resultante bezüglich $\theta$ bestimmen wollen, d.h. wir schreiben $f,g$ als Polynome in $\theta$, in den Koeffizienten tritt dann ggf. $z$ auf, schreiben wir $\res_{\theta}(f,g)$.\\
+Beispiel:
+\begin{itemize}
+\item $f = x^2+3x+2, g = 5x^2-5\in \mathbb{C}[x]$. Dann ist:
+\begin{align*}
+\tilde{S}_{f,g} = \begin{pmatrix}2&0&-5&0\\3&2&0&-5\\1&3&5&0 \\0&1&0&5\end{pmatrix}
+\end{align*}
+bzw. die Sylvestermatrix:
+\begin{align*}
+S_{f,g} = \begin{pmatrix}1&3&2&0\\0&1&3&2\\5&0&-5&0\\0&5&0&-5\end{pmatrix}
+\end{align*}
+Die Resultante von $f,g$ ist dann:
+\begin{align*}
+\res(f,g) = \begin{vmatrix}1&3&2&0\\0&1&3&2\\5&0&-5&0\\0&5&0&-5\end{vmatrix} = 0
+\end{align*}
+Folglich sind $f,g$ nicht teilerfremd und tatsächlich gilt: $(x+1)\mid f,g$.
+\end{itemize}
+Ein weiteres Resultant über Resultanten, welches später wichtig wird, was wir aber hier nicht mehr beweisen, ist folgendes Lemma:
+\begin{lemma}
+Sei $F$ ein Körper und $f,g\in F[x]$, wobei $A$ der Leitkoeffizient von $g$ und $\alpha_1,\dots,\alpha_n$ die (nicht notwendigerweise verschiedenen) Nullstellen von $g$ sind. Dann gilt:
+\begin{align*}
+\res(f,g) = A^{\deg(f)}\prod_{i=1}^n f(\alpha_i) 
+\end{align*}
+\end{lemma}
+%todo: polynome, körpererweiterungen, transzendent/algebraisch, quadratfrei (faktorisieren), partialbruchzerlegung
+
+
+
 \chapter{Grundlagen der differentiellen Algebra}
 Im Folgenden sei $F$ stets ein Körper.\\
 Zunächst benötigen wir eine rein algebraische Definition der Ableitung.
@@ -159,18 +348,19 @@ Für $n\in\mathbb{N}, x,y \in F$, wobei $F$ ein differentieller Körper mit Ableit
 \item $D(x^n)=nD(x)x^{n-1}$ (Potenzregel)
 \end{enumerate}
 \end{lemma}
-\begin{proof} Beispielsweise für die Potenzregel:\\
-Für $n=1$ ist: $D(x^n)=D(x)=1\cdot D(x)\cdot x^0$\\
-Über Induktion folgt: 
-\begin{align*}D(x^{n+1})&=D(x^n\cdot x)=x^nD(x)+D(x^n)\cdot x\\&=x^nD(x)+nD(x)x^{n-1}\cdot x=(n+1)D(x)x^n\end{align*}
-\end{proof}
-Wir wissen aus der Analysis, dass Stammfunktionen bis auf additive Konstanten eindeutig sind, d.h. sind $F,G$ Stammfunktionen einer Funktion $f$, so gibt es eine Konstante $C\in\mathbb{C}$, sodass $F=G+C$. Konstante Funktionen haben die Eigenschaft, dass ihre Ableitung 0 ist. Auf diese Weise definieren wir auch Konstanten in der differentiellen Algebra:
+%\begin{proof} Beispielsweise für die Potenzregel:\\
+%Für $n=1$ ist: $D(x^n)=D(x)=1\cdot D(x)\cdot x^0$\\
+%Über Induktion folgt: 
+%\begin{align*}D(x^{n+1})&=D(x^n\cdot x)=x^nD(x)+D(x^n)\cdot x\\&=x^nD(x)+nD(x)x^{n-1}\cdot x=(n+1)D(x)x^n\end{align*}
+%\end{proof}
+%Wir wissen aus der Analysis, dass Stammfunktionen bis auf additive Konstanten eindeutig sind, d.h. sind $F,G$ Stammfunktionen einer Funktion $f$, so gibt es eine Konstante $C\in\mathbb{C}$, sodass $F=G+C$. Konstante Funktionen haben die Eigenschaft, dass ihre Ableitung 0 ist. Auf diese Weise definieren wir auch Konstanten in der differentiellen Algebra:
+Wir benötigen zusätzlich noch den Begriff der \textit{Konstanten}. In der Analysis zeichnen sich konstante Funktionen dadurch aus, dass ihre Ableitung 0 ist. Analog definieren wir Konstanten in der differentiellen Algebra:
 \begin{definition}
 Für einen differentiellen Körper $(F,D)$ definieren wir:
 \begin{align*}
 K := \{x\in F~\vert~ D(x)=0\}
 \end{align*}
-als den \textup{Konstantenkörper} von $F$.
+als den \textup{Konstantenkörper} von $F$ und die Elemente von $K$ nennen wir \textup{Konstanten}.
 \end{definition}
 Im Folgenden schreiben wir $x'$ statt $D(x)$.\\
 Um alle elementaren Funktionen zu erhalten genügt nicht $\mathbb{C}(x)$, wir benötigen auch noch Exponential-, Logarithmus- und Wurzelfunktionen. Dafür benötigen wir den Begriff der differentiellen Körpererweiterung:
@@ -321,7 +511,7 @@ Nach dem Satz von Liouville gibt es $c_1,\dots,c_m\in\mathbb{C}$ und $v_0,\dots,
 p(\theta)=v_0(\theta)' + \sum_{i=1}^m c_i\frac{v_i(\theta)'}{v_i(\theta)}
 \end{align*}
 Man kann sich nun überlegen, dass die $v_i$ für $i=1,\dots,m$ nicht von $\theta$ abhängen können, da sonst auf der rechten Seite im Nenner irgendwo $\theta$ auftauchen müsste, was nicht möglich ist, da $p$ ein Polynom in $\theta$ ist und $\theta$ daher nur im Zähler auftauchen kann. Ebenso kann $\theta$ auch nicht im Nenner von $v_0$ auftauchen. Folglich sind $v_i\in F$ für $i=1,\dots,m$ und $v_0\in F[\theta]$.\\
-Wir versuchen nun die Koeffizienten von $v_0$ herauszufinden. Wir bemerken zunächst, dass, wenn wir einen Ausdruck der Form $p\log(f)^n$ ableiten, wir $p'\log(f)^n + n \frac{f'}{f} \log(f)^{n-1}$ erhalten. Die Potenz des Logarithmus verringert sich beim Ableiten also höchstens um 1. Da auf der rechten Seite der obigen Gleichung nur $v_0$ von $\theta$ abhängt, gilt $\deg(v_0)\leq l+1$. Sei also $v_0(\theta)=q_{l+1}\theta^{l+1}+q_l\theta^l+\cdots+q_0$, mit $q_i\in F$. Setzen wir das ein, erhalten wir:
+Wir versuchen nun die Koeffizienten von $v_0$ herauszufinden. Aus Kapitel 4 wissen wir, dass sich der Grad eines logarithmischen Polynoms beim Ableiten entweder gleich bleibt oder sich um eins verringert und da auf der rechten Seite der obigen Gleichung nur $v_0$ von $\theta$ abhängt, gilt $\deg(v_0)\leq l+1$. Sei also $v_0(\theta)=q_{l+1}\theta^{l+1}+q_l\theta^l+\cdots+q_0$, mit $q_i\in F$. Setzen wir das ein, erhalten wir:
 \begin{align*}
 p(\theta) &= (q_{l+1}\theta^{l+1}+q_l\theta^l+\cdots+q_0)'+ \sum_{i=1}^m c_i\frac{v_i'}{v_i}\\
 &=q_{l+1}\theta^{l+1}+((l+1)q_{l+1}\theta'+q_l')\theta^l+(l q_l\theta'+q_{l-1}')\theta^{l-1}+\cdots\\&~~~+(2q_2\theta'+q_1')\theta+\left(q_1\theta'+q_0+\sum_{i=1}^m c_i\frac{v_i'}{v_i}\right)
@@ -576,7 +766,7 @@ für $i=1,\dots,m$. Dies können wir auch wie folgt zusammenfassen: Die verschiede
 \begin{align*}
 \tilde{R}(z):=\prod_{i=1}^m (a(x_i)-zb'(x_i))
 \end{align*}
-Es stellt sich heraus, dass dies, bis auf einen Faktor, der vom Leitkoeffizienten von $(a(x)-zb'(x))$ abhängt und insbesondere nicht 0 ist, genau die Resultante $R(z):=\res_x(a(x)-zb'(x),b(x))$ ist. Man kann dann weiter zeigen, dass dies auch hier für Logarithmen anwendbar ist und auch, dass sich die zugehörigen $v_i$ einfach durch $v_i=\ggT(a(\theta)-c_ib'(\theta),b(\theta))$ berechnen lassen.
+Es stellt sich heraus, dass dies, bis auf einen Faktor, der vom Leitkoeffizienten von $b(x)$ abhängt und insbesondere nicht 0 ist, genau die Resultante $R(z):=\res_x(a(x)-zb'(x),b(x))$ ist. Man kann dann weiter zeigen, dass dies auch hier für Logarithmen anwendbar ist und auch, dass sich die zugehörigen $v_i$ einfach durch $v_i=\ggT(a(\theta)-c_ib'(\theta),b(\theta))$ berechnen lassen.
 
 \section{Exponentielle Körpererweiterungen}
 Sei nun $\theta:=\theta_n$ exponentiell über $F:=\mathbb{C}(x,\theta_1,\dots,\theta_{n-1})$, mit $u\in F$, sodass $\frac{\theta'}{\theta} = u, f(\theta)=\frac{a(\theta)}{b(\theta)}$\\
@@ -739,6 +929,7 @@ Dann gibt es bzgl. der Polynome noch einige Funktionen, die nicht in der Klasse 
 \begin{align*}
 \frac{a}{b} = \sum_{i=1}^m \sum_{j=1}^i \frac{r_{ij}}{b_i}
 \end{align*}
+\sloppy
 wobei zusätzlich gilt $\deg(r_ij)<\deg(b_i)$. Es wird dann die Liste $[(r_{11},b_1,1),(r_{21},b_2,1),(r_{22},b_2,2),\dots,(r_{mm},b_m,m)]$ zurückgegeben.
 \end{itemize}
 Zusätzlich gibt es noch die Klasse \textit{RationalFunction}, welche allerdings nicht besonders spannend ist. Im Wesentlich hat sie die zwei Attribute \textit{numerator} und \textit{denominator}, also Zähler- und Nennerpolynome und einige Methoden wie die \textit{Polynomial}-Klasse.\\
@@ -747,7 +938,7 @@ Eine weitere wichtige Klasse ist \textit{FieldExtension}. Hier werden die Inform
 \item \textit{extensionType}: Die Art der Körpererweiterung. Kann die Werte $0,1,2,3$ annehmen, die für \textit{TRANS\_LOG, TRANS\_EXP, ALGEBRAIC, TRANSCENDENTAL\_SYMBOL} stehen. Der letzte Typ ist dafür da, falls zwischendurch neue Variablen benötigt werden, die aber nicht z.B. für eine Exponentialfunktion stehen. Dies wird beispielweise benötigt, wenn die Resultante $\res_{\theta}(a(\theta)-zb'(\theta),b(\theta))\in F[z]$ berechnet wird.
 \item \textit{argFunction}: Falls es sich um ein logarithmisches oder exponentielles $\theta$ handelt, wird zu diesem ein $u$ benötigt mit $\log(u)=\theta$ bzw. $\exp(u)=\theta$, dies wird hier abgespeichert.
 \end{itemize}
-Dazu gibt es noch die Klasse \textit{FieldTower}, in der eine Folge von solchen $\theta_1,\dots,\theta_n$ abgespeichert werden.
+Dazu gibt es noch die Klasse \textit{FieldTower}, in der eine Folge von solchen $\theta_1,\dots,\theta_n$ abgespeichert werden. Dies sind bereits die wichtigsten Klassen, es gibt allerdings noch viele weitere Teile, z.B. eine Matrix-Klasse zum berechnen von Determinanten und Lösen von linearen Gleichungssystemen oder eine \textit{Pretty-Printing}-Funktion, die dafür sorgt, dass der Output nicht nur auf einer Zeile geschrieben wird, sondern, dass z.B. Potenzen hochgestellt werden o.Ä. Bilder hierzu sind im nächsten Kapitel zu finden.
 %\section{Probleme und zukünftige Entwicklungen}
 \chapter{Benutzung des Programms}
 Zur Benutzung des startet man das \textit{main.py}-Skript. Prinzipiell kann man das Programm auch als Modul benutzt werden, also z.B. eingebunden in andere Programme; dafür habe ich es allerdings noch nicht ausgereift. Will man nun eine Funktion $f$, muss man zunächst selber die benötigten $\theta_1,\dots,\theta_n$ finden, sodass $f\in\mathbb{C}(x,\theta_1,\dots,\theta_n)$. Die hierbei benötigte Anzahl an Körpererweiterungen $n$ muss als erstes eingegeben werden. Daraufhin muss jedes $\theta_i$ einzeln eingegeben werden. Dazu muss zunächst angegeben werden, ob es sich um eine transzendente oder algebraische Körpererweiterung handelt. Da ich algebraische $\theta_i$ noch nicht implementiert habe, gibt es nur die transzendente Variante, woraufhin gefragt wird, ob $\theta_i$ logarithmisch oder exponentiell ist und man muss die Argumentfunktion, d.h. das $u$ mit $\theta_i=\log(u)$ bzw. $\theta_i=\exp(u)$, eingeben.\\Will man nun einen Funktionsterm für $f$ eingeben, muss man darauf achten, nicht z.B. $\log(u)$ zu schreiben, sondern stattdessen die zugehörige Variable, in diesem Fall $T_i$ (aufgrund mangelnder griechischer Buchstaben beim Programmieren). Dies gilt auch, wenn man vorher bereits in einigen der $u$ eine vorherige Körpererweiterung benötigt.\\
@@ -791,6 +982,30 @@ Die Funktion, die in diesem Bildausschnitt integriert wird, sieht anders aus als
 \includegraphics[scale=0.7]{bsp5.png}
 \end{figure}
 
+\item $f = \frac{1}{1+\exp(x)}, \theta_1=\exp(x)$:
+
+\begin{figure}[H]
+\includegraphics[scale=0.7]{bsp7.png}
+\end{figure}
+
+\end{itemize}
+
+Manche Konsolen unterstützen kein Unicode, daher wird möglicherweise ein etwas unschönerer Ausdruck ausgegeben. Ich arbeite allerdings an einer Ascii-Version des \textit{Pretty-Printing}-Systems, sodass dieses Problem umgangen wird. Ebenfalls kann es zu Anzeigeproblemen kommen, wenn das Programm in einem Python-Editor wie \textit{IDLE} oder \textit{Eclipse} ausgeführt wird, da in den dortigen Textfeldern die Zeichen unterschiedliche Längen haben.
+
+\chapter{Anstehende Entwicklungen}
+Das Projekt \textit{Differentielle Algebra und der Risch-Algorithmus} ist natürlich nicht abgeschlossen und wird es auch nie werden, aber es gibt einige Dinge die ich in der Zukunft gerne noch implementieren bzw. verbessern möchte (Stand 13.1.2019):
+\begin{itemize}
+\item Performance: Bezogen auf die Effizienz hängt das Programm ziemlich hinterher. Bereits für kleine Berechnungen wie das Addieren von Polynomen finden unzählige Funktionsaufrufe statt, von denen viele überflüssig sind bzw. schneller gemacht werden können. Auch einige Algorithmen könnten verbessert werden, z.B.:
+\begin{itemize}
+\item Die $\ggT$-Berechnung: Zurzeit wird der ggT zweier Polynome über den euklidischen Algorithmus berechnet. Dieser ist zwar einfach und erfüllt seine Aufgabe, aber gerade bei ggT-Berechungen über multivariaten Polynomringen wie sie hier auftauchen wird er problematisch. Bereits bei der ggT-Berechnung zweier Polynome 6-ten Grades über $\mathbb{C}(\theta_1)[\theta_2]$, also drei Variablen, kam es zu einem Overflow-Error, da zu große Zahlen in den Zwischenschritten auftraten. Es gibt bessere Algorithmen hierfür.
+\item Der rationale Teil beim Integrieren: Hier werden verscheidene ggT's der Form $\ggT(a-zb',b)$ berechnet. Die Berechnung dieser ggT's kann hier noch einmal verbessert werden.(Siehe \textit{Lazard/Rioboo/Trager}-Algorithmus und Subresultanten.)
+\item Die Berechnung der quadratfreien Faktorisierung. Auch hierbei gibt es bessere Algorithmen als den, der in Kapitel 2 vorgestellt wurde.
+\end{itemize}
+\item Allgemeine Lösung der Risch-Differentialgleichung
+\item Algebraische Körpererweiterungen, zumindest für wurzelartige, d.h. für $\theta=\sqrt[\uproot{3}n]{f}$.
+\item Ausarbeitung zu einem Modul, sodass ich verschiedene Funktionen des Programms, wie z.B. Polynome, Matrizen etc. auch für andere Projekte einfach einbinden kann.
+\item Unterstützung für endliche Körper (nicht direkt für das Integrations-Problem, sondern allgemein für Polynome, Matrizen etc.)
+\item Fehlerbehebungen (es gibt sicher noch diverse Fehler im Programm)
 \end{itemize}
 
 

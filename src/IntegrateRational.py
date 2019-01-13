@@ -64,7 +64,7 @@ def IntegrateRationalFunction(func): # field=0, func element C(x)
         bpm = bp*(-1)
         
         zvar = FE.Variable('z')
-        zExtension = FE.FieldExtension(FE.TRANSCENDENTAL_SYMBOL,1,zvar)
+        zExtension = FE.FieldExtension(FE.TRANSCENDENTAL_SYMBOL,None,zvar)
         newFieldTower = FE.FieldTower(zExtension)
         
         poly = Pol.Polynomial([a,bpm],variable=zvar)

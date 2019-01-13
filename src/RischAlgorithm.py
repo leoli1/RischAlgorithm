@@ -355,7 +355,7 @@ def IntegrateRationalPartExpExt(func, fieldTower):
         bp = b.differentiate()
         
         zvar = FE.Variable('z')
-        zExtension = FE.FieldExtension(FE.TRANSCENDENTAL_SYMBOL,1,zvar)
+        zExtension = FE.FieldExtension(FE.TRANSCENDENTAL_SYMBOL,None,zvar)
         newFieldTower = fieldTower.getStrippedTower(fieldTower.towerHeight-1).addFieldExtension(zExtension)
         
         coeffsA = []
@@ -394,7 +394,6 @@ def IntegrateRationalPartExpExt(func, fieldTower):
             x = a+bp*(-c)
             vfunc.append(Pol.PolyGCD(x, b))
         intPart = Int.Integral()
-        rootsDone = []
         for (c,v) in zip(rootsDone,vfunc):
             logExpr = Int.LogFunction(v,c)
             intPart += Int.Integral(logs=[logExpr])
@@ -405,11 +404,14 @@ def IntegrateRationalPartExpExt(func, fieldTower):
         integral += intPart
     
     return integral
-    raise NotImplementedError()
+    #raise NotImplementedError()
 
 
 def printIntegral(func,fieldTower=None):
     integral = Integrate(func)#, fieldTower)
+    return printFinishedIntegral(integral)
+    
+def printFinishedIntegral(integral):
     if integral!=None:
         integral.simplify()
         int_str = integral.printFull()
@@ -419,7 +421,6 @@ def printIntegral(func,fieldTower=None):
             return int_str + "  + C"
     else:
         return "Integral not elementary"
-    
 def integratetest(expected, got):
     return "integratetest: should be {}, got {}".format(expected, got)
 

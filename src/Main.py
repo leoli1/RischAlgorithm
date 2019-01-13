@@ -14,6 +14,8 @@ import PrettyPrinting as PP
 
 PYTHON3 = False
 
+usePP = True
+
 import sys
 if sys.version_info[0]>=3:
     PYTHON3 = True
@@ -82,6 +84,8 @@ def Main():
             integ = integral.asFunctionWithRootSums()
             #print("create string matrix")
             if integ[0]==0:
+                if len(integ)==1:
+                    raise Exception()
                 integralSM = PP.ppRootSums(integ[1:len(integ)]) + PP.StringMatrix.fromString(" + C")
             else:
                 if len(integ)==1:
@@ -90,11 +94,15 @@ def Main():
                     integralSM = PP.pp(integ[0])+PP.StringMatrix.fromString("+")+PP.ppRootSums(integ[1:len(integ)]) + PP.StringMatrix.fromString(" + C")
         else:
             integralSM = PP.StringMatrix.fromString("Integral is not elementary")
-        try:
-            (PP.ppEquation(PP.ppIntegralExpression(f, FE.BASEVARIABLE), integralSM)).pprint()
-        except:
-            print("Integral({}) = {}".format(f.printFull(),printIntegral(f, FE.fieldTower)))
             
+        if usePP:
+            try:
+                (PP.ppEquation(PP.ppIntegralExpression(f, FE.BASEVARIABLE), integralSM)).pprint()
+            except:
+                print("Pretty printing not supported")
+                print("Integral({}) = {}".format(f.printFull(),printFinishedIntegral(integral)))
+        else:
+            print("Integral({}) = {}".format(f.printFull(),printFinishedIntegral(integral)))
         b = time.time()
         print("calculating and printing time: {}s".format(b-a))#0.00032901763916s
         #print(Pol.Polynomial.updateCoefficients.calls)
