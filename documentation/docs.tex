@@ -757,9 +757,9 @@ und wir erhalten wieder:
 \begin{align*}
 \int \frac{2\frac{\theta}{x}-1}{\theta^2-x} = \log(\theta^2-x)
 \end{align*}
-Um eine Idee davon zu bekommen, wieso hier die Resultante auftaucht, betrachten wir dieses Beispiel noch einmal. Zunächst brauchten wir neue Ausdrücke ($\sqrt{x}$), um $f$ vollständig zu faktorisieren. 
+Um eine Idee davon zu bekommen, wieso hier die Resultante auftaucht, betrachten wir dieses Beispiel noch einmal. Zunächst brauchten wir neue Ausdrücke ($\sqrt{x}$), um den Nenner von $f$ vollständig zu faktorisieren. 
 Diese konnten wir aber hinterher zusammenfassen: $\log((\theta+\sqrt{x})(\theta+\sqrt{x})) = \log(\theta^2-x)$. Das lag daran, dass die Koeffizienten $c_1,c_2$ der Logarithmen beide gleich waren. 
-Allgemein für $\int f=\int\frac{a}{b} = \sum_{i=1}^m v_i log(v_i)$ genügt es also vielleicht, wenn wir nur die \textit{verschiedenen} Werte der $c_i$ herausfinden. Dies ist wie folgt möglich: Wir erinnern uns, dass wir für den Fall, dass $a,b\in\mathbb{C}[x]$ ist, die $c_i$ einfach durch $c_i=\frac{a(x_i)}{b'(x_i)}$ berechnen konnten, wobei die $x_1,\dots,x_m$ die Nullstellen von $b$ waren. Das heißt wir suchen die verschiedenen Lösungen, der Gleichungen:
+Allgemein für $\int f=\int\frac{a}{b} = \sum_{i=1}^m c_i \log(v_i)$ genügt es also vielleicht, wenn wir nur die \textit{verschiedenen} Werte der $c_i$ herausfinden. Dies ist wie folgt möglich: Wir erinnern uns, dass wir für den Fall, dass $a,b\in\mathbb{C}[x]$ ist, die $c_i$ einfach durch $c_i=\frac{a(x_i)}{b'(x_i)}$ berechnen konnten, wobei die $x_1,\dots,x_m$ die Nullstellen von $b$ waren. Das heißt wir suchen die verschiedenen Lösungen, der Gleichungen:
 \begin{align*}
 a(x_i)-c_ib'(x_i) = 0
 \end{align*}
