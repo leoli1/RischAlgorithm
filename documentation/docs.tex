@@ -203,7 +203,7 @@ Hier werde ich nur auf zwei Dinge eingehen:
 \end{itemize}
 \subsection{Quadratfreie Polynome}
 \begin{definition}
-Sei $F$ ein Körper. Ein Polynom $p\in F[t]$ heißt \textup{quadratfrei}, falls es nicht von einem Quadrat geteilt wird, d.h. es gibt kein $q\in F[t]$ mit $q^2\mid p$.
+Sei $F$ ein Körper. Ein Polynom $p\in F[t]$ heißt \textup{quadratfrei}, falls es nicht von einem Quadrat geteilt wird, d.h. es gibt kein $q\in F[t]$ mit $q^2\mid p$ und $\deg(q)>0$.
 \end{definition}
 Dies ist, wenn man den Zerfällungskörper\footnote{Der Zerfällungskörper eines Polynoms $p\in F[t]$, ist die kleinste Körpererweiterung $F$, sodass $p$ über diesem in Linearfaktoren zerfällt. Z.B. für $F=\mathbb{Q}: p=x^2-1 = (x-1)(x+1)$ zerfällt $p$ bereits über $F$ in Linearfaktoren, $F$ ist also bereits der Zerfällungskörper von $p$. Ist hingegen $q=x^2+1$ brauchen wir $\pm i\notin\mathbb{Q}: q=(x-i)(x+i)$, der Zerfällungskörper von $q$ ist also $\mathbb{Q}(i)$.} von $p$ über $F$ betrachtet, genau dann der Fall, wenn $p$ nur einfache Nullstellen hat. Beispiele:
 \begin{itemize}
@@ -227,7 +227,7 @@ wobei die $\alpha_i$ keine Nullstellen von $g$ sind, womit insbesondere $\ggT(f,
 \end{align*}
 Wir wollten ja eigentlich überprüfen, ob $f$ quadratfrei ist. Dies ist aber genau dann der Fall, wenn $f$ nur einfache Nullstellen hat, d.h. für alle $i=1,\dots,n$ gilt: $k_i=1$, was nach der eben hergeleiteten Formel äquivalent dazu ist, dass $\ggT(f,\frac{d}{dx}f)= \prod_{i=1}^n (x-\alpha_i)^{1-1}=1$ ist. Also:
 \begin{align*}
-f\textrm{ ist quadratfrei}\quad \Longleftrightarrow\quad \ggT(f,\frac{d}{dx})=1
+f\textrm{ ist quadratfrei}\quad \Longleftrightarrow\quad \ggT(f,\frac{d}{dx}f)=1
 \end{align*}
 Quadratfreie Polynome werden in den folgenden Kapiteln wichtig werden, da man bei ihnen recht einfach eine Partialbruchzerlegung durchführen kann (sofern sie im Nenner sind), bei nicht-quadratfreien kann man das zwar prinzipiell auch, wird aber komplizierter. Um dies machen zu können, muss man zunächst ein gegebenes Polynom quadratfrei \glqq machen\grqq. Dazu bedient man sich der \textit{Quadratfreien Faktorisierung}:
 \begin{definition}
@@ -344,7 +344,7 @@ Aus der Definition können wir weitere uns bekannte Regeln herleiten:
 \begin{lemma}
 Für $n\in\mathbb{N}, x,y \in F$, wobei $F$ ein differentieller Körper mit Ableitung $D$ ist, gilt:
 \begin{enumerate}
-\item $D(\frac{x}{y})=\frac{yD(x)-xD(y)}{D(y)^2}$ (Quotientenregel)
+\item $D(\frac{x}{y})=\frac{yD(x)-xD(y)}{y^2}$ (Quotientenregel)
 \item $D(x^n)=nD(x)x^{n-1}$ (Potenzregel)
 \end{enumerate}
 \end{lemma}
