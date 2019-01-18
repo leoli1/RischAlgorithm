@@ -211,7 +211,7 @@ Dies ist, wenn man den Zerfällungskörper\footnote{Der Zerfällungskörper eines Po
 \end{itemize}
 Mithilfe der Ableitung erhalten wir eine einfache Methode, um zu überprüfen, ob ein Polynom quadratfrei ist oder nicht. Die Ableitung ist hier die Abbildung 
 \begin{align*}
-\frac{d}{dx}:F[x]&\to F[x], \\a_n x^n+a_{n-1}x^{n-1}+\cdots+a_1x+a_0 &\mapsto na_nx^{n-1}+(n-1)a_{n-1}+\cdots+a_1
+\frac{d}{dx}:F[x]&\to F[x], \\a_n x^n+a_{n-1}x^{n-1}+\cdots+a_1x+a_0 &\mapsto na_nx^{n-1}+(n-1)a_{n-1}x^{n-2}+\cdots+a_1
 \end{align*}
 Man kann sich nun leicht überlegen, dass sich der Grad einer Nullstelle beim Ableiten um genau eins verringert, d.h. ist $\alpha$ eine $k-$fache Nullstelle von $f\in F[x]$, also $f=(x-\alpha)^kg$, sodass $\alpha$ keine Nullstelle von $g$ ist, so ist $\frac{d}{dx}f=(x-\alpha)^{k-1}\tilde{g}$, wobei wieder $\alpha$ keine Nullstelle von $\tilde{g}$ ist.\\ Betrachten wir nun ein $f\in F[x]$ mit der Faktorisierung:
 \begin{align*}
