@@ -42,6 +42,7 @@ def parseField0RatFromStr(rat_raw,var="x"):
 
 def parseExpressionFromStr(expr_str,fieldTower=None):
     a = time.time()
+    sqrt = Number.sqrt
     if fieldTower==None:
         fieldTower = FE.BASEFIELD
     variables = [fieldTower.getFieldExtension(i).variable for i in range(fieldTower.towerHeight)]#[(fieldTower.getFieldExtension(i).variable, fieldTower.getStrippedTower(i+1)) for i in range(fieldTower.towerHeight)]

@@ -37,6 +37,8 @@ class SqrRootPolynomial(object):
         if self.radicand!=other.radicand:
             raise ValueError()
         return SqrRootPolynomial(self.radicand,a=self.a+other.a,b=self.b+other.b)
+    def __rsub__(self, other):
+        return -self.__sub__(other)
     def __sub__(self, other):
         return self.__add__(-other)
     def __rmul__(self, other):
@@ -136,7 +138,7 @@ class Rational(AlgebraicNumber):
         
     @staticmethod
     def fromFloat(f):
-        if type(f) is Rational:
+        if type(f) is Rational or type(f) == SqrRootPolynomial:
             return f
         n = 0
         p = f
@@ -273,6 +275,10 @@ ONE = Rational(1,1)
 ZERO = Rational(0,1)
 
 def sqrt(x):
+    if type(x) == SqrRootPolynomial:
+        if x.b!=0:
+            raise NotImplementedError()
+        x = x.a
     if type(x)!=Rational:
         return sqrt(Rational.fromFloat(x))
     if x._p<0:

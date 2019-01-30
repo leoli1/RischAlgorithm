@@ -238,6 +238,8 @@ def ppSqrRootPolynomial(rootPol):
         if b==-1:
             return m+rootSM
         return bSM+rootSM
+    if b==0:
+        return aSM
     if b==1:
         return aSM+p+rootSM
     if b==-1:
