@@ -398,7 +398,7 @@ Auf diese Weise können wir exponentielle und logarithmische Körpererweiterungen 
 Sei $G$ eine differentielle Körpererweiterung von $F$ und $\theta\in G$.
 %, so dass $\theta$ transzendent über $F$ ist.
 \begin{enumerate}
-\item Gibt es ein $u\in F$ mit $\frac{\theta'}{\theta}=u$, so nennt man $\theta$ \textup{exponentiell} über $F$ und schreibt $\theta = \exp(u)$.
+\item Gibt es ein $u\in F$ mit $\frac{\theta'}{\theta}=u'$, so nennt man $\theta$ \textup{exponentiell} über $F$ und schreibt $\theta = \exp(u)$.
 \item Gibt es ein $u\in F$ mit $\frac{u'}{u}=\theta'$, so nennt man $\theta$ \textup{logarithmisch} über $F$ und schreibt $\theta =\log(u)$.
 \end{enumerate}
 \end{definition}
@@ -428,7 +428,7 @@ Für den Spezialfall $F=\mathbb{C}(x)$ nennt man die Elemente $f\in G$ einer elem
 \end{definition}
 Beispiele:
 \begin{itemize}
-\item $f=\frac{\exp(\sqrt{x})+x}{\sqrt{x}+x^2+1}$. Seien $\theta_1=\sqrt{x}$ und $\theta_2=\exp(\theta_1)$. $\theta_1$ erfüllt die Polynomgleichung $z^2-x=0$ und ist somit algebraisch über $\mathbb{C}(x)$. Für $u=\sqrt{x}=\theta_1$ ist $\frac{\theta_2'}{\theta_2}=u$ und somit exponentiell über $\mathbb{C}(x,\theta_1)$ ist. Da $f=\frac{\theta_2+x}{\theta_1+x^2+1} \in \mathbb{C}(x,\theta_1,\theta_2)$, ist $f$ elementar.
+\item $f=\frac{\exp(\sqrt{x})+x}{\sqrt{x}+x^2+1}$. Seien $\theta_1=\sqrt{x}$ und $\theta_2=\exp(\theta_1)$. $\theta_1$ erfüllt die Polynomgleichung $z^2-x=0$ und ist somit algebraisch über $\mathbb{C}(x)$. Für $u=\sqrt{x}=\theta_1$ ist $\frac{\theta_2'}{\theta_2}=u'$ und somit exponentiell über $\mathbb{C}(x,\theta_1)$ ist. Da $f=\frac{\theta_2+x}{\theta_1+x^2+1} \in \mathbb{C}(x,\theta_1,\theta_2)$, ist $f$ elementar.
 \item $f=\sin(x)$. Wähle $\theta_1=\exp(ix)$. Wegen $\sin(x)=\frac{\exp(ix)-\exp(-ix)}{2i}$ ist $f=\frac{\theta_1-\frac{1}{\theta_1}}{2i}\in\mathbb{C}(x,\theta_1)$, somit ist $\sin(x)$ elementar.
 \item $f=\exp(x)^2$. Sei $\theta_1 = \exp(x)$. Dann ist $f=\theta_1^2\in\mathbb{C}(x,\theta_1)$. Allerdings gilt auch: $f=\exp(x)^2=\exp(2x)=:\theta_2\in\mathbb{C}(x,\theta_2)$.
 \end{itemize}
