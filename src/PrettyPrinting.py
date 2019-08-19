@@ -12,6 +12,8 @@ import Polynomial as Pol
 import RationalFunction as Rat
 import Integral as Int
 
+from Main import useUnicode
+
 
 
 class StringMatrix(object): 
@@ -157,7 +159,7 @@ def ppRootSum(rootSum):
     sigma = bigSigma()
     sm = StringMatrix(height=sigma.height+polySM.height,width=w+1)
     sm.setSubMatrix(sigma,0,w//2-1)
-    sm.setSubMatrix(polySM,2,0)
+    sm.setSubMatrix(polySM,sigma.height,0)
     sm.mainRow = sigma.height/2
     if type(rootSum.expr)==Int.LogFunction:
         argSM = pp(rootSum.expr.argFunction)
@@ -297,6 +299,12 @@ def ppPower(base, power,customVar=None):
 
 def ppIntegralExpression(func, var):
     funcSM = pp(func)
+    if useUnicode==False:
+        if funcSM.height==1:
+            funcSM.insertEmptyRow(1)
+            funcSM.insertEmptyRow(0)
+        elif funcSM.height==2:
+            funcSM.insertEmptyRow(2)
     funcSM.insertColumn(0,IntegralSymbol(funcSM.height))
     varSM = StringMatrix.fromString(" d"+str(var))
     return funcSM+varSM

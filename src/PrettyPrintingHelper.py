@@ -4,29 +4,36 @@ Created on 23.10.2018
 @author: Leonard
 '''
 import PrettyPrinting as PP
+from Main import useUnicode
 
-R_UP = u"\N{RIGHT PARENTHESIS UPPER HOOK}"
-R_LO = u"\N{RIGHT PARENTHESIS LOWER HOOK}"
-L_UP = u"\N{LEFT PARENTHESIS UPPER HOOK}"
-L_LO = u"\N{LEFT PARENTHESIS LOWER HOOK}"
-R_VERT = u"\N{RIGHT PARENTHESIS EXTENSION}"
-L_VERT = u"\N{LEFT PARENTHESIS EXTENSION}"
-T_INT = u"\N{TOP HALF INTEGRAL}"
-B_INT = u"\N{BOTTOM HALF INTEGRAL}"
-VERT_INT = u"\N{INTEGRAL EXTENSION}"
+R_UP = u"\N{RIGHT PARENTHESIS UPPER HOOK}" if useUnicode else "\\"
+R_LO = u"\N{RIGHT PARENTHESIS LOWER HOOK}" if useUnicode else "/"
+L_UP = u"\N{LEFT PARENTHESIS UPPER HOOK}" if useUnicode else "/"
+L_LO = u"\N{LEFT PARENTHESIS LOWER HOOK}" if useUnicode else "\\"
+R_VERT = u"\N{RIGHT PARENTHESIS EXTENSION}" if useUnicode else "|"
+L_VERT = u"\N{LEFT PARENTHESIS EXTENSION}" if useUnicode else "|"
+T_INT = u"\N{TOP HALF INTEGRAL}" if useUnicode else "/"
+B_INT = u"\N{BOTTOM HALF INTEGRAL}" if useUnicode else "/"
+VERT_INT = u"\N{INTEGRAL EXTENSION}" if useUnicode else "|"
 INT = u"\N{INTEGRAL}"
-DIAG_DOWN = u"\N{BOX DRAWINGS LIGHT DIAGONAL UPPER LEFT TO LOWER RIGHT}"
-DIAG_UP = u"\N{BOX DRAWINGS LIGHT DIAGONAL UPPER RIGHT TO LOWER LEFT}"
-LOW_LINE = u"\N{LOW LINE}"
+DIAG_DOWN = u"\N{BOX DRAWINGS LIGHT DIAGONAL UPPER LEFT TO LOWER RIGHT}" if useUnicode else "\\"
+DIAG_UP = u"\N{BOX DRAWINGS LIGHT DIAGONAL UPPER RIGHT TO LOWER LEFT}" if useUnicode else "/"
+LOW_LINE = u"\N{LOW LINE}" if useUnicode else "_"
 
-FRACTION_MID = u"\N{BOX DRAWINGS LIGHT HORIZONTAL}"
+FRACTION_MID = u"\N{BOX DRAWINGS LIGHT HORIZONTAL}" if useUnicode else "-"
 
 SUMM_TOP = u"\N{SUMMATION TOP}"
 SUMM_BOT = u"\N{SUMMATION BOTTOM}"
 
 def bigSigma():
-    sm = PP.StringMatrix(data=[[SUMM_TOP],[SUMM_BOT]])
-    sm.mainRow = 1
+    if useUnicode:
+        sm = PP.StringMatrix(data=[[SUMM_TOP],[SUMM_BOT]])
+        sm.mainRow = 1
+    else:
+        sm = PP.StringMatrix(data=[[" ","_"],
+                                   ["\\"," "],
+                                   ["/"," "],
+                                   [" ","-"]])
     return sm
 def LeftBracket1(height):
     if height==1:
@@ -44,8 +51,10 @@ def RightBracket1(height):
     return t+[R_LO]
 
 def IntegralSymbol(height):
-    if height==1:
+    if height==1 and useUnicode:
         return [INT]
+    if not useUnicode and height<=2:
+        height=3
     t = [T_INT]
     for _ in range(1,height-1):
         t.append(VERT_INT)

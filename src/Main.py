@@ -15,6 +15,7 @@ import PrettyPrinting as PP
 PYTHON3 = False
 
 usePP = True
+useUnicode = False
 
 import sys
 if sys.version_info[0]>=3:
